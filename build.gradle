@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
     id 'jacoco'
     id 'io.freefair.lombok' version '6.4.3' // https://plugins.gradle.org/plugin/io.freefair.lombok
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'java'
 }
 
 group = 'mil.dso.keycloak-p1-auth-plugin'
@@ -34,6 +34,20 @@ dependencies {
     implementation 'org.keycloak:keycloak-server-spi-private:13.0.0'
 }
 
+// override default jar task to create a fat/uber jar with all dependencies
+// https://docs.gradle.org/current/userguide/building_java_projects.html#sec:java_packaging
+jar {
+    duplicatesStrategy = 'include'
+
+    from sourceSets.main.output
+    
+    dependsOn configurations.runtimeClasspath
+    
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+}
+
 jacocoTestReport {
     reports {
         html.enabled false
@@ -42,8 +56,6 @@ jacocoTestReport {
         xml.destination file("${buildDir}/jacoco/test.xml")
     }
 }
-
-group = 'dod.p1.keycloak'
 
 publishing {
     publications {
@@ -56,5 +68,3 @@ publishing {
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
-
-build.dependsOn shadowJar
