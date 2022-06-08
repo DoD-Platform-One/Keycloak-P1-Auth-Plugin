@@ -48,6 +48,11 @@ jar {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.8"
+    reportsDirectory = file("${buildDir}/jacoco")
+}
+
 jacocoTestReport {
     reports {
         html.enabled false
