@@ -2,7 +2,10 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'jacoco'
-    id 'io.freefair.lombok' version '6.4.3' // https://plugins.gradle.org/plugin/io.freefair.lombok
+    // https://plugins.gradle.org/plugin/io.freefair.lombok
+    id 'io.freefair.lombok' version '6.4.3'
+    // shadowJar plugin is required to create an uberJar with all runtime dependencies
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
 }
 
@@ -34,18 +37,17 @@ dependencies {
     implementation 'org.keycloak:keycloak-server-spi-private:18.0.0'
 }
 
-// override default jar task to create a fat/uber jar with all dependencies
-// https://docs.gradle.org/current/userguide/building_java_projects.html#sec:java_packaging
 jar {
-    duplicatesStrategy = 'include'
+    // disable the default jar task so that shadowJar is used instead
+    enabled = false
+    dependsOn(shadowJar)
+}
 
-    from sourceSets.main.output
-    
-    dependsOn configurations.runtimeClasspath
-    
-    from {
-        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
-    }
+// shadowJar inherits from the jar task
+// https://imperceptiblethoughts.com/shadow/configuration/
+shadowJar {
+    // don't append anything to the end of the jar file name
+    classifier = null
 }
 
 jacoco {
