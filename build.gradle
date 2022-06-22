@@ -7,6 +7,7 @@ plugins {
     // shadowJar plugin is required to create an uberJar with all runtime dependencies
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
+    id 'checkstyle'
 }
 
 group = 'mil.dso.keycloak-p1-auth-plugin'
@@ -24,6 +25,19 @@ repositories {
         url = uri('https://repo.maven.apache.org/maven2')
     }
 }
+
+// create lintGradle task for pipeline
+tasks.register('lintGradle') {
+    dependsOn checkstyleMain, checkstyleTest
+}
+
+// exclue ant style folders from lint scan 
+// tasks.withType(Checkstyle) {
+//   exclude '**/**/src/test/java/mavenspring/example/hellogradle/*.java'
+// }
+// ignore all errors for tests
+checkstyleTest.exclude('**/**')
+
 
 dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
