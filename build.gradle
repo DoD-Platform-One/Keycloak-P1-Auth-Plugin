@@ -31,14 +31,6 @@ tasks.register('lintGradle') {
     dependsOn checkstyleMain, checkstyleTest
 }
 
-// exclue ant style folders from lint scan 
-// tasks.withType(Checkstyle) {
-//   exclude '**/**/src/test/java/mavenspring/example/hellogradle/*.java'
-// }
-// ignore all errors for tests
-checkstyleTest.exclude('**/**')
-
-
 dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
     testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
