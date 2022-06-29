@@ -94,10 +94,10 @@ public final class CommonConfig {
             exit(1);
             return null;
         } finally {
-            if (fileInputStream!=null) {
+            if (fileInputStream != null) {
                 try {
                     fileInputStream.close();
-                } catch (Exception e){
+                } catch (Exception e) {
                     System.out.println("File is closed. Cannot be read");
                 }
             }
