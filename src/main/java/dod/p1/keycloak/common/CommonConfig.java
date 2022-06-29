@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.keycloak.models.GroupModel;
@@ -79,20 +80,30 @@ public final class CommonConfig {
     }
 
     private YAMLConfig loadConfigFile() {
-        String configFilePath = System.getenv("CUSTOM_REGISTRATION_CONFIG");
+        String configFilePath = FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG"));
         File file = new File(configFilePath);
         FileInputStream fileInputStream = null;
+        YAMLConfig yamlConfig;
 
         try {
             fileInputStream = new FileInputStream(file);
+            Yaml yaml = new Yaml(new Constructor(YAMLConfig.class));
+            yamlConfig = yaml.load(fileInputStream);
         } catch (FileNotFoundException e) {
             LOGGER_COMMON.fatal("Invalid or missing YAML Config, aborting.");
             exit(1);
             return null;
+        } finally {
+            if (fileInputStream!=null) {
+                try {
+                    fileInputStream.close();
+                } catch (Exception e){
+                    System.out.println("File is closed. Cannot be read");
+                }
+            }
         }
 
-        Yaml yaml = new Yaml(new Constructor(YAMLConfig.class));
-        return yaml.load(fileInputStream);
+        return yamlConfig;
     }
 
     private List<GroupModel> convertPathsToGroupModels(final RealmModel realm, final List<String> paths) {
