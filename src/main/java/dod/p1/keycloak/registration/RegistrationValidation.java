@@ -28,12 +28,28 @@ import dod.p1.keycloak.common.CommonConfig;
 
 public class RegistrationValidation extends RegistrationProfile {
 
+    /**
+     * Provider ID.
+     */
     public static final String PROVIDER_ID = "registration-validation-action";
 
+    /**
+     * Requirement choices.
+     */
     private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
             AuthenticationExecutionModel.Requirement.REQUIRED };
 
-    private static void bindRequiredActions(UserModel user, String x509Username) {
+    /**
+     * The minimum length of user name.
+     */
+    private static final int MIN_USER_NAME_LENGTH = 3;
+
+    /**
+     * The max length of user name.
+     */
+    private static final int MAX_USER_NAME_LENGTH = 22;
+
+    private static void bindRequiredActions(final UserModel user, final String x509Username) {
         // Default actions for all users
         user.addRequiredAction(UserModel.RequiredAction.VERIFY_EMAIL);
 
@@ -46,14 +62,22 @@ public class RegistrationValidation extends RegistrationProfile {
         }
     }
 
-    private static void processX509UserAttribute(RealmModel realm, UserModel user, String x509Username) {
+    private static void processX509UserAttribute(
+        final RealmModel realm,
+        final UserModel user,
+        final String x509Username) {
+
         if (x509Username != null) {
             // Bind the X509 attribute to the user
             user.setSingleAttribute(getInstance(realm).getUserIdentityAttribute(), x509Username);
         }
     }
 
-    private static void joinValidUserToGroups(FormContext context, UserModel user, String x509Username) {
+    private static void joinValidUserToGroups(
+        final FormContext context,
+        final UserModel user,
+        final String x509Username) {
+
         String email = user.getEmail().toLowerCase();
         RealmModel realm = context.getRealm();
         CommonConfig config = getInstance(realm);
@@ -63,13 +87,20 @@ public class RegistrationValidation extends RegistrationProfile {
 
         if (x509Username != null) {
             // User is a X509 user - Has a CAC
-            config.logger.info(" user " + user.getId() + " / " + user.getUsername() + " found with X509: " + x509Username);
+            config.LOGGER_COMMON.info(
+                " user "
+                + user.getId()
+                + " / "
+                + user.getUsername()
+                + " found with X509: "
+                + x509Username);
+
             config.getAutoJoinGroupX509().forEach(user::joinGroup);
         } else {
           if (domainMatchCount != 0) {
             // User is not a X509 user but is in the whitelist
 
-            config.logger.info(" user " + user.getUsername() + " / " + email + ": Email found in whitelist");
+            config.LOGGER_COMMON.info(" user " + user.getUsername() + " / " + email + ": Email found in whitelist");
 
             //Below Works but without logging
             /*config.getEmailMatchAutoJoinGroup()
@@ -79,7 +110,11 @@ public class RegistrationValidation extends RegistrationProfile {
             config.getEmailMatchAutoJoinGroup()
                   .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
                   .forEach(match -> {
-                    config.logger.info("Adding user " + user.getUsername() + " to group(s): " + match.getGroups());
+                    config.LOGGER_COMMON.info(
+                        "Adding user "
+                        + user.getUsername()
+                        + " to group(s): "
+                        + match.getGroups());
                     match.getGroupModels().forEach(group_match -> {
                       user.joinGroup(group_match);
                       });
@@ -87,7 +122,7 @@ public class RegistrationValidation extends RegistrationProfile {
 
         } else {
             // User is not a X509 user or in whitelist
-            config.logger.info(" user " + user.getUsername() + " / " + email + ": Email Not found in whitelist");
+            config.LOGGER_COMMON.info(" user " + user.getUsername() + " / " + email + ": Email Not found in whitelist");
             config.getNoEmailMatchAutoJoinGroup().forEach(user::joinGroup);
             user.setSingleAttribute("public-registrant", "true");
           }
@@ -96,11 +131,15 @@ public class RegistrationValidation extends RegistrationProfile {
 
     /**
      * Add a custom user attribute (mattermostid) to enable direct mattermost <>
-     * keycloak auth on mattermost teams edition
+     * keycloak auth on mattermost teams edition.
      *
      * @param formData The user registration form data
+     * @param user the Keycloak user object
      */
-    private static void generateUniqueStringIdForMattermost(MultivaluedMap<String, String> formData, UserModel user) {
+    private static void generateUniqueStringIdForMattermost(
+        final MultivaluedMap<String, String> formData,
+        final UserModel user) {
+
         String email = formData.getFirst(Validation.FIELD_EMAIL);
 
         byte[] encodedEmail;
@@ -117,8 +156,11 @@ public class RegistrationValidation extends RegistrationProfile {
         user.setSingleAttribute("mattermostid", formatDate.format(today) + emailByteTotal);
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void success(FormContext context) {
+    public void success(final FormContext context) {
         UserModel user = context.getUser();
         RealmModel realm = context.getRealm();
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
@@ -130,36 +172,54 @@ public class RegistrationValidation extends RegistrationProfile {
         bindRequiredActions(user, x509Username);
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void buildPage(FormContext context, LoginFormsProvider form) {
+    public void buildPage(final FormContext context, final LoginFormsProvider form) {
         String x509Username = X509Tools.getX509Username(context);
         if (x509Username != null) {
             form.setAttribute("cacIdentity", x509Username);
         }
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getDisplayType() {
         return "Platform One Registration Validation";
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getId() {
         return PROVIDER_ID;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean isConfigurable() {
         return false;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
         return REQUIREMENT_CHOICES;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void validate(ValidationContext context) {
+    public void validate(final ValidationContext context) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
 
         List<FormMessage> errors = new ArrayList<>();
@@ -188,7 +248,7 @@ public class RegistrationValidation extends RegistrationProfile {
                 errors.add(new FormMessage(Validation.FIELD_USERNAME, "Username must begin with a letter."));
             }
 
-            if (username.length() < 3 || username.length() > 22) {
+            if (username.length() < MIN_USER_NAME_LENGTH || username.length() > MAX_USER_NAME_LENGTH) {
                 errors.add(new FormMessage(Validation.FIELD_USERNAME, "Username must be between 3 to 22 characters."));
             }
         }

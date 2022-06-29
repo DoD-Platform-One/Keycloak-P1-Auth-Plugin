@@ -23,15 +23,28 @@ import dod.p1.keycloak.authentication.RequireGroupAuthenticator;
 
 public final class CommonConfig {
 
-    private static CommonConfig INSTANCE;
-
+    /**
+     * common config.
+     */
+    private static CommonConfig instance;
+    /**
+     * yaml config variable.
+     */
     private final YAMLConfig config;
+    /**
+     * List of GroupModel for auto join group x509.
+     */
     private final List<GroupModel> autoJoinGroupX509;
+    /**
+     * List of GroupModel for no email matchauto join group.
+     */
     private final List<GroupModel> noEmailMatchAutoJoinGroup;
+    /**
+     * common logger.
+     */
+    public static final Logger LOGGER_COMMON = LogManager.getLogger(RequireGroupAuthenticator.class);
 
-    public static final Logger logger = LogManager.getLogger(RequireGroupAuthenticator.class);
-
-    private CommonConfig(RealmModel realm) {
+    private CommonConfig(final RealmModel realm) {
 
         config = loadConfigFile();
 
@@ -42,22 +55,27 @@ public final class CommonConfig {
             boolean hasInvalidDomain = match.getDomains().stream()
                     .anyMatch(domain -> domain.matches("^[^\\.\\@][\\w\\-\\.]+$"));
             if (hasInvalidDomain) {
-                logger.warn(
+                LOGGER_COMMON.warn(
                         "Invalid email domain config.  All email domain matches should begin with a \".\" or \"@\".");
                 match.setDomains(new ArrayList<String>());
             } else {
                 match.setGroupModels(convertPathsToGroupModels(realm, match.getGroups()));
-                //logger.debug("Groups found associated with valid formatted domains: " + match.getGroups());
+                //LOGGER_COMMON.debug("Groups found associated with valid formatted domains: " + match.getGroups());
             }
         });
     }
 
-    public static CommonConfig getInstance(RealmModel realm) {
-        if (INSTANCE == null) {
-            INSTANCE = new CommonConfig(realm);
+    /**
+     * get common config instance.
+     * @param realm
+     * @return CommonConfig
+     */
+    public static CommonConfig getInstance(final RealmModel realm) {
+        if (instance == null) {
+            instance = new CommonConfig(realm);
         }
 
-        return INSTANCE;
+        return instance;
     }
 
     private YAMLConfig loadConfigFile() {
@@ -68,7 +86,7 @@ public final class CommonConfig {
         try {
             fileInputStream = new FileInputStream(file);
         } catch (FileNotFoundException e) {
-            logger.fatal("Invalid or missing YAML Config, aborting.");
+            LOGGER_COMMON.fatal("Invalid or missing YAML Config, aborting.");
             exit(1);
             return null;
         }
@@ -77,7 +95,7 @@ public final class CommonConfig {
         return yaml.load(fileInputStream);
     }
 
-    private List<GroupModel> convertPathsToGroupModels(RealmModel realm, List<String> paths) {
+    private List<GroupModel> convertPathsToGroupModels(final RealmModel realm, final List<String> paths) {
         return paths
                 .stream()
                 .map(group -> findGroupByPath(realm, group))
@@ -85,6 +103,10 @@ public final class CommonConfig {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * get email match auto join group.
+     * @return Stream<YAMLConfigEmailAutoJoin>
+     */
     public Stream<YAMLConfigEmailAutoJoin> getEmailMatchAutoJoinGroup() {
         return config
                 .getEmailMatchAutoJoinGroup()
@@ -92,26 +114,50 @@ public final class CommonConfig {
                 .filter(group -> group.getDomains().size() > 0);
     }
 
+    /**
+     * get user identity attribute.
+     * @return String
+     */
     public String getUserIdentityAttribute() {
         return config.getX509().getUserIdentityAttribute();
     }
 
+    /**
+     * get user active 509 attribute.
+     * @return String
+     */
     public String getUserActive509Attribute() {
         return config.getX509().getUserActive509Attribute();
     }
 
+    /**
+     * get auto join group x509.
+     * @return Stream<GroupModel>
+     */
     public Stream<GroupModel> getAutoJoinGroupX509() {
         return autoJoinGroupX509.stream();
     }
 
+    /**
+     * get required certificate policies.
+     * @return Stream<String>
+     */
     public Stream<String> getRequiredCertificatePolicies() {
         return config.getX509().getRequiredCertificatePolicies().stream();
     }
 
+    /**
+     * get no email match auto join group.
+     * @return Stream<GroupModel>
+     */
     public Stream<GroupModel> getNoEmailMatchAutoJoinGroup() {
         return noEmailMatchAutoJoinGroup.stream();
     }
 
+    /**
+     * get ignored group proetection clients.
+     * @return List<String>
+     */
     public List<String> getIgnoredGroupProtectionClients() {
         return config.getGroupProtectionIgnoreClients();
     }

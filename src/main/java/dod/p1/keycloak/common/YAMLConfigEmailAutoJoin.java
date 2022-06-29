@@ -13,8 +13,20 @@ import lombok.Setter;
 @NoArgsConstructor
 public class YAMLConfigEmailAutoJoin {
 
+    /**
+     * String for description.
+     */
     private String description;
+    /**
+     * List of strings for goups.
+     */
     private List<String> groups;
+    /**
+     * List of strings for domains.
+     */
     private List<String> domains;
+    /**
+     * Lsit of GroupModel.
+     */
     private List<GroupModel> groupModels;
 }

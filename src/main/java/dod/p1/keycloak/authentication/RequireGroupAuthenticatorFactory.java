@@ -12,29 +12,44 @@ import org.keycloak.provider.ProviderConfigProperty;
 
 public class RequireGroupAuthenticatorFactory implements AuthenticatorFactory {
 
+    /**
+     * provider id variable.
+     */
     public static final String PROVIDER_ID = "p1-group-restriction";
+    /**
+     * group authenticator variable.
+     */
     public static final RequireGroupAuthenticator GROUP_AUTHENTICATOR = new RequireGroupAuthenticator();
+    /**
+     * requirement choices variable.
+     */
     private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
             AuthenticationExecutionModel.Requirement.REQUIRED
     };
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getId() {
         return PROVIDER_ID;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public Authenticator create(KeycloakSession session) {
+    public Authenticator create(final KeycloakSession session) {
         return GROUP_AUTHENTICATOR;
     }
 
     @Override
-    public void init(Config.Scope scope) {
+    public void init(final Config.Scope scope) {
 
     }
 
     @Override
-    public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
+    public void postInit(final KeycloakSessionFactory keycloakSessionFactory) {
 
     }
 
@@ -43,36 +58,57 @@ public class RequireGroupAuthenticatorFactory implements AuthenticatorFactory {
 
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getDisplayType() {
         return "Platform One Group Authentication Validation";
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getReferenceCategory() {
         return null;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean isConfigurable() {
         return false;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
         return REQUIREMENT_CHOICES;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean isUserSetupAllowed() {
         return false;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getHelpText() {
         return null;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
         return null;
