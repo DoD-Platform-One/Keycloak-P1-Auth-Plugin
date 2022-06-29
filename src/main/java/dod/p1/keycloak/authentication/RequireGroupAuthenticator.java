@@ -23,10 +23,16 @@ import dod.p1.keycloak.common.CommonConfig;
  */
 public class RequireGroupAuthenticator implements Authenticator {
 
-    private static final Logger logger = LogManager.getLogger(RequireGroupAuthenticator.class);
+    /**
+     * Logger variable.
+     */
+    private static final Logger LOGGER = LogManager.getLogger(RequireGroupAuthenticator.class);
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void authenticate(AuthenticationFlowContext context) {
+    public void authenticate(final AuthenticationFlowContext context) {
 
         RealmModel realm = context.getRealm();
         UserModel user = context.getUser();
@@ -37,15 +43,16 @@ public class RequireGroupAuthenticator implements Authenticator {
         String logPrefix = "P1_GROUP_PROTECTION_AUTHENTICATE_" + authenticationSession.getParentSession().getId();
 
         if (user != null) {
-            logger.info(logPrefix + " user " + user.getId() + " / " + user.getUsername());
+            LOGGER.info(logPrefix + " user " + user.getId() + " / " + user.getUsername());
         } else {
-            logger.warn(logPrefix + " invalid user");
+            LOGGER.warn(logPrefix + " invalid user");
         }
-        logger.info(logPrefix + " client " + clientId + " / " + client.getName());
+        LOGGER.info(logPrefix + " client " + clientId + " / " + client.getName());
 
         // Match the pattern "test_b4e4ae70-5b78-47ff-ad5c-7ebf3c10e452_app"
         // where "test" is the short name and "b4e4ae70-5b78-47ff-ad5c-7ebf3c10e452" is the group id
-        String clientIdPatternMatch = "^[a-z0-9-]+_([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})_[_a-z0-9-]+$";
+        String clientIdPatternMatch =
+            "^[a-z0-9-]+_([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})_[_a-z0-9-]+$";
         Pattern pattern = Pattern.compile(clientIdPatternMatch);
         Matcher matcher = pattern.matcher(clientId);
 
@@ -61,31 +68,31 @@ public class RequireGroupAuthenticator implements Authenticator {
 
             // Must be an valid environment name
             if (groupId == null || group == null) {
-                logger.warn(logPrefix + " invalid group {}" + groupId);
+                LOGGER.warn(logPrefix + " invalid group {}" + groupId);
                 context.failure(AuthenticationFlowError.CLIENT_DISABLED);
             } else {
                 // Check if the user is a member of the specified group
                 if (isMemberOfGroup(realm, user, group, logPrefix)) {
-                    logger.info(logPrefix + " matched authorized group");
+                    LOGGER.info(logPrefix + " matched authorized group");
                     success(context, user);
                 } else {
-                    logger.warn(logPrefix + " failed authorized group match");
+                    LOGGER.warn(logPrefix + " failed authorized group match");
                     context.failure(AuthenticationFlowError.INVALID_CLIENT_SESSION);
                 }
             }
         } else {
             if (CommonConfig.getInstance(realm).getIgnoredGroupProtectionClients().contains(clientId)) {
-                logger.info(logPrefix + " matched authorized ignored group protect client");
+                LOGGER.info(logPrefix + " matched authorized ignored group protect client");
                 success(context, user);
             } else {
-                logger.warn(logPrefix + " failed ignored group protect client test");
+                LOGGER.warn(logPrefix + " failed ignored group protect client test");
                 context.failure(AuthenticationFlowError.CLIENT_DISABLED);
             }
         }
 
     }
 
-    private void success(AuthenticationFlowContext context, UserModel user) {
+    private void success(final AuthenticationFlowContext context, final UserModel user) {
         RealmModel realm = context.getRealm();
         // Reset X509 attribute per login event
         user.setSingleAttribute(CommonConfig.getInstance(realm).getUserActive509Attribute(), "");
@@ -93,10 +100,15 @@ public class RequireGroupAuthenticator implements Authenticator {
         context.success();
     }
 
-    private boolean isMemberOfGroup(RealmModel realm, UserModel user, GroupModel group, String logPrefix) {
-        // No on likes null pointers
+    private boolean isMemberOfGroup(
+        final RealmModel realm,
+        final UserModel user,
+        final GroupModel group,
+        final String logPrefix) {
+
+        // No one likes null pointers
         if (realm == null || user == null || group == null) {
-            logger.warn(logPrefix + " realm, group or user null");
+            LOGGER.warn(logPrefix + " realm, group or user null");
             return false;
         }
 
@@ -104,27 +116,40 @@ public class RequireGroupAuthenticator implements Authenticator {
                 .map(GroupModel::getId)
                 .collect(Collectors.joining(","));
 
-        logger.info(logPrefix + " user groups {} " + groupList);
+        LOGGER.info(logPrefix + " user groups {} " + groupList);
 
         return user.isMemberOf(group);
     }
 
     @Override
-    public void action(AuthenticationFlowContext authenticationFlowContext) {
+    public void action(final AuthenticationFlowContext authenticationFlowContext) {
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean requiresUser() {
         return false;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public boolean configuredFor(KeycloakSession keycloakSession, RealmModel realmModel, UserModel userModel) {
+    public boolean configuredFor(
+        final KeycloakSession keycloakSession,
+        final RealmModel realmModel,
+        final UserModel userModel) {
+
         return true;
     }
 
     @Override
-    public void setRequiredActions(KeycloakSession keycloakSession, RealmModel realmModel, UserModel userModel) {
+    public void setRequiredActions(
+        final KeycloakSession keycloakSession,
+        final RealmModel realmModel,
+        final UserModel userModel) {
     }
 
     @Override

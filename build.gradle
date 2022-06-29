@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'mil.dso.keycloak-p1-auth-plugin'
-version = '2.0.0'
+version = '2.0.1'
 sourceCompatibility = '11'
 
 java {
@@ -30,6 +30,9 @@ repositories {
 tasks.register('lintGradle') {
     dependsOn checkstyleMain, checkstyleTest
 }
+
+// ignore all lint errors for test code
+checkstyleTest.exclude('**/**')
 
 dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'

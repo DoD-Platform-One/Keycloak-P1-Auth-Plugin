@@ -29,19 +29,36 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 
 import dod.p1.keycloak.common.CommonConfig;
 
-public class X509Tools {
+public final class X509Tools {
 
-    private static final Logger logger = LogManager.getLogger(X509Tools.class);
+    /**
+     * The LOGGER.
+     */
+    private static final Logger LOGGER = LogManager.getLogger(X509Tools.class);
+    /**
+     * The certificate policy OID.
+     */
     private static final String CERTIFICATE_POLICY_OID = "2.5.29.32";
+    /**
+     * The max number of certificate policies to check.
+     */
+    private static final int MAX_CERT_POLICIES_TO_CHECK = 10;
 
-    private static String getLogPrefix(AuthenticationSessionModel authenticationSession, String suffix) {
+    private static String getLogPrefix(final AuthenticationSessionModel authenticationSession, final String suffix) {
         return "P1_X509_TOOLS_" + suffix + "_" + authenticationSession.getParentSession().getId();
     }
 
-    private static boolean isX509Registered(KeycloakSession session, HttpRequest httpRequest, RealmModel realm) {
+    // hide constructor per checkstyle linting
+    private X509Tools() { }
+
+    private static boolean isX509Registered(
+        final KeycloakSession session,
+        final HttpRequest httpRequest,
+        final RealmModel realm) {
+
         String logPrefix = getLogPrefix(session.getContext().getAuthenticationSession(), "IS_X509_REGISTERED");
         String username = getX509Username(session, httpRequest, realm);
-        logger.info(logPrefix + " X509 ID: " + username);
+        LOGGER.info(logPrefix + " X509 ID: " + username);
         if (username != null) {
             Stream<UserModel> users = session.users().searchForUserByUserAttributeStream(realm,
                     CommonConfig.getInstance(realm).getUserIdentityAttribute(), username);
@@ -50,15 +67,36 @@ public class X509Tools {
         return false;
     }
 
-    public static boolean isX509Registered(FormContext context) {
+    /**
+     * Determine if x509 is registered from form context.
+     * @param context
+     * @return boolean
+     */
+    public static boolean isX509Registered(final FormContext context) {
         return isX509Registered(context.getSession(), context.getHttpRequest(), context.getRealm());
     }
 
-    public static boolean isX509Registered(RequiredActionContext context) {
+    /**
+     * Determine if x509 is registered from required action.
+     * @param context
+     * @return boolean
+     */
+    public static boolean isX509Registered(final RequiredActionContext context) {
         return isX509Registered(context.getSession(), context.getHttpRequest(), context.getRealm());
     }
 
-    private static String getX509Username(KeycloakSession session, HttpRequest httpRequest, RealmModel realm) {
+    /**
+     * Get x509 user name from identity.
+     * @param session
+     * @param httpRequest
+     * @param realm
+     * @return String
+     */
+    private static String getX509Username(
+        final KeycloakSession session,
+        final HttpRequest httpRequest,
+        final RealmModel realm) {
+
         Object identity = getX509Identity(session, httpRequest, realm);
         if (identity != null && !identity.toString().isEmpty()) {
             return identity.toString();
@@ -66,16 +104,36 @@ public class X509Tools {
         return null;
     }
 
-    public static String getX509Username(FormContext context) {
+    /**
+     * Get x509 user name from form context.
+     * @param context a Keycloak form context
+     * @return String
+     */
+    public static String getX509Username(final FormContext context) {
         return getX509Username(context.getSession(), context.getHttpRequest(), context.getRealm());
     }
 
-    public static String getX509Username(RequiredActionContext context) {
+    /**
+     * Get x509 user name from required action context.
+     * @param context a Keycloak required action context
+     * @return String
+     */
+    public static String getX509Username(final RequiredActionContext context) {
         return getX509Username(context.getSession(), context.getHttpRequest(), context.getRealm());
     }
 
-    public static String getCertificatePolicyId(X509Certificate cert, int certificatePolicyPos, int policyIdentifierPos)
-            throws IOException {
+    /**
+     * Get x509 certificate policy.
+     * @param cert x509 CA certificate
+     * @param certificatePolicyPos an Integer
+     * @param policyIdentifierPos an Integer
+     * @return String
+     */
+    public static String getCertificatePolicyId(
+        final X509Certificate cert,
+        final int certificatePolicyPos,
+        final int policyIdentifierPos) throws IOException {
+
         byte[] extPolicyBytes = cert.getExtensionValue(CERTIFICATE_POLICY_OID);
         if (extPolicyBytes == null) {
             return null;
@@ -99,13 +157,20 @@ public class X509Tools {
         return policyInformation[policyIdentifierPos].getPolicyIdentifier().getId();
     }
 
-    public static Object getX509IdentityFromCertChain(X509Certificate[] certs, RealmModel realm,
-            AuthenticationSessionModel authenticationSession) {
+    /**
+     * Get x509 identity from cert chain.
+     * @param certs an array of CA certs
+     * @param realm a Keycloak realm model
+     * @param authenticationSession a Keycloak authentication session
+     * @return Object
+     */
+    public static Object getX509IdentityFromCertChain(final X509Certificate[] certs, final RealmModel realm,
+            final AuthenticationSessionModel authenticationSession) {
 
         String logPrefix = getLogPrefix(authenticationSession, "GET_X509_IDENTITY_FROM_CHAIN");
 
         if (certs == null || certs.length == 0) {
-            logger.info(logPrefix + " no valid certs found");
+            LOGGER.info(logPrefix + " no valid certs found");
             return null;
         }
 
@@ -113,25 +178,25 @@ public class X509Tools {
 
         int index = 0;
         // Only check up to 10 cert policies, DoD only uses 1-2 policies
-        while (!hasValidPolicy && index < 10) {
+        while (!hasValidPolicy && index < MAX_CERT_POLICIES_TO_CHECK) {
             try {
                 String certificatePolicyId = getCertificatePolicyId(certs[0], index, 0);
                 if (certificatePolicyId == null) {
                     break;
                 }
-                logger.info(logPrefix + " checking cert policy " + certificatePolicyId);
+                LOGGER.info(logPrefix + " checking cert policy " + certificatePolicyId);
                 hasValidPolicy = getInstance(realm).getRequiredCertificatePolicies()
                         .anyMatch(s -> s.equals(certificatePolicyId));
                 index++;
             } catch (Exception ignored) {
-                logger.warn(logPrefix + " error parsing cert policies");
+                LOGGER.warn(logPrefix + " error parsing cert policies");
                 // abort checks
-                index = 20;
+                break;
             }
         }
 
         if (!hasValidPolicy) {
-            logger.warn(logPrefix + " no valid cert policies found");
+            LOGGER.warn(logPrefix + " no valid cert policies found");
             return null;
         }
 
@@ -148,7 +213,10 @@ public class X509Tools {
         return null;
     }
 
-    private static Object getX509Identity(KeycloakSession session, HttpRequest httpRequest, RealmModel realm) {
+    private static Object getX509Identity(
+        final KeycloakSession session,
+        final HttpRequest httpRequest,
+        final RealmModel realm) {
 
         try {
             if (session == null || httpRequest == null || realm == null) {

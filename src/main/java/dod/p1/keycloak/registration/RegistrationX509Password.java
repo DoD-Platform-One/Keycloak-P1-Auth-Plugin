@@ -27,22 +27,38 @@ import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.services.messages.Messages;
 
 public class RegistrationX509Password extends RegistrationPassword {
+
+    /**
+     * Provider ID.
+     */
     public static final String PROVIDER_ID = "registration-x509-password-action";
+    /**
+     * Requirement choices.
+     */
     private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
             AuthenticationExecutionModel.Requirement.REQUIRED };
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getHelpText() {
         return "Disables password registration if CAC authentication is possible.";
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
         return null;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void validate(ValidationContext context) {
+    public void validate(final ValidationContext context) {
         if (X509Tools.getX509Username(context) == null) {
             super.validate(context);
             return;
@@ -68,8 +84,9 @@ public class RegistrationX509Password extends RegistrationPassword {
                     context.getRealm().isRegistrationEmailAsUsername() ? formData.getFirst(RegistrationPage.FIELD_EMAIL)
                             : formData.getFirst(RegistrationPage.FIELD_USERNAME),
                     formData.getFirst(RegistrationPage.FIELD_PASSWORD));
-            if (err != null)
+            if (err != null) {
                 errors.add(new FormMessage(RegistrationPage.FIELD_PASSWORD, err.getMessage(), err.getParameters()));
+            }
         }
 
         if (errors.size() > 0) {
@@ -82,8 +99,11 @@ public class RegistrationX509Password extends RegistrationPassword {
         }
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void success(FormContext context) {
+    public void success(final FormContext context) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         UserModel user = context.getUser();
 
@@ -95,28 +115,40 @@ public class RegistrationX509Password extends RegistrationPassword {
         }
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void buildPage(FormContext context, LoginFormsProvider form) {
+    public void buildPage(final FormContext context, final LoginFormsProvider form) {
         if (X509Tools.getX509Username(context) == null) {
             form.setAttribute("passwordRequired", true);
         }
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean requiresUser() {
         return false;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
+    public boolean configuredFor(final KeycloakSession session, final RealmModel realm, final UserModel user) {
         return true;
     }
 
     @Override
-    public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {
+    public void setRequiredActions(final KeycloakSession session, final RealmModel realm, final UserModel user) {
 
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean isUserSetupAllowed() {
         return false;
@@ -126,41 +158,59 @@ public class RegistrationX509Password extends RegistrationPassword {
     public void close() {
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getDisplayType() {
         return "Platform One X509 Password Validation";
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getReferenceCategory() {
         return PasswordCredentialModel.TYPE;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean isConfigurable() {
         return false;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
         return REQUIREMENT_CHOICES;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public FormAction create(KeycloakSession session) {
+    public FormAction create(final KeycloakSession session) {
         return this;
     }
 
     @Override
-    public void init(Config.Scope config) {
+    public void init(final Config.Scope config) {
 
     }
 
     @Override
-    public void postInit(KeycloakSessionFactory factory) {
+    public void postInit(final KeycloakSessionFactory factory) {
 
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getId() {
         return PROVIDER_ID;

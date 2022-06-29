@@ -23,12 +23,20 @@ import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
 public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory {
-
+    /**
+     * Provider id.
+     */
     private static final String PROVIDER_ID = "UPDATE_X509";
+    /**
+     * Ignore x509.
+     */
     private static final String IGNORE_X509 = "IGNORE_X509";
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void evaluateTriggers(RequiredActionContext context) {
+    public void evaluateTriggers(final RequiredActionContext context) {
         String ignore = context.getAuthenticationSession().getAuthNote(IGNORE_X509);
         String x509Username = getX509Username(context);
         if (x509Username == null || ignore != null && ignore.equals("true")) {
@@ -49,8 +57,11 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
 
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void requiredActionChallenge(RequiredActionContext context) {
+    public void requiredActionChallenge(final RequiredActionContext context) {
         MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("username", context.getUser() != null ? context.getUser().getUsername() : "unknown user");
         formData.add("subjectDN", getX509Username(context));
@@ -61,8 +72,11 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
         context.challenge(challenge);
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public void processAction(RequiredActionContext context) {
+    public void processAction(final RequiredActionContext context) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         if (formData.containsKey("cancel")) {
             context.getAuthenticationSession().setAuthNote(IGNORE_X509, "true");
@@ -80,33 +94,45 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
         context.success();
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getDisplayText() {
         return "Update X509";
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public boolean isOneTimeAction() {
         return true;
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
-    public RequiredActionProvider create(KeycloakSession session) {
+    public RequiredActionProvider create(final KeycloakSession session) {
         return this;
     }
 
     @Override
-    public void init(Config.Scope config) {
+    public void init(final Config.Scope config) {
     }
 
     @Override
-    public void postInit(KeycloakSessionFactory factory) {
+    public void postInit(final KeycloakSessionFactory factory) {
     }
 
     @Override
     public void close() {
     }
 
+    /**
+     * This implementation is not intended to be overridden.
+     */
     @Override
     public String getId() {
         return PROVIDER_ID;
