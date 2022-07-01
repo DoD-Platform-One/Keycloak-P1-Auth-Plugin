@@ -29,6 +29,15 @@ import dod.p1.keycloak.common.CommonConfig;
 public class RegistrationValidation extends RegistrationProfile {
 
     /**
+     * constant for logging message.
+     */
+    private static final String LOGGING_USER_TEXT = " user ";
+    /**
+     * get user by email constant.
+     */
+    private static final String EMAIL = "email";
+
+    /**
      * Provider ID.
      */
     public static final String PROVIDER_ID = "registration-validation-action";
@@ -88,7 +97,7 @@ public class RegistrationValidation extends RegistrationProfile {
         if (x509Username != null) {
             // User is a X509 user - Has a CAC
             config.LOGGER_COMMON.info(
-                " user "
+                LOGGING_USER_TEXT
                 + user.getId()
                 + " / "
                 + user.getUsername()
@@ -100,13 +109,13 @@ public class RegistrationValidation extends RegistrationProfile {
           if (domainMatchCount != 0) {
             // User is not a X509 user but is in the whitelist
 
-            config.LOGGER_COMMON.info(" user " + user.getUsername() + " / " + email + ": Email found in whitelist");
+            config.LOGGER_COMMON.info(
+                LOGGING_USER_TEXT
+                + user.getUsername()
+                + " / "
+                + email
+                + ": Email found in whitelist");
 
-            //Below Works but without logging
-            /*config.getEmailMatchAutoJoinGroup()
-                    .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
-                    .forEach(collection -> collection.getGroupModels().forEach(user::joinGroup));
-            */
             config.getEmailMatchAutoJoinGroup()
                   .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
                   .forEach(match -> {
@@ -115,14 +124,17 @@ public class RegistrationValidation extends RegistrationProfile {
                         + user.getUsername()
                         + " to group(s): "
                         + match.getGroups());
-                    match.getGroupModels().forEach(group_match -> {
-                      user.joinGroup(group_match);
-                      });
+                    match.getGroupModels().forEach(groupMatch -> user.joinGroup(groupMatch));
                   });
 
         } else {
             // User is not a X509 user or in whitelist
-            config.LOGGER_COMMON.info(" user " + user.getUsername() + " / " + email + ": Email Not found in whitelist");
+            config.LOGGER_COMMON.info(
+                LOGGING_USER_TEXT
+                + user.getUsername()
+                + " / "
+                + email
+                + ": Email Not found in whitelist");
             config.getNoEmailMatchAutoJoinGroup().forEach(user::joinGroup);
             user.setSingleAttribute("public-registrant", "true");
           }
@@ -238,20 +250,7 @@ public class RegistrationValidation extends RegistrationProfile {
         }
 
         // Username validation based on Mattermost requirements.
-        if (!Validation.isBlank(username)) {
-            if (!username.matches("[A-Za-z0-9-_.]+")) {
-                errors.add(new FormMessage(Validation.FIELD_USERNAME,
-                        "Username can only contain alphanumeric, underscore, hyphen and period characters."));
-            }
-
-            if (!Character.isLetter(username.charAt(0))) {
-                errors.add(new FormMessage(Validation.FIELD_USERNAME, "Username must begin with a letter."));
-            }
-
-            if (username.length() < MIN_USER_NAME_LENGTH || username.length() > MAX_USER_NAME_LENGTH) {
-                errors.add(new FormMessage(Validation.FIELD_USERNAME, "Username must be between 3 to 22 characters."));
-            }
-        }
+        mattermostUsernameValidation(errors, username);
 
         if (Validation.isBlank(formData.getFirst(RegistrationPage.FIELD_FIRST_NAME))) {
             errors.add(new FormMessage(RegistrationPage.FIELD_FIRST_NAME, Messages.MISSING_FIRST_NAME));
@@ -273,13 +272,11 @@ public class RegistrationValidation extends RegistrationProfile {
             errors.add(new FormMessage("user.attributes.organization", "Please specify your organization."));
         }
 
-        if (X509Tools.getX509Username(context) != null) {
-            if (X509Tools.isX509Registered(context)) {
-                // X509 auth, invite code not required
-                errors.add(new FormMessage(null, "Sorry, this CAC seems to already be registered."));
-                context.error(Errors.INVALID_REGISTRATION);
-                context.validationError(formData, errors);
-            }
+        if (X509Tools.getX509Username(context) != null && X509Tools.isX509Registered(context)) {
+            // X509 auth, invite code not required
+            errors.add(new FormMessage(null, "Sorry, this CAC seems to already be registered."));
+            context.error(Errors.INVALID_REGISTRATION);
+            context.validationError(formData, errors);
         }
 
         if (Validation.isBlank(email) || !Validation.isEmailValid(email)) {
@@ -290,9 +287,9 @@ public class RegistrationValidation extends RegistrationProfile {
 
         if (context.getSession().users().getUserByEmail(context.getRealm(), email) != null) {
             eventError = Errors.EMAIL_IN_USE;
-            formData.remove("email");
-            context.getEvent().detail("email", email);
-            errors.add(new FormMessage("email", Messages.EMAIL_EXISTS));
+            formData.remove(EMAIL);
+            context.getEvent().detail(EMAIL, email);
+            errors.add(new FormMessage(EMAIL, Messages.EMAIL_EXISTS));
         }
 
         if (errors.size() > 0) {
@@ -302,6 +299,23 @@ public class RegistrationValidation extends RegistrationProfile {
             context.success();
         }
 
+    }
+
+    private void mattermostUsernameValidation(final List<FormMessage> errors, final String username) {
+        if (!Validation.isBlank(username)) {
+            if (!username.matches("[A-Za-z0-9-_.]+")) {
+                errors.add(new FormMessage(Validation.FIELD_USERNAME,
+                        "Username can only contain alphanumeric, underscore, hyphen and period characters."));
+            }
+
+            if (!Character.isLetter(username.charAt(0))) {
+                errors.add(new FormMessage(Validation.FIELD_USERNAME, "Username must begin with a letter."));
+            }
+
+            if (username.length() < MIN_USER_NAME_LENGTH || username.length() > MAX_USER_NAME_LENGTH) {
+                errors.add(new FormMessage(Validation.FIELD_USERNAME, "Username must be between 3 to 22 characters."));
+            }
+        }
     }
 
 }

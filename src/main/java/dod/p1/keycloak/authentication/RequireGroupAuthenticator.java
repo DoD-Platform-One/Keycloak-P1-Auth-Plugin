@@ -59,29 +59,10 @@ public class RequireGroupAuthenticator implements Authenticator {
         // Check for a valid match
         if (matcher.find() && matcher.groupCount() == 1) {
             String groupId = matcher.group(1);
-
-            GroupModel group = null;
-
-            if (realm != null) {
-                group = realm.getGroupById(groupId);
-            }
-
-            // Must be an valid environment name
-            if (groupId == null || group == null) {
-                LOGGER.warn(logPrefix + " invalid group {}" + groupId);
-                context.failure(AuthenticationFlowError.CLIENT_DISABLED);
-            } else {
-                // Check if the user is a member of the specified group
-                if (isMemberOfGroup(realm, user, group, logPrefix)) {
-                    LOGGER.info(logPrefix + " matched authorized group");
-                    success(context, user);
-                } else {
-                    LOGGER.warn(logPrefix + " failed authorized group match");
-                    context.failure(AuthenticationFlowError.INVALID_CLIENT_SESSION);
-                }
-            }
+            checkIfUserIsAuthorized(context, realm, user, logPrefix, groupId);
         } else {
-            if (CommonConfig.getInstance(realm).getIgnoredGroupProtectionClients().contains(clientId)) {
+            if (CommonConfig.getInstance(realm).getIgnoredGroupProtectionClients().contains(clientId)
+                && user != null) {
                 LOGGER.info(logPrefix + " matched authorized ignored group protect client");
                 success(context, user);
             } else {
@@ -89,7 +70,35 @@ public class RequireGroupAuthenticator implements Authenticator {
                 context.failure(AuthenticationFlowError.CLIENT_DISABLED);
             }
         }
+    }
 
+    private void checkIfUserIsAuthorized(
+        final AuthenticationFlowContext context,
+        final RealmModel realm,
+        final UserModel user,
+        final String logPrefix,
+        final String groupId) {
+
+        GroupModel group = null;
+
+        if (realm != null) {
+            group = realm.getGroupById(groupId);
+        }
+
+        // Must be a valid environment name
+        if (groupId == null || group == null) {
+            LOGGER.warn(logPrefix + " invalid group {}" + groupId);
+            context.failure(AuthenticationFlowError.CLIENT_DISABLED);
+        } else {
+            // Check if the user is a member of the specified group
+            if (isMemberOfGroup(realm, user, group, logPrefix)) {
+                LOGGER.info(logPrefix + " matched authorized group");
+                success(context, user);
+            } else {
+                LOGGER.warn(logPrefix + " failed authorized group match");
+                context.failure(AuthenticationFlowError.INVALID_CLIENT_SESSION);
+            }
+        }
     }
 
     private void success(final AuthenticationFlowContext context, final UserModel user) {
@@ -123,6 +132,7 @@ public class RequireGroupAuthenticator implements Authenticator {
 
     @Override
     public void action(final AuthenticationFlowContext authenticationFlowContext) {
+        // no implementation needed here
     }
 
     /**
@@ -150,9 +160,12 @@ public class RequireGroupAuthenticator implements Authenticator {
         final KeycloakSession keycloakSession,
         final RealmModel realmModel,
         final UserModel userModel) {
+
+        // no implementation needed here
     }
 
     @Override
     public void close() {
+        // no implementation needed here
     }
 }

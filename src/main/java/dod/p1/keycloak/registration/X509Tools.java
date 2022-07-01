@@ -191,7 +191,7 @@ public final class X509Tools {
             } catch (Exception ignored) {
                 LOGGER.warn(logPrefix + " error parsing cert policies");
                 // abort checks
-                break;
+                index = MAX_CERT_POLICIES_TO_CHECK;
             }
         }
 
@@ -201,9 +201,9 @@ public final class X509Tools {
         }
 
         if (realm.getAuthenticatorConfigsStream().count() > 0) {
-            return realm.getAuthenticatorConfigsStream().filter(config -> {
-                return config.getConfig().containsKey(AbstractX509ClientCertificateAuthenticator.CUSTOM_ATTRIBUTE_NAME);
-            }).map(config -> {
+            return realm.getAuthenticatorConfigsStream().filter(config ->
+                config.getConfig().containsKey(AbstractX509ClientCertificateAuthenticator.CUSTOM_ATTRIBUTE_NAME)
+            ).map(config -> {
                 X509ClientCertificateAuthenticator authenticator = new X509ClientCertificateAuthenticator();
                 X509AuthenticatorConfigModel model = new X509AuthenticatorConfigModel(config);
                 return authenticator.getUserIdentityExtractor(model).extractUserIdentity(certs);
@@ -234,7 +234,7 @@ public final class X509Tools {
 
             return getX509IdentityFromCertChain(certs, realm, authenticationSession);
         } catch (GeneralSecurityException e) {
-            System.err.println(e.getMessage());
+            LOGGER.error(e.getMessage());
         }
         return null;
     }
