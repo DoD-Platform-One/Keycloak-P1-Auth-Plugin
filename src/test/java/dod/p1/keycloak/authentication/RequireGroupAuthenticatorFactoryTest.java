@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.junit.Before;
@@ -16,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.provider.ProviderConfigProperty;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
@@ -77,7 +79,6 @@ public class RequireGroupAuthenticatorFactoryTest {
         assertFalse(subjectUnderTest.isConfigurable());
         assertFalse(subjectUnderTest.isUserSetupAllowed());
         assertNull(subjectUnderTest.getHelpText());
-        assertNull(subjectUnderTest.getConfigProperties());
-
+        assertEquals( new <ProviderConfigProperty>ArrayList(),subjectUnderTest.getConfigProperties());
     }
 }

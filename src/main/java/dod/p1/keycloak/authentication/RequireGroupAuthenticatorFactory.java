@@ -1,5 +1,6 @@
 package dod.p1.keycloak.authentication;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.keycloak.Config;
@@ -45,17 +46,17 @@ public class RequireGroupAuthenticatorFactory implements AuthenticatorFactory {
 
     @Override
     public void init(final Config.Scope scope) {
-
+        // no implementation needed here
     }
 
     @Override
     public void postInit(final KeycloakSessionFactory keycloakSessionFactory) {
-
+        // no implementation needed here
     }
 
     @Override
     public void close() {
-
+        // no implementation needed here
     }
 
     /**
@@ -111,6 +112,7 @@ public class RequireGroupAuthenticatorFactory implements AuthenticatorFactory {
      */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
-        return null;
+        // no implementation needed here. Just return empty collection
+        return new ArrayList<>();
     }
 }

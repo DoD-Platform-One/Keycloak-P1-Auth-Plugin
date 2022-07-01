@@ -51,7 +51,7 @@ public class RegistrationX509Password extends RegistrationPassword {
      */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
-        return null;
+        return new ArrayList<>();
     }
 
     /**
@@ -143,7 +143,7 @@ public class RegistrationX509Password extends RegistrationPassword {
 
     @Override
     public void setRequiredActions(final KeycloakSession session, final RealmModel realm, final UserModel user) {
-
+        // no implementation needed
     }
 
     /**
@@ -156,6 +156,7 @@ public class RegistrationX509Password extends RegistrationPassword {
 
     @Override
     public void close() {
+        // no implementation needed
     }
 
     /**
@@ -200,12 +201,12 @@ public class RegistrationX509Password extends RegistrationPassword {
 
     @Override
     public void init(final Config.Scope config) {
-
+        // no implementation needed
     }
 
     @Override
     public void postInit(final KeycloakSessionFactory factory) {
-
+        // no implementation needed
     }
 
     /**

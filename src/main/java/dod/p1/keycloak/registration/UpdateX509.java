@@ -120,14 +120,17 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
 
     @Override
     public void init(final Config.Scope config) {
+        // no implementation needed
     }
 
     @Override
     public void postInit(final KeycloakSessionFactory factory) {
+        // no implementation needed
     }
 
     @Override
     public void close() {
+        // no implementation needed
     }
 
     /**

@@ -5,7 +5,7 @@ import static org.keycloak.models.utils.KeycloakModelUtils.findGroupByPath;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -61,7 +61,6 @@ public final class CommonConfig {
                 match.setDomains(new ArrayList<String>());
             } else {
                 match.setGroupModels(convertPathsToGroupModels(realm, match.getGroups()));
-                //LOGGER_COMMON.debug("Groups found associated with valid formatted domains: " + match.getGroups());
             }
         });
     }
@@ -82,25 +81,17 @@ public final class CommonConfig {
     private YAMLConfig loadConfigFile() {
         String configFilePath = FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG"));
         File file = new File(configFilePath);
-        FileInputStream fileInputStream = null;
         YAMLConfig yamlConfig;
 
-        try {
-            fileInputStream = new FileInputStream(file);
+        try (
+            FileInputStream fileInputStream = new FileInputStream(file)
+            ) {
             Yaml yaml = new Yaml(new Constructor(YAMLConfig.class));
             yamlConfig = yaml.load(fileInputStream);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             LOGGER_COMMON.fatal("Invalid or missing YAML Config, aborting.");
             exit(1);
             return null;
-        } finally {
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (Exception e) {
-                    System.out.println("File is closed. Cannot be read");
-                }
-            }
         }
 
         return yamlConfig;
