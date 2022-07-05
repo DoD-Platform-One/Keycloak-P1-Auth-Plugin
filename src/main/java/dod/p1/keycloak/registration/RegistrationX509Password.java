@@ -89,7 +89,7 @@ public class RegistrationX509Password extends RegistrationPassword {
             }
         }
 
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             context.error(Errors.INVALID_REGISTRATION);
             formData.remove(RegistrationPage.FIELD_PASSWORD);
             formData.remove(RegistrationPage.FIELD_PASSWORD_CONFIRM);

@@ -20,7 +20,6 @@ import org.keycloak.models.RealmModel;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
-import dod.p1.keycloak.authentication.RequireGroupAuthenticator;
 
 public final class CommonConfig {
 
@@ -43,7 +42,7 @@ public final class CommonConfig {
     /**
      * common logger.
      */
-    public static final Logger LOGGER_COMMON = LogManager.getLogger(RequireGroupAuthenticator.class);
+    public static final Logger LOGGER_COMMON = LogManager.getLogger(CommonConfig.class);
 
     private CommonConfig(final RealmModel realm) {
 
@@ -58,7 +57,7 @@ public final class CommonConfig {
             if (hasInvalidDomain) {
                 LOGGER_COMMON.warn(
                         "Invalid email domain config.  All email domain matches should begin with a \".\" or \"@\".");
-                match.setDomains(new ArrayList<String>());
+                match.setDomains(new ArrayList<>());
             } else {
                 match.setGroupModels(convertPathsToGroupModels(realm, match.getGroups()));
             }
@@ -113,7 +112,7 @@ public final class CommonConfig {
         return config
                 .getEmailMatchAutoJoinGroup()
                 .stream()
-                .filter(group -> group.getDomains().size() > 0);
+                .filter(group -> !group.getDomains().isEmpty());
     }
 
     /**

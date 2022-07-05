@@ -96,7 +96,7 @@ public class RegistrationValidation extends RegistrationProfile {
 
         if (x509Username != null) {
             // User is a X509 user - Has a CAC
-            config.LOGGER_COMMON.info(
+            CommonConfig.LOGGER_COMMON.info(
                 LOGGING_USER_TEXT
                 + user.getId()
                 + " / "
@@ -109,7 +109,7 @@ public class RegistrationValidation extends RegistrationProfile {
           if (domainMatchCount != 0) {
             // User is not a X509 user but is in the whitelist
 
-            config.LOGGER_COMMON.info(
+            CommonConfig.LOGGER_COMMON.info(
                 LOGGING_USER_TEXT
                 + user.getUsername()
                 + " / "
@@ -119,17 +119,17 @@ public class RegistrationValidation extends RegistrationProfile {
             config.getEmailMatchAutoJoinGroup()
                   .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
                   .forEach(match -> {
-                    config.LOGGER_COMMON.info(
+                    CommonConfig.LOGGER_COMMON.info(
                         "Adding user "
                         + user.getUsername()
                         + " to group(s): "
                         + match.getGroups());
-                    match.getGroupModels().forEach(groupMatch -> user.joinGroup(groupMatch));
+                    match.getGroupModels().forEach(user::joinGroup);
                   });
 
         } else {
             // User is not a X509 user or in whitelist
-            config.LOGGER_COMMON.info(
+            CommonConfig.LOGGER_COMMON.info(
                 LOGGING_USER_TEXT
                 + user.getUsername()
                 + " / "
@@ -292,7 +292,7 @@ public class RegistrationValidation extends RegistrationProfile {
             errors.add(new FormMessage(EMAIL, Messages.EMAIL_EXISTS));
         }
 
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             context.error(eventError);
             context.validationError(formData, errors);
         } else {

@@ -281,7 +281,6 @@ ul#kc-totp-supported-apps {
 }
 
 body {
-  background-size: cover !important;
   background: #010d17 url(../img/tech-bg.jpg) no-repeat center center fixed;
   color: #fff;
   height: 100vh;
