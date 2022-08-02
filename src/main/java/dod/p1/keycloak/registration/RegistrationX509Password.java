@@ -1,10 +1,5 @@
 package dod.p1.keycloak.registration;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.core.MultivaluedMap;
-
 import org.keycloak.Config;
 import org.keycloak.authentication.FormAction;
 import org.keycloak.authentication.FormContext;
@@ -14,17 +9,17 @@ import org.keycloak.authentication.forms.RegistrationPassword;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.forms.login.LoginFormsProvider;
-import org.keycloak.models.AuthenticationExecutionModel;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.KeycloakSessionFactory;
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserModel;
+import org.keycloak.models.*;
 import org.keycloak.models.credential.PasswordCredentialModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.policy.PasswordPolicyManagerProvider;
 import org.keycloak.policy.PolicyError;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.services.messages.Messages;
+
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RegistrationX509Password extends RegistrationPassword {
 
@@ -39,7 +34,7 @@ public class RegistrationX509Password extends RegistrationPassword {
             AuthenticationExecutionModel.Requirement.REQUIRED };
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public String getHelpText() {
@@ -47,7 +42,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
@@ -55,7 +50,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public void validate(final ValidationContext context) {
@@ -100,7 +95,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public void success(final FormContext context) {
@@ -116,7 +111,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public void buildPage(final FormContext context, final LoginFormsProvider form) {
@@ -126,7 +121,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public boolean requiresUser() {
@@ -134,33 +129,39 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public boolean configuredFor(final KeycloakSession session, final RealmModel realm, final UserModel user) {
         return true;
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void setRequiredActions(final KeycloakSession session, final RealmModel realm, final UserModel user) {
         // no implementation needed
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public boolean isUserSetupAllowed() {
         return false;
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void close() {
         // no implementation needed
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public String getDisplayType() {
@@ -168,7 +169,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public String getReferenceCategory() {
@@ -176,7 +177,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public boolean isConfigurable() {
@@ -184,7 +185,7 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
@@ -192,25 +193,31 @@ public class RegistrationX509Password extends RegistrationPassword {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public FormAction create(final KeycloakSession session) {
         return this;
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void init(final Config.Scope config) {
         // no implementation needed
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void postInit(final KeycloakSessionFactory factory) {
         // no implementation needed
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public String getId() {

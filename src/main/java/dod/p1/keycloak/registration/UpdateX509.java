@@ -1,17 +1,5 @@
 package dod.p1.keycloak.registration;
 
-import static dod.p1.keycloak.common.CommonConfig.getInstance;
-import static dod.p1.keycloak.registration.X509Tools.getX509IdentityFromCertChain;
-import static dod.p1.keycloak.registration.X509Tools.getX509Username;
-import static dod.p1.keycloak.registration.X509Tools.isX509Registered;
-import static org.keycloak.services.x509.DefaultClientCertificateLookup.JAVAX_SERVLET_REQUEST_X509_CERTIFICATE;
-
-import java.security.cert.X509Certificate;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
 import org.keycloak.Config;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.RequiredActionFactory;
@@ -21,6 +9,15 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
+
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import java.security.cert.X509Certificate;
+
+import static dod.p1.keycloak.common.CommonConfig.getInstance;
+import static dod.p1.keycloak.registration.X509Tools.*;
+import static org.keycloak.services.x509.DefaultClientCertificateLookup.JAVAX_SERVLET_REQUEST_X509_CERTIFICATE;
 
 public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory {
     /**
@@ -33,7 +30,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     private static final String IGNORE_X509 = "IGNORE_X509";
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public void evaluateTriggers(final RequiredActionContext context) {
@@ -58,7 +55,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public void requiredActionChallenge(final RequiredActionContext context) {
@@ -73,7 +70,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public void processAction(final RequiredActionContext context) {
@@ -95,7 +92,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public String getDisplayText() {
@@ -103,7 +100,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public boolean isOneTimeAction() {
@@ -111,30 +108,39 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public RequiredActionProvider create(final KeycloakSession session) {
         return this;
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void init(final Config.Scope config) {
         // no implementation needed
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void postInit(final KeycloakSessionFactory factory) {
         // no implementation needed
     }
 
+    /**
+     * Custom implementation.
+     */
     @Override
     public void close() {
         // no implementation needed
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Custom implementation.
      */
     @Override
     public String getId() {
