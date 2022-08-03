@@ -3,6 +3,14 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [2.0.6] - 2022-08-02
+### Updated
+- unit tests
+- documentation
+- lombok gradle plugin upgrade to 6.5.0.3
+### Added
+- x509.sh script
+
 ## [2.0.5] - 2022-07-05
 ### Updated
 - more Sonarqube remediation
