@@ -293,23 +293,11 @@ gradle lintGradle
 ```
 
 ## Run unit tests
-An IDE is best for runnnig unit tests to get code coverage. You can also run unit tests unit tests from command line on workstation. Temporarily modify build.gradle to output jacoco html report
-```
-jacocoTestReport {
-    reports {
-        html.enabled true
-        html.destination file("${buildDir}/jacoco/html/")
-        csv.enabled false
-        xml.enabled true
-        xml.destination file("${buildDir}/jacoco/test.xml")
-    }
-}
-```
-Locally run the tests and generate the htlm report
+An IDE is best for running unit tests to get code coverage. You can also run unit tests from command line on workstation.
+Locally run the tests and generate the html report.
 ```
 docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
-gradle clean
-gradle test
-gradle jacocoTestReport
+gradle clean test jacocoTestReport --info
 ```
+Then open build/jacoco/html/index.html in a browser.

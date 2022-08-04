@@ -118,21 +118,21 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testGetHelpText() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getHelpText();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testGetConfigProperties() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getConfigProperties();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testValidatePasswordEmpty() {
 
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
@@ -148,7 +148,7 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testValidate() {
 
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
@@ -172,7 +172,7 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testSuccess() {
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
         formData.add(RegistrationPage.FIELD_PASSWORD, "password");
@@ -187,7 +187,7 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testBuildPage() {
         // force to null
         PowerMockito.when(validationContext.getSession()).thenReturn(null);
@@ -197,91 +197,91 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testRequiresUser() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.requiresUser();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testconfiguredFor() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.configuredFor(keycloakSession, realmModel, userModel);
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testSetRequiredActions() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.setRequiredActions(keycloakSession, realmModel, userModel);
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testIsUserSetupAllowed() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.isUserSetupAllowed();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testClose() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.close();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testgetDisplayType() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getDisplayType();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testGetReferenceCategory() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getReferenceCategory();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testIsConfigurable() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.isConfigurable();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testGetRequirementChoices() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getRequirementChoices();
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testCreate() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.create(keycloakSession);
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testInit() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.init(scope);
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testPostInit() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.postInit(keycloakSession.getKeycloakSessionFactory());
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testGetId() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getId();
