@@ -82,7 +82,7 @@ class X509ToolsTest {
     }
 
     @Test
-    @PrepareForTest({ X509Tools.class, CommonConfig.class })
+    @PrepareForTest({ CommonConfig.class })
     public void testIsX509RegisteredFalse() {
 
         boolean isRegistered = isX509Registered(validationContext);
@@ -91,7 +91,7 @@ class X509ToolsTest {
     }
 
     @Test
-    @PrepareForTest({ X509Tools.class, CommonConfig.class })
+    @PrepareForTest({ CommonConfig.class })
     public void testIsX509RegisteredTrue() throws Exception {
 
         PowerMockito.when(keycloakSession.getProvider(X509ClientCertificateLookup.class)).thenReturn(x509ClientCertificateLookup);

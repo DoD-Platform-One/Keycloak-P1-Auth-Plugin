@@ -22,6 +22,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
@@ -106,7 +107,7 @@ class RegistrationValidation2Test {
     }
 
     @Test
-    @PrepareForTest({X509Tools.class, CommonConfig.class})
+    @PrepareForTest({ CommonConfig.class })
     public void testSuccess() {
 
         UserModelDefaultMethodsImpl userModelDefaultMethodsImpl = new UserModelDefaultMethodsImpl();
@@ -114,14 +115,31 @@ class RegistrationValidation2Test {
         PowerMockito.when(validationContext.getRealm()).thenReturn(realmModel);
 
         MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
-        formData.add(Validation.FIELD_EMAIL, "test.user@test.mil");
+        formData.add(Validation.FIELD_EMAIL, "test.user@test.bad");
 
         PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
-
 
         RegistrationValidation registrationValidation = new RegistrationValidation();
         registrationValidation.success(validationContext);
     }
 
+    @Test
+    @PrepareForTest({ CommonConfig.class })
+    public void testSuccessNoX509() throws GeneralSecurityException {
 
+        // force no cert
+        PowerMockito.when(x509ClientCertificateLookup.getCertificateChain(httpRequest)).thenReturn(null);
+
+        UserModelDefaultMethodsImpl userModelDefaultMethodsImpl = new UserModelDefaultMethodsImpl();
+        PowerMockito.when(validationContext.getUser()).thenReturn(userModelDefaultMethodsImpl);
+        PowerMockito.when(validationContext.getRealm()).thenReturn(realmModel);
+
+        MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
+        formData.add(Validation.FIELD_EMAIL, "test.user@test.bad");
+
+        PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
+
+        RegistrationValidation registrationValidation = new RegistrationValidation();
+        registrationValidation.success(validationContext);
+    }
 }
