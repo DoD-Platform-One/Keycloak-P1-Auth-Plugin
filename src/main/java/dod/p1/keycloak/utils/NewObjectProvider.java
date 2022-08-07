@@ -15,6 +15,10 @@ import java.io.FileNotFoundException;
  */
 public class NewObjectProvider {
 
+    private NewObjectProvider() {
+        // hide public constructor. No need to ever declare an instance. All methods are static.
+    }
+
     /**
      * Get new java.io.File object
      * @param filePath a String

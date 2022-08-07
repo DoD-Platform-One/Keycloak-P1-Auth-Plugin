@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.0.8 - 2022-08-07
 ### Updated
 - more unit tests
+- add private constructor to NewObjectProvider to satisfy sonar scan.
 
 ## [2.0.7 - 2022-08-04
 ### Updated
