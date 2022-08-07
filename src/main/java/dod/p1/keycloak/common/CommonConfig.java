@@ -1,7 +1,12 @@
 package dod.p1.keycloak.common;
 
-import static java.lang.System.exit;
-import static org.keycloak.models.utils.KeycloakModelUtils.findGroupByPath;
+import dod.p1.keycloak.utils.NewObjectProvider;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.keycloak.models.GroupModel;
+import org.keycloak.models.RealmModel;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,13 +17,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.keycloak.models.GroupModel;
-import org.keycloak.models.RealmModel;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
+import static java.lang.System.exit;
+import static org.keycloak.models.utils.KeycloakModelUtils.findGroupByPath;
 
 
 public final class CommonConfig {
@@ -79,13 +79,13 @@ public final class CommonConfig {
 
     private YAMLConfig loadConfigFile() {
         String configFilePath = FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG"));
-        File file = new File(configFilePath);
+        File file = NewObjectProvider.getFile(configFilePath);
         YAMLConfig yamlConfig;
 
         try (
-            FileInputStream fileInputStream = new FileInputStream(file)
+                FileInputStream fileInputStream = NewObjectProvider.getFileInputStream(file);
             ) {
-            Yaml yaml = new Yaml(new Constructor(YAMLConfig.class));
+            Yaml yaml = NewObjectProvider.getYaml();
             yamlConfig = yaml.load(fileInputStream);
         } catch (IOException e) {
             LOGGER_COMMON.fatal("Invalid or missing YAML Config, aborting.");

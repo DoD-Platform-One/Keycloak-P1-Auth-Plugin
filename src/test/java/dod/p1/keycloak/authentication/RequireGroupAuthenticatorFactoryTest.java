@@ -1,16 +1,8 @@
 package dod.p1.keycloak.authentication;
 
-import static dod.p1.keycloak.utils.Utils.setupFileMocks;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-
+import dod.p1.keycloak.common.CommonConfig;
+import dod.p1.keycloak.utils.NewObjectProvider;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,10 +14,17 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
 
-import dod.p1.keycloak.common.CommonConfig;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static dod.p1.keycloak.utils.Utils.setupFileMocks;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class })
+@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class })
 public class RequireGroupAuthenticatorFactoryTest {
 
     public static final String EXPECTED_ID = "p1-group-restriction";

@@ -2,6 +2,7 @@ package dod.p1.keycloak.utils;
 
 import dod.p1.keycloak.common.YAMLConfig;
 import dod.p1.keycloak.registration.X509Tools;
+import org.apache.commons.io.FilenameUtils;
 import org.keycloak.authentication.FormContext;
 import org.powermock.api.mockito.PowerMockito;
 import org.yaml.snakeyaml.Yaml;
@@ -16,6 +17,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class Utils {
@@ -72,6 +74,15 @@ public class Utils {
         PowerMockito.whenNew(Yaml.class).withAnyArguments().thenReturn(yamlMock);
 
         when(yamlMock.load(any(InputStream.class))).thenReturn(yamlConfig);
+
+        PowerMockito.mockStatic(FilenameUtils.class);
+        PowerMockito.when(FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG")))
+                .thenReturn("test/filepath/file");
+
+        PowerMockito.mockStatic(NewObjectProvider.class);
+        PowerMockito.when(NewObjectProvider.getFile(anyString())).thenReturn(fileMock);
+        PowerMockito.when(NewObjectProvider.getFileInputStream(any(File.class))).thenReturn(fileInputStreamMock);
+        PowerMockito.when(NewObjectProvider.getYaml()).thenReturn(yamlMock);
     }
 
     public static X509Certificate buildTestCertificate() throws Exception {

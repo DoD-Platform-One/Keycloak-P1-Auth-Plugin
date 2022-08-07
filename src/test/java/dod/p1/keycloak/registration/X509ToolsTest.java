@@ -1,7 +1,8 @@
 package dod.p1.keycloak.registration;
 
-import dod.p1.keycloak.common.CommonConfig;
+import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.Utils;
+import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 
 @RunWith(PowerMockRunner.class)
+@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class })
 class X509ToolsTest {
 
     @Mock
@@ -61,8 +63,6 @@ class X509ToolsTest {
     @Mock
     UserModel userModel;
 
-//    X509CertificateImpl x509Certificate = new X509CertificateImpl();
-
     public X509ToolsTest(){};
 
     @Before
@@ -82,7 +82,6 @@ class X509ToolsTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testIsX509RegisteredFalse() {
 
         boolean isRegistered = isX509Registered(validationContext);
@@ -91,7 +90,6 @@ class X509ToolsTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testIsX509RegisteredTrue() throws Exception {
 
         PowerMockito.when(keycloakSession.getProvider(X509ClientCertificateLookup.class)).thenReturn(x509ClientCertificateLookup);
