@@ -1,7 +1,8 @@
 package dod.p1.keycloak.registration;
 
-import dod.p1.keycloak.common.CommonConfig;
+import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.Utils;
+import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.junit.Before;
@@ -34,6 +35,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 
 @RunWith(PowerMockRunner.class)
+@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class })
 class UpdateX509Test {
 
     @Mock
@@ -111,7 +113,6 @@ class UpdateX509Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testEvaluateTriggers() throws Exception {
         PowerMockito.when(requiredActionContext.getAuthenticationSession()).thenReturn(authenticationSessionModel);
         PowerMockito.when(requiredActionContext.getAuthenticationSession().getAuthNote("IGNORE_X509")).thenReturn("authNote");
@@ -130,7 +131,6 @@ class UpdateX509Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testRequiredActionChallenge() throws Exception {
         PowerMockito.when(requiredActionContext.form()).thenReturn(loginFormsProvider);
 
@@ -139,7 +139,6 @@ class UpdateX509Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testProcessActionCancel() throws Exception {
         MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
         formData.add("cancel", "");
@@ -152,7 +151,6 @@ class UpdateX509Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testProcessAction() throws Exception {
         MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
 
@@ -165,42 +163,36 @@ class UpdateX509Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetDisplayText() {
         UpdateX509 updateX509 = new UpdateX509();
         updateX509.getDisplayText();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testIsOneTimeAction() {
         UpdateX509 updateX509 = new UpdateX509();
         updateX509.isOneTimeAction();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testCreate() {
         UpdateX509 updateX509 = new UpdateX509();
         updateX509.create(keycloakSession);
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testPostInit() {
         UpdateX509 updateX509 = new UpdateX509();
         updateX509.postInit(keycloakSession.getKeycloakSessionFactory());
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testClose() {
         UpdateX509 updateX509 = new UpdateX509();
         updateX509.close();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetId() {
         UpdateX509 updateX509 = new UpdateX509();
         updateX509.getId();

@@ -1,7 +1,8 @@
 package dod.p1.keycloak.registration;
 
-import dod.p1.keycloak.common.CommonConfig;
+import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.Utils;
+import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.junit.Before;
@@ -37,6 +38,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 
 @RunWith(PowerMockRunner.class)
+@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class })
 class RegistrationX509PasswordTest {
 
     @Mock
@@ -118,21 +120,18 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetHelpText() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getHelpText();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetConfigProperties() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getConfigProperties();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testValidatePasswordEmpty() {
 
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
@@ -148,7 +147,6 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testValidate() {
 
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
@@ -172,7 +170,6 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testSuccess() {
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
         formData.add(RegistrationPage.FIELD_PASSWORD, "password");
@@ -187,7 +184,6 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testBuildPage() {
         // force to null
         PowerMockito.when(validationContext.getSession()).thenReturn(null);
@@ -197,91 +193,78 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testRequiresUser() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.requiresUser();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testconfiguredFor() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.configuredFor(keycloakSession, realmModel, userModel);
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testSetRequiredActions() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.setRequiredActions(keycloakSession, realmModel, userModel);
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testIsUserSetupAllowed() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.isUserSetupAllowed();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testClose() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.close();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testgetDisplayType() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getDisplayType();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetReferenceCategory() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getReferenceCategory();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testIsConfigurable() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.isConfigurable();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetRequirementChoices() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getRequirementChoices();
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testCreate() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.create(keycloakSession);
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testInit() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.init(scope);
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testPostInit() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.postInit(keycloakSession.getKeycloakSessionFactory());
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testGetId() {
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.getId();

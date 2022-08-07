@@ -1,28 +1,8 @@
 package dod.p1.keycloak.registration;
 
-import static dod.p1.keycloak.utils.Utils.setupFileMocks;
-import static dod.p1.keycloak.utils.Utils.setupX509Mocks;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.function.Function;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
-
+import dod.p1.keycloak.common.CommonConfig;
+import dod.p1.keycloak.utils.NewObjectProvider;
+import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.ResteasyAsynchronousContext;
@@ -39,26 +19,7 @@ import org.keycloak.component.ComponentModel;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.forms.login.LoginFormsProvider;
-import org.keycloak.models.AuthenticationExecutionModel;
-import org.keycloak.models.AuthenticatorConfigModel;
-import org.keycloak.models.ClientProvider;
-import org.keycloak.models.ClientScopeProvider;
-import org.keycloak.models.GroupProvider;
-import org.keycloak.models.KeyManager;
-import org.keycloak.models.KeycloakContext;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.KeycloakSessionFactory;
-import org.keycloak.models.KeycloakTransactionManager;
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.RealmProvider;
-import org.keycloak.models.RoleProvider;
-import org.keycloak.models.ThemeManager;
-import org.keycloak.models.TokenManager;
-import org.keycloak.models.UserCredentialManager;
-import org.keycloak.models.UserLoginFailureProvider;
-import org.keycloak.models.UserModel;
-import org.keycloak.models.UserProvider;
-import org.keycloak.models.UserSessionProvider;
+import org.keycloak.models.*;
 import org.keycloak.models.cache.UserCache;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.provider.Provider;
@@ -72,10 +33,27 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
 
-import dod.p1.keycloak.common.CommonConfig;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static dod.p1.keycloak.utils.Utils.setupFileMocks;
+import static dod.p1.keycloak.utils.Utils.setupX509Mocks;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, X509Tools.class })
+@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, X509Tools.class, FilenameUtils.class, NewObjectProvider.class })
 public class RegistrationValidationTest {
 
     @Before

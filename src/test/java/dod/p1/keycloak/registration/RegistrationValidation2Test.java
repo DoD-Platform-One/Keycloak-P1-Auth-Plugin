@@ -1,8 +1,10 @@
 package dod.p1.keycloak.registration;
 
 import dod.p1.keycloak.common.CommonConfig;
+import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.UserModelDefaultMethodsImpl;
 import dod.p1.keycloak.utils.Utils;
+import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.junit.Before;
@@ -21,7 +23,10 @@ import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -34,6 +39,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 
 @RunWith(PowerMockRunner.class)
+@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class})
 class RegistrationValidation2Test {
 
     @Mock
@@ -107,7 +113,6 @@ class RegistrationValidation2Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testSuccess() {
 
         UserModelDefaultMethodsImpl userModelDefaultMethodsImpl = new UserModelDefaultMethodsImpl();
@@ -124,7 +129,6 @@ class RegistrationValidation2Test {
     }
 
     @Test
-    @PrepareForTest({ CommonConfig.class })
     public void testSuccessNoX509() throws GeneralSecurityException {
 
         // force no cert
