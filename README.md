@@ -14,7 +14,7 @@ This documentation is intended to outline the manual steps so that it can be aut
 ## Build
 First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. The java archive(jar) will be created at /build/libs/platform-one-sso-x.x.x.jar. The plugin uses semantic versioning controlled by the "version" in the build.gradle configuration.
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.5.0 bash
 cd /app
 gradle clean --build-cache assemble
 ```
@@ -22,16 +22,16 @@ gradle clean --build-cache assemble
 ## Build a plugin image
 Build an image that contains the jar and the x509.sh script. Change the image tag to match the location where you will host the image. And update the version if it does not match the version being built. Example:
 ```
-docker build -t registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.8 .
+docker build -t registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.9 .
 ```
 Verify the contents of the plugin image. It should contain the jar and the x509 script.
 ```
-docker run -it --rm registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.8 /bin/bash
+docker run -it --rm registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.9 /bin/bash
 ls -l
 ```
 Push the plugin image to your image registry. Example:
 ```
-docker push registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.8
+docker push registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.9
 ```
 ## Deploy plugin with k8s init-container
 The following config is an example Big Bang vaules file to delpoy Keycloak with the plugin. Take note of the following details:
@@ -128,7 +128,7 @@ addons:
       #   enabled: false
       image:
         repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
-        tag: 18.0.2-legacy
+        tag: 19.0.1-legacy
       secrets:
         env:
           stringData:
@@ -146,13 +146,13 @@ addons:
             realm.json: '{{ .Files.Get "resources/dev/baby-yoda.json" }}'
       extraInitContainers: |-
         - name: plugin
-          image: registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.8
+          image: registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.9
           imagePullPolicy: Always
           command:
           - sh
           - -c
           - | 
-            cp /app/platform-one-sso-2.0.8.jar /init
+            cp /app/platform-one-sso-2.0.9.jar /init
             cp /app/x509.sh /init
             ls -l /init
           volumeMounts:
@@ -184,8 +184,8 @@ addons:
           subPath: realm.json
           readOnly: true
         - name: plugin
-          mountPath: /opt/jboss/keycloak/standalone/deployments/platform-one-sso-2.0.8.jar
-          subPath: platform-one-sso-2.0.8.jar
+          mountPath: /opt/jboss/keycloak/standalone/deployments/platform-one-sso-2.0.9.jar
+          subPath: platform-one-sso-2.0.9.jar
         - name: plugin
           mountPath: /opt/jboss/tools/x509.sh
           subPath: x509.sh
@@ -287,7 +287,7 @@ addons:
 ## Run linting
 To run code linting locally on workstation
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.5.0 bash
 cd /app
 gradle lintGradle
 ```
@@ -296,7 +296,7 @@ gradle lintGradle
 An IDE is best for running unit tests to get code coverage. You can also run unit tests from command line on workstation.
 Locally run the tests and generate the html report.
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.5.0 bash
 cd /app
 gradle clean test jacocoTestReport --info
 ```

@@ -4,9 +4,9 @@ import dod.p1.keycloak.common.CommonConfig;
 import dod.p1.keycloak.utils.NewObjectProvider;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
+import org.jboss.resteasy.specimpl.ResteasyUriInfo;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.ResteasyAsynchronousContext;
-import org.jboss.resteasy.spi.ResteasyUriInfo;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,8 +20,8 @@ import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.*;
-import org.keycloak.models.cache.UserCache;
 import org.keycloak.models.utils.FormMessage;
+import org.keycloak.provider.InvalidationHandler;
 import org.keycloak.provider.Provider;
 import org.keycloak.services.clientpolicy.ClientPolicyManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
@@ -236,7 +236,7 @@ public class RegistrationValidationTest {
                     }
 
                     @Override
-                    public void invalidate(InvalidableObjectType type, Object... ids) {
+                    public void invalidate(InvalidationHandler.InvalidableObjectType type, Object... params) {
 
                     }
 
@@ -276,7 +276,7 @@ public class RegistrationValidationTest {
                     }
 
                     @Override
-                    public UserCache userCache() {
+                    public UserProvider userCache() {
                         return null;
                     }
 
@@ -430,6 +430,11 @@ public class RegistrationValidationTest {
                     }
 
                     @Override
+                    public boolean formParametersRead() {
+                        return false;
+                    }
+
+                    @Override
                     public Object getAttribute(String s) {
                         return null;
                     }
@@ -467,6 +472,16 @@ public class RegistrationValidationTest {
                     @Override
                     public boolean wasForwarded() {
                         return false;
+                    }
+
+                    @Override
+                    public String getRemoteAddress() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getRemoteHost() {
+                        return null;
                     }
                 };
             }
