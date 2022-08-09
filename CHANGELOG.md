@@ -3,6 +3,11 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [2.0.9 - 2022-08-09
+### Updated
+- Upgrade Keycloak to version 19.0.1
+- Upgrade Gradle version to 7.5 required to support Keycloak 19
+ 
 ## [2.0.8 - 2022-08-07
 ### Updated
 - more unit tests

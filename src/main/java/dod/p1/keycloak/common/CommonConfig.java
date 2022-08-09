@@ -2,8 +2,9 @@ package dod.p1.keycloak.common;
 
 import dod.p1.keycloak.utils.NewObjectProvider;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.RealmModel;
 import org.yaml.snakeyaml.Yaml;

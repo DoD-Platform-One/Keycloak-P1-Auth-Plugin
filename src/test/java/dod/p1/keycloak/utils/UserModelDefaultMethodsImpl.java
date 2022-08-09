@@ -1,9 +1,6 @@
 package dod.p1.keycloak.utils;
 
-import org.keycloak.models.ClientModel;
-import org.keycloak.models.GroupModel;
-import org.keycloak.models.RoleModel;
-import org.keycloak.models.UserModelDefaultMethods;
+import org.keycloak.models.*;
 
 import java.util.List;
 import java.util.Map;
@@ -146,6 +143,11 @@ public class UserModelDefaultMethodsImpl extends UserModelDefaultMethods {
     @Override
     public void setServiceAccountClientLink(String clientInternalId) {
 
+    }
+
+    @Override
+    public SubjectCredentialManager credentialManager() {
+        return null;
     }
 
     @Override

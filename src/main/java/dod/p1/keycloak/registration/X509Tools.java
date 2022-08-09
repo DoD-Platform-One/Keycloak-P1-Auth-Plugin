@@ -1,15 +1,8 @@
 package dod.p1.keycloak.registration;
 
-import static dod.p1.keycloak.common.CommonConfig.getInstance;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
-import java.util.stream.Stream;
-
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import dod.p1.keycloak.common.CommonConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEROctetString;
@@ -27,7 +20,13 @@ import org.keycloak.models.UserModel;
 import org.keycloak.services.x509.X509ClientCertificateLookup;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
-import dod.p1.keycloak.common.CommonConfig;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
+import java.util.stream.Stream;
+
+import static dod.p1.keycloak.common.CommonConfig.getInstance;
 
 public final class X509Tools {
 
