@@ -9,8 +9,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 /**
- * The sole purpose of this class is to allow for unit test coverage
- * The Jaccoco test coverage report is not fully compatible with the PowerMock testing framework
+ * The sole purpose of this class is to allow for unit test coverage.
+ * The Jaccoco test coverage report is not fully compatible with the PowerMock testing framework.
  * This class is used in @PrepareForTest so that the Jaccoco report detects test coverage for CommonConfig class.
  */
 public final class NewObjectProvider {
