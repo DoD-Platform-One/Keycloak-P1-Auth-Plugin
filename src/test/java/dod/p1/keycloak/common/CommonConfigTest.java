@@ -79,25 +79,11 @@ public class CommonConfigTest {
     }
 
     @Test
-    public void testCommonConfig() throws Exception {
+    public void testCommonConfig() {
 
         PowerMockito.mockStatic(FilenameUtils.class);
         PowerMockito.when(FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG")))
             .thenReturn("test/filepath/file");
-
-//        final File fileMock = PowerMockito.mock(File.class);
-
-//        PowerMockito.whenNew(File.class).withArguments("test/filepath/file").thenReturn(fileMock);
-//        PowerMockito.whenNew(File.class).withArguments(Mockito.anyString()).thenReturn(fileMock);
-//        PowerMockito.whenNew(File.class).withAnyArguments().thenReturn(fileMock);
-//        PowerMockito.verifyNew(File.class).withNoArguments();
-//        PowerMockito.when(new File("test/filepath/file")).thenReturn(fileMock);
-
-//        String configFilePath = FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG"));
-//        File file = new File(configFilePath);
-
-//        System.out.println(file.getPath());
-
 
         CommonConfig commonConfigInstance = CommonConfig.getInstance(realmModel);
     }

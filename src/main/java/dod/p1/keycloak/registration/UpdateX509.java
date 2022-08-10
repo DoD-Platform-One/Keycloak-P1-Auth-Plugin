@@ -16,9 +16,10 @@ import javax.ws.rs.core.Response;
 import java.security.cert.X509Certificate;
 
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
-import static dod.p1.keycloak.registration.X509Tools.getX509IdentityFromCertChain;
-import static dod.p1.keycloak.registration.X509Tools.getX509Username;
 import static dod.p1.keycloak.registration.X509Tools.isX509Registered;
+import static dod.p1.keycloak.registration.X509Tools.getX509Username;
+import static dod.p1.keycloak.registration.X509Tools.getX509IdentityFromCertChain;
+
 import static org.keycloak.services.x509.DefaultClientCertificateLookup.JAVAX_SERVLET_REQUEST_X509_CERTIFICATE;
 
 public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory {

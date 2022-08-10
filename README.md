@@ -14,7 +14,7 @@ This documentation is intended to outline the manual steps so that it can be aut
 ## Build
 First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. The java archive(jar) will be created at /build/libs/platform-one-sso-x.x.x.jar. The plugin uses semantic versioning controlled by the "version" in the build.gradle configuration.
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.5.0 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
 gradle clean --build-cache assemble
 ```
@@ -287,7 +287,7 @@ addons:
 ## Run linting
 To run code linting locally on workstation
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.5.0 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
 gradle lintGradle
 ```
@@ -296,7 +296,7 @@ gradle lintGradle
 An IDE is best for running unit tests to get code coverage. You can also run unit tests from command line on workstation.
 Locally run the tests and generate the html report.
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.5.0 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
 gradle clean test jacocoTestReport --info
 ```
