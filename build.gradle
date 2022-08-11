@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'mil.dso.keycloak-p1-auth-plugin'
-version = '2.0.9'
+version = '2.0.10'
 sourceCompatibility = '11'
 
 java {

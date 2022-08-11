@@ -97,44 +97,29 @@ public class RegistrationValidation extends RegistrationProfile {
         if (x509Username != null) {
             // User is a X509 user - Has a CAC
             CommonConfig.LOGGER_COMMON.info(
-                LOGGING_USER_TEXT
-                + user.getId()
-                + " / "
-                + user.getUsername()
-                + " found with X509: "
-                + x509Username);
-
+        "{} {} / {} found with X509: {}",
+                LOGGING_USER_TEXT, user.getId(), user.getUsername(), x509Username);
             config.getAutoJoinGroupX509().forEach(user::joinGroup);
         } else {
           if (domainMatchCount != 0) {
             // User is not a X509 user but is in the whitelist
-
             CommonConfig.LOGGER_COMMON.info(
-                LOGGING_USER_TEXT
-                + user.getUsername()
-                + " / "
-                + email
-                + ": Email found in whitelist");
-
+        "{} {} / {}: Email found in whitelist",
+                LOGGING_USER_TEXT, user.getUsername(), email);
             config.getEmailMatchAutoJoinGroup()
                   .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
                   .forEach(match -> {
                     CommonConfig.LOGGER_COMMON.info(
-                        "Adding user "
-                        + user.getUsername()
-                        + " to group(s): "
-                        + match.getGroups());
+                "Adding user {} to group(s): {}",
+                        user.getUsername(), match.getGroups());
                     match.getGroupModels().forEach(user::joinGroup);
                   });
 
         } else {
             // User is not a X509 user or in whitelist
             CommonConfig.LOGGER_COMMON.info(
-                LOGGING_USER_TEXT
-                + user.getUsername()
-                + " / "
-                + email
-                + ": Email Not found in whitelist");
+        "{} {} / {}: Email Not found in whitelist",
+                LOGGING_USER_TEXT, user.getUsername(), email);
             config.getNoEmailMatchAutoJoinGroup().forEach(user::joinGroup);
             user.setSingleAttribute("public-registrant", "true");
           }
