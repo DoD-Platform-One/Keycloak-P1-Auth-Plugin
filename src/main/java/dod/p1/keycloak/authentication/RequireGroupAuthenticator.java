@@ -43,11 +43,12 @@ public class RequireGroupAuthenticator implements Authenticator {
         String logPrefix = "P1_GROUP_PROTECTION_AUTHENTICATE_" + authenticationSession.getParentSession().getId();
 
         if (user != null) {
-            LOGGER.info(logPrefix + " user " + user.getId() + " / " + user.getUsername());
+            LOGGER.info("{} user {} / {}", logPrefix, user.getId(), user.getUsername());
         } else {
-            LOGGER.warn(logPrefix + " invalid user");
+            LOGGER.warn("{} invalid user", logPrefix);
+
         }
-        LOGGER.info(logPrefix + " client " + clientId + " / " + client.getName());
+        LOGGER.info("{} client {} / {}", logPrefix, clientId, client.getName());
 
         // Match the pattern "test_b4e4ae70-5b78-47ff-ad5c-7ebf3c10e452_app"
         // where "test" is the short name and "b4e4ae70-5b78-47ff-ad5c-7ebf3c10e452" is the group id
@@ -63,10 +64,10 @@ public class RequireGroupAuthenticator implements Authenticator {
         } else {
             if (CommonConfig.getInstance(realm).getIgnoredGroupProtectionClients().contains(clientId)
                 && user != null) {
-                LOGGER.info(logPrefix + " matched authorized ignored group protect client");
+                LOGGER.info("{} matched authorized ignored group protect client", logPrefix);
                 success(context, user);
             } else {
-                LOGGER.warn(logPrefix + " failed ignored group protect client test");
+                LOGGER.warn("{} failed ignored group protect client test", logPrefix);
                 context.failure(AuthenticationFlowError.CLIENT_DISABLED);
             }
         }
@@ -87,15 +88,15 @@ public class RequireGroupAuthenticator implements Authenticator {
 
         // Must be a valid environment name
         if (groupId == null || group == null) {
-            LOGGER.warn(logPrefix + " invalid group {}" + groupId);
+            LOGGER.warn("{} invalid group {}", logPrefix, groupId);
             context.failure(AuthenticationFlowError.CLIENT_DISABLED);
         } else {
             // Check if the user is a member of the specified group
             if (isMemberOfGroup(realm, user, group, logPrefix)) {
-                LOGGER.info(logPrefix + " matched authorized group");
+                LOGGER.info("{} matched authorized group", logPrefix);
                 success(context, user);
             } else {
-                LOGGER.warn(logPrefix + " failed authorized group match");
+                LOGGER.warn("{} failed authorized group match", logPrefix);
                 context.failure(AuthenticationFlowError.INVALID_CLIENT_SESSION);
             }
         }
@@ -117,7 +118,7 @@ public class RequireGroupAuthenticator implements Authenticator {
 
         // No one likes null pointers
         if (realm == null || user == null || group == null) {
-            LOGGER.warn(logPrefix + " realm, group or user null");
+            LOGGER.warn("{} realm, group or user null", logPrefix);
             return false;
         }
 
@@ -125,7 +126,7 @@ public class RequireGroupAuthenticator implements Authenticator {
                 .map(GroupModel::getId)
                 .collect(Collectors.joining(","));
 
-        LOGGER.info(logPrefix + " user groups {} " + groupList);
+        LOGGER.info("{} user groups {}", logPrefix, groupList);
 
         return user.isMemberOf(group);
     }
