@@ -184,7 +184,7 @@ public final class X509Tools {
                 if (certificatePolicyId == null) {
                     break;
                 }
-                LOGGER.info(logPrefix + "{} checking cert policy {}", logPrefix, certificatePolicyId);
+                LOGGER.info("{} checking cert policy {}", logPrefix, certificatePolicyId);
                 hasValidPolicy = getInstance(realm).getRequiredCertificatePolicies()
                         .anyMatch(s -> s.equals(certificatePolicyId));
                 index++;
