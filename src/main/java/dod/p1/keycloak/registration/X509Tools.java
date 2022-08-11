@@ -57,7 +57,8 @@ public final class X509Tools {
 
         String logPrefix = getLogPrefix(session.getContext().getAuthenticationSession(), "IS_X509_REGISTERED");
         String username = getX509Username(session, httpRequest, realm);
-        LOGGER.info(logPrefix + " X509 ID: " + username);
+        LOGGER.info("{} X509 ID: {}", logPrefix, username);
+
         if (username != null) {
             Stream<UserModel> users = session.users().searchForUserByUserAttributeStream(realm,
                     CommonConfig.getInstance(realm).getUserIdentityAttribute(), username);
@@ -169,7 +170,7 @@ public final class X509Tools {
         String logPrefix = getLogPrefix(authenticationSession, "GET_X509_IDENTITY_FROM_CHAIN");
 
         if (certs == null || certs.length == 0) {
-            LOGGER.info(logPrefix + " no valid certs found");
+            LOGGER.info("{} no valid certs found", logPrefix);
             return null;
         }
 
@@ -183,19 +184,19 @@ public final class X509Tools {
                 if (certificatePolicyId == null) {
                     break;
                 }
-                LOGGER.info(logPrefix + " checking cert policy " + certificatePolicyId);
+                LOGGER.info(logPrefix + "{} checking cert policy {}", logPrefix, certificatePolicyId);
                 hasValidPolicy = getInstance(realm).getRequiredCertificatePolicies()
                         .anyMatch(s -> s.equals(certificatePolicyId));
                 index++;
             } catch (Exception ignored) {
-                LOGGER.warn(logPrefix + " error parsing cert policies");
+                LOGGER.warn("{} error parsing cert policies", logPrefix);
                 // abort checks
                 index = MAX_CERT_POLICIES_TO_CHECK;
             }
         }
 
         if (!hasValidPolicy) {
-            LOGGER.warn(logPrefix + " no valid cert policies found");
+            LOGGER.warn("{} no valid cert policies found", logPrefix);
             return null;
         }
 
