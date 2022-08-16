@@ -3,7 +3,7 @@ The Keycloak plugin is packaged in a plugin image. It will eventually be hosted 
 1. Be aware that there are currently two versions of Keycloak. One is the legacy version that uses Wildfly for the application server. The other version is the new one using Quarkus. Big Bang for now will remain with the legacy version. The images in Iron Bank have tag with ```X.X.X-legacy```.
 1. Create a development branch and merge request. Can do this in the Gitlab UI from an issue.
 1. Update /CHANGELOG.md with an entry for "upgrade Keycloak plugin to app version x.x.x. Or, whatever description is appropriate.
-1. Update the keycloak library dependencies in the build.gradle file to match the new version of Keycloak. This library update might cause build errors. You might have to fix code in `src/main/**.java` and `src/test/**.java` to get a build to complete without errors.
+1. Update the keycloak library dependencies in the build.gradle file to match the new version of Keycloak. This Keycloak library update might cause build errors. You might have to fix code in `src/main/**.java` and `src/test/**.java` to get the build and unit tests to complete without errors.
 1. Update any of the other gradle plugins as necessary. 
 1. Follow instructions in the top-level README.md for how to build and deploy.
 

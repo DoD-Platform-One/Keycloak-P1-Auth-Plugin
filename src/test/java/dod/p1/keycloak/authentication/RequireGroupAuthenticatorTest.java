@@ -14,6 +14,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class})
+@PowerMockIgnore("javax.management.*")
 public class RequireGroupAuthenticatorTest {
 
     private RequireGroupAuthenticator subject;

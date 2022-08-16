@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.keycloak.models.RealmModel;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
@@ -23,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Yaml.class, File.class, FileInputStream.class, FilenameUtils.class, NewObjectProvider.class })
+@PowerMockIgnore("javax.management.*")
 public class CommonConfigTest {
 
     @Mock

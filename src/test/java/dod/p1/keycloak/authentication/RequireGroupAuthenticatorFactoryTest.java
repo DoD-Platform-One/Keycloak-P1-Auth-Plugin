@@ -10,6 +10,7 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.provider.ProviderConfigProperty;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class })
+@PowerMockIgnore("javax.management.*")
 public class RequireGroupAuthenticatorFactoryTest {
 
     public static final String EXPECTED_ID = "p1-group-restriction";
