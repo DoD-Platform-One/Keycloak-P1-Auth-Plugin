@@ -16,7 +16,7 @@ First build this plugin project to create a jar file. This is a Java Gradle proj
 ```
 docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
-gradle clean --build-cache assemble
+./gradlew clean --build-cache assemble
 ```
 
 ## Build a plugin image
@@ -289,7 +289,7 @@ To run code linting locally on workstation
 ```
 docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
-gradle lintGradle
+./gradlew lintGradle
 ```
 
 ## Run unit tests
@@ -298,6 +298,6 @@ Locally run the tests and generate the html report.
 ```
 docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
-gradle clean test jacocoTestReport --info
+./gradlew clean test jacocoTestReport --info
 ```
 Then open build/jacoco/html/index.html in a browser.
