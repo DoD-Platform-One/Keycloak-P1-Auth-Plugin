@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'mil.dso.keycloak-p1-auth-plugin'
-version = '2.0.11'
+version = '2.1.0'
 sourceCompatibility = '11'
 
 java {
@@ -45,6 +45,7 @@ dependencies {
     compileOnly 'org.keycloak:keycloak-server-spi-private:19.0.1'
 
     implementation 'org.apache.logging.log4j:log4j-api:2.18.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.18.0'
 }
 
 jar {
