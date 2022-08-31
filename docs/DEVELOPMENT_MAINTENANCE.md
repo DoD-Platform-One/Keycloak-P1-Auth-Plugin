@@ -151,13 +151,13 @@ The Keycloak plugin is packaged in a plugin image. It will eventually be hosted 
                 realm.json: '{{ .Files.Get "resources/dev/baby-yoda.json" }}'
         extraInitContainers: |-
             - name: plugin
-            image: registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.0.10
+            image: registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:2.1.0
             imagePullPolicy: Always
             command:
             - sh
             - -c
             - | 
-                cp /app/platform-one-sso-2.0.10.jar /init
+                cp /app/platform-one-sso-2.1.0.jar /init
                 cp /app/x509.sh /init
                 ls -l /init
             volumeMounts:
@@ -189,8 +189,8 @@ The Keycloak plugin is packaged in a plugin image. It will eventually be hosted 
             subPath: realm.json
             readOnly: true
             - name: plugin
-            mountPath: /opt/jboss/keycloak/standalone/deployments/platform-one-sso-2.0.10.jar
-            subPath: platform-one-sso-2.0.10.jar
+            mountPath: /opt/jboss/keycloak/standalone/deployments/platform-one-sso-2.1.0.jar
+            subPath: platform-one-sso-2.1.0.jar
             - name: plugin
             mountPath: /opt/jboss/tools/x509.sh
             subPath: x509.sh
