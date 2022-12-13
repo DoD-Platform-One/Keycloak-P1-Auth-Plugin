@@ -1,0 +1,1 @@
+project(':runtime').projectDir = file('quarkus-ext-routing/runtime')

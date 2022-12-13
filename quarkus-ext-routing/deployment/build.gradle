@@ -1,0 +1,49 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+}
+
+group "${rootProjectgroupId}"
+version "${rootProjectVersion}"
+
+repositories {
+    mavenLocal {
+        content {
+            includeGroupByRegex 'io.quarkus.*'
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation project(':runtime')
+
+    implementation 'io.quarkus:quarkus-arc-deployment:2.12.3.Final'
+    implementation 'io.quarkus:quarkus-vertx-http-deployment:2.12.3.Final'
+
+    testImplementation 'org.springframework:spring-context:3.0.1.RELEASE'
+    testImplementation 'io.quarkus:quarkus-reactive-routes:2.12.3.Final'
+    testImplementation 'io.quarkus:quarkus-junit5-internal'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}
+
+jacoco {
+    toolVersion = "0.8.8"
+    reportsDirectory = file("${buildDir}/jacoco")
+}
+
+jacocoTestReport {
+    reports {
+        html.enabled true
+        html.destination file("${buildDir}/jacoco/html/")
+        csv.enabled false
+        xml.enabled true
+        xml.destination file("${buildDir}/jacoco/test.xml")
+    }
+}
