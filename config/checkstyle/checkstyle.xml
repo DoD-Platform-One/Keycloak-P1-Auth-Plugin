@@ -91,6 +91,8 @@
 
   <module name="TreeWalker">
 
+    <module name="SuppressionCommentFilter"/>
+
     <!-- Checks for Javadoc comments.                     -->
     <!-- See https://checkstyle.org/config_javadoc.html -->
     <module name="InvalidJavadocPosition"/>
@@ -188,7 +190,7 @@
     </module>
 
   </module>
-  
+
   <module name="SuppressionFilter">
     <property name="file" value="${config_loc}/suppressions.xml" />
     <property name="optional" value="false"/>

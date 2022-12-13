@@ -6,6 +6,8 @@
 # build
 .gradle
 build
+**/bin
+target
 
 # scan
 .scannerwork

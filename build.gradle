@@ -1,75 +1,119 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+    id 'groovy-gradle-plugin'
     id 'jacoco'
-    // https://plugins.gradle.org/plugin/io.freefair.lombok
-    id 'io.freefair.lombok' version '6.5.0.3'
-    // shadowJar plugin is required to create an uberJar with all runtime dependencies
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'java'
-    id 'checkstyle'
 }
 
-group = 'mil.dso.keycloak-p1-auth-plugin'
-version = '2.2.0'
-sourceCompatibility = '11'
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
+group = "${rootProjectgroupId}"
+version = "${rootProjectVersion}"
 
 repositories {
     mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
+    gradlePluginPortal()
 }
 
-// create lintGradle task for pipeline
-tasks.register('lintGradle') {
-    dependsOn checkstyleMain, checkstyleTest
-}
-
-// ignore all lint errors for test code
-checkstyleTest.exclude('**/**')
-
-dependencies {
-    testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
-    testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
-    testImplementation 'org.keycloak:keycloak-services:19.0.1'
-    testImplementation 'org.keycloak:keycloak-server-spi:19.0.1'
-    testImplementation 'org.keycloak:keycloak-server-spi-private:19.0.1'
-
-    compileOnly 'org.keycloak:keycloak-services:19.0.1'
-    compileOnly 'org.keycloak:keycloak-server-spi:19.0.1'
-    compileOnly 'org.keycloak:keycloak-server-spi-private:19.0.1'
-
-    implementation 'org.jboss.logmanager:log4j2-jboss-logmanager:1.1.1.Final'
+subprojects.each {
+subproject -> evaluationDependsOn(subproject.name)
 }
 
 jar {
-    // disable the default jar task so that shadowJar is used instead
+    // disable the default jar task. A multi project jar is built with allJar task
     enabled = false
-    dependsOn(shadowJar)
 }
 
-// shadowJar inherits from the jar task
-// https://imperceptiblethoughts.com/shadow/configuration/
-shadowJar {
-    // don't append anything to the end of the jar file name
-    classifier = null
+task allJar(type: Jar, dependsOn: subprojects.jar) {
+    duplicatesStrategy = 'include'
+    baseName = "${rootProjectName}"
+    subprojects.each { subproject ->
+        from subproject.configurations.archives.allArtifacts.files.collect {
+            zipTree(it)
+        }
+    }
 }
 
-test {
-    // avoid error during unit tests for jboss logmanager
-    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+artifacts {
+    archives allJar
 }
 
-jacoco {
-    toolVersion = "0.8.8"
-    reportsDirectory = file("${buildDir}/jacoco")
+description = 'Keycloak Plugin Parent'
+
+
+// https://stackoverflow.com/questions/57803277/run-checkstyles-in-subprojects-before-all-tests-in-all-subprojects
+// Create a lifecycle task in the root project.
+// make this depend on all checkstyle tasks from subprojects (see below)
+def checkstyleAllTask = task("checkstyleAll")
+
+// register task "listGradle" for CI pipeline
+tasks.register('lintGradle') {
+    dependsOn checkstyleAll
 }
 
-jacocoTestReport {
+// Make 'lintGradle' task depend on lifecycle task
+lintGradle.dependsOn(checkstyleAllTask)
+
+subprojects {
+
+    //CHECKSTYLE
+    apply plugin: "checkstyle"
+
+    // ignore all lint errors for test code
+    checkstyleTest.exclude('**/**')
+
+    checkstyle {
+        toolVersion = '8.29'
+        ignoreFailures = false
+        showViolations = true
+    }
+
+    // Ensure all checkstyle tasks are a dependency of the "checkstyleAll" task
+    checkstyleAllTask.dependsOn(tasks.withType(Checkstyle))
+
+    tasks.withType(Test) {
+        // Indicate that testing tasks should run after the "checkstyleAll" task
+        shouldRunAfter(checkstyleAllTask)
+
+        // Indicate that testing tasks should run after any checksytle tasks.
+        // This is useful for when you only want to run an individual
+        // subproject's checks (e.g. ./gradlew ::subprojA::check)
+        shouldRunAfter(tasks.withType(Checkstyle))
+    }
+
+    // help with dependency tree research
+    // ./gradlew allDeps
+    task allDeps(type: DependencyReportTask) {}
+}
+
+allprojects {
+    //DEPENDENCYCHECK
+    apply plugin: "org.owasp.dependencycheck"
+    dependencyCheck {
+        format = "ALL"
+    }
+}
+
+task jacocoMergeAll(type: JacocoMerge) {
+    dependsOn(subprojects.test, subprojects.jacocoTestReport)
+    subprojects.each { subproject ->
+        // exclude runtime subproject because there is no integration tests
+        if (subproject.name != 'runtime') {
+            executionData subproject.tasks.withType(Test)
+        }
+    }
+}
+
+task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
+    description = 'Generates an aggregate report from all subprojects'
+    dependsOn(jacocoMergeAll)
+
+    additionalSourceDirs.from =
+            files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories.from =
+            files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.from =
+            files(subprojects.sourceSets.main.output)
+    executionData.from =
+            files("${buildDir}/jacoco/jacocoMergeAll.exec")
+    dependencyCheckAggregate
     reports {
         html.enabled true
         html.destination file("${buildDir}/jacoco/html/")
@@ -79,14 +123,8 @@ jacocoTestReport {
     }
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from(components.java)
-        }
-    }
-}
+// make jacocoRootReport run after jacocoTestReport
+jacocoTestReport.finalizedBy(jacocoRootReport)
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
+// aggregate dependencyCheck reports
+dependencyCheckAnalyze.finalizedBy(dependencyCheckAggregate)
