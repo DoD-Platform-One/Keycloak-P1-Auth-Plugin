@@ -1,11 +1,11 @@
 # Deployment Overview
-Jar files are deployed by placing them in `/opt/keycloak/providers/` directory. They will be detected and deployed by the application server. In a containerized k8s environment this happens by putting the jar in an plugin image and deploying the image as an additional init-container when Keycloak deploys. Keycloak k8s upstream is changing from Wildfly application server to  [Quarkus](https://www.keycloak.org/migration/migrating-to-quarkus). This plugin support the new Keyloak Quarkus.
+Jar files are deployed with Keycloak by placing them in `/opt/keycloak/providers/` directory. In a containerized k8s environment this happens by putting the jar in an plugin image and deploying the image as an additional init-container when Keycloak deploys. Keycloak k8s upstream is changing from Wildfly application server to  [Quarkus](https://www.keycloak.org/migration/migrating-to-quarkus). This plugin supports the new Keyloak Quarkus.
 
 # Deployment Details
 This documentation is intended to outline the manual steps so that it can be automated with configuration as code(CaC).
 
 ## Build
-First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. The java archive(jar) will be created at /build/libs/p1-keycloak-plugin-x.x.x.jar. The plugin uses semantic versioning controlled by the "version" in the build.gradle configuration.
+First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. If you want to build on your workstation without the gradle image you will need to install the appropriate versions of JDK and gradle. The java archive(jar) will be created at /build/libs/p1-keycloak-plugin-x.x.x.jar. The plugin uses semantic versioning controlled by the "version" in the top level gradle.properties configuration.
 ```
 docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
 cd /app
@@ -13,28 +13,25 @@ cd /app
 ```
 
 ## Build a plugin image
-Build an image that contains the plugin jar. Change the image tag to match the location where you will host the image. And update the version if it does not match the version being built. Example:
+Build an image that contains the plugin jar. The official plugin image is hosted in [Iron Bank](https://ironbank.dso.mil/repomap/details;registry1Path=big-bang%252Fp1-keycloak-plugin) available to be pulled at `registry1.dso.mil/ironbank/big-bang/p1-keycloak-plugin:X.X.X`. DO NOT configure production deployments using registry.dso.mil. The registry.dso.mil is for development testing only by the Big Bang Product team. For development, change the image tag to match the location where you will host the image. And update the version if it does not match the version being built. These commands are for example only. Note that the Dockerfile matches the Dockerfile from the [Iron Bank dosp repository](https://repo1.dso.mil/dsop/big-bang/p1-keycloak-plugin/-/blob/development/Dockerfile). Example:
 ```
-docker build -t registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:3.0.0 .
+docker build -t registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X .
 ```
 Verify the contents of the plugin image. It should contain the plugin jar.
 ```
-docker run -it --rm registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:3.0.0 /bin/bash
+docker run -it --rm registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X /bin/bash
 ls -l
 ```
 Push the plugin image to your image registry. Example:
 ```
-docker push registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:3.0.0
+docker push registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X
 ```
 
 ## Deploy plugin with k8s init-container
-Example Big Bang deployment values to deploy Keycloak with the plugin are in progress and will be provided when available. Take note of the following details:
+Example development Big Bang deployment values to deploy Keycloak with the plugin are avaliable at [https://repo1.dso.mil/platform-one/big-bang/apps/security-tools/keycloak/-/blob/main/docs/assets/config/example/keycloak-bigbang-values.yaml](https://repo1.dso.mil/platform-one/big-bang/apps/security-tools/keycloak/-/blob/main/docs/assets/config/example/keycloak-bigbang-values.yaml). Take note of the following details:
 - The Keycloak deployment uses the base Keycloak image from Iron Bank instead of a custom image.
-- The plugin jar is copied into the Keycloak container by the init-container.
+- The plugin jar is injected into the Keycloak container on startup by an init-container.
 - The init-container uses the k8s emptyDir for the volume. The emptyDir volume is shared between all containers in a pod. This is what allows the plugin jar to be copied into the Keycloak container.
-
-Change the plugin image registry to match where you hosted the plugin image. For this demonstration we are only deploying istio, istio operator, Keycloak, and Gitlab. Gitlab is deployed in order to test end-to-end SSO. All other core apps and addons are disabled.
-
 
 # Other development tasks
 ## Run linting
