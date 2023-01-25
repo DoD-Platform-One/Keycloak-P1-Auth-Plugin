@@ -15,20 +15,20 @@ cd /app
 ## Build a plugin image
 Build an image that contains the plugin jar. The official plugin image is hosted in [Iron Bank](https://ironbank.dso.mil/repomap/details;registry1Path=big-bang%252Fp1-keycloak-plugin) available to be pulled at `registry1.dso.mil/ironbank/big-bang/p1-keycloak-plugin:X.X.X`. DO NOT configure production deployments using registry.dso.mil. The registry.dso.mil is for development testing only by the Big Bang Product team. For development, change the image tag to match the location where you will host the image. And update the version if it does not match the version being built. These commands are for example only. Note that the Dockerfile matches the Dockerfile from the [Iron Bank dosp repository](https://repo1.dso.mil/dsop/big-bang/p1-keycloak-plugin/-/blob/development/Dockerfile). Example:
 ```
-docker build -t registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X .
+docker build -t registry.dso.mil/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X .
 ```
 Verify the contents of the plugin image. It should contain the plugin jar.
 ```
-docker run -it --rm registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X /bin/bash
+docker run -it --rm registry.dso.mil/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X /bin/bash
 ls -l
 ```
 Push the plugin image to your image registry. Example:
 ```
-docker push registry.dso.mil/platform-one/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X
+docker push registry.dso.mil/big-bang/apps/product-tools/keycloak-p1-auth-plugin/init-container:test-X.X.X
 ```
 
 ## Deploy plugin with k8s init-container
-Example development Big Bang deployment values to deploy Keycloak with the plugin are avaliable at [https://repo1.dso.mil/platform-one/big-bang/apps/security-tools/keycloak/-/blob/main/docs/assets/config/example/keycloak-bigbang-values.yaml](https://repo1.dso.mil/platform-one/big-bang/apps/security-tools/keycloak/-/blob/main/docs/assets/config/example/keycloak-bigbang-values.yaml). Take note of the following details:
+Example development Big Bang deployment values to deploy Keycloak with the plugin are avaliable at [https://repo1.dso.mil/big-bang/apps/security-tools/keycloak/-/blob/main/docs/assets/config/example/keycloak-bigbang-values.yaml](https://repo1.dso.mil/big-bang/apps/security-tools/keycloak/-/blob/main/docs/assets/config/example/keycloak-bigbang-values.yaml). Take note of the following details:
 - The Keycloak deployment uses the base Keycloak image from Iron Bank instead of a custom image.
 - The plugin jar is injected into the Keycloak container on startup by an init-container.
 - The init-container uses the k8s emptyDir for the volume. The emptyDir volume is shared between all containers in a pod. This is what allows the plugin jar to be copied into the Keycloak container.
