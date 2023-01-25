@@ -14,7 +14,7 @@ RUN echo "bigbang:x:1000:1000::/home/bigbang:/sbin/nologin" >> /etc/passwd \
 
 COPY build/libs/p1-keycloak-plugin-*.jar /app/p1-keycloak-plugin.jar
 
-RUN chmod +x p1-keycloak-plugin.jar
+RUN chmod +rx p1-keycloak-plugin.jar
 
 USER 1000:1000
 
