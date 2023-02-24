@@ -1,4 +1,4 @@
-package dod.p1.kc.routing.redirects.deployment.redirects;
+package dod.p1.kc.routing.deployment.redirects;
 
 import io.quarkus.test.QuarkusUnitTest;
 import io.restassured.RestAssured;
@@ -19,8 +19,8 @@ public class SimpleRedirectFalseTest {
   @RegisterExtension
   static final QuarkusUnitTest config = new QuarkusUnitTest().withApplicationRoot((jar) -> jar
           .addAsResource(new StringAsset(
-                  "quarkus.kc-routing-redirects.urls./DontFollow1=/ArbitraryValue\n" +
-                  "quarkus.kc-routing-redirects.urls./DontFollow2=/ArbitraryValue\n"),
+                  "quarkus.kc-routing.path-redirect./DontFollow1=/ArbitraryValue\n" +
+                  "quarkus.kc-routing.path-redirect./DontFollow2=/ArbitraryValue\n"),
                   "application.properties"));
   @Test
   public void testOne() {

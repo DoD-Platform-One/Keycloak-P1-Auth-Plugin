@@ -1,4 +1,4 @@
-package dod.p1.kc.routing.redirects.deployment.properties;
+package dod.p1.kc.routing.deployment.properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,12 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.arc.DefaultBean;
-import io.quarkus.arc.profile.IfBuildProfile;
-import io.quarkus.arc.profile.UnlessBuildProfile;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.test.QuarkusUnitTest;
 
-public class CombinedBuildProfileAndBuildPropertiesTest {
+public class IfBuildPropertyTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
@@ -115,10 +113,7 @@ public class CombinedBuildProfileAndBuildPropertiesTest {
         String foo();
     }
 
-    // this will be enabled since the profile condition does not pass
-    @IfBuildProperty(name = "some.prop1", stringValue = "v1")
-    @IfBuildProperty(name = "some.prop2", stringValue = "v2")
-    @UnlessBuildProfile("test")
+    @IfBuildProperty(name = "some.other.prop1", stringValue = "v2")
     static class BarBean {
 
     }
@@ -141,10 +136,8 @@ public class CombinedBuildProfileAndBuildPropertiesTest {
             };
         }
 
-        // this will be enabled since both conditions pass
         @Produces
         @IfBuildProperty(name = "some.prop1", stringValue = "v1")
-        @IfBuildProfile("test")
         GreetingBean matchingValueGreetingBean(FooBean fooBean) {
             return new GreetingBean() {
 
@@ -156,10 +149,8 @@ public class CombinedBuildProfileAndBuildPropertiesTest {
             };
         }
 
-        // this will not be enabled since the first condition does not pass
         @Produces
         @IfBuildProperty(name = "some.prop2", stringValue = "v") // won't be enabled because the property values don't match
-        @IfBuildProfile("test")
         GreetingBean nonMatchingValueGreetingBean(BarBean barBean) {
             return new GreetingBean() {
 
@@ -184,10 +175,7 @@ public class CombinedBuildProfileAndBuildPropertiesTest {
 
     }
 
-    // this will match since all conditions pass
     @IfBuildProperty(name = "some.other.prop1", stringValue = "v1", enableIfMissing = true)
-    @IfBuildProperty(name = "some.prop2", stringValue = "v2")
-    @UnlessBuildProfile("dev")
     static class AnotherProducer {
 
         @Produces

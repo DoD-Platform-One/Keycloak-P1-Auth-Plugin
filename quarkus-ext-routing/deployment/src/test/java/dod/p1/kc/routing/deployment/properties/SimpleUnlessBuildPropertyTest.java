@@ -1,4 +1,4 @@
-package dod.p1.kc.routing.redirects.deployment.properties;
+package dod.p1.kc.routing.deployment.properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

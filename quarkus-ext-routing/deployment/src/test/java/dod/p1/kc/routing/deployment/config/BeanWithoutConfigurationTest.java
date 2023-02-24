@@ -1,4 +1,4 @@
-package dod.p1.kc.routing.redirects.deployment.config;
+package dod.p1.kc.routing.deployment.config;
 
 import javax.enterprise.inject.spi.DeploymentException;
 import javax.inject.Inject;

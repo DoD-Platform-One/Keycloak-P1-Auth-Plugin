@@ -1,8 +1,8 @@
-name: Kc Routing Redirects
+name: Kc Routing
 #description: Do something useful.
 metadata:
  keywords:
-   - kc-routing-redirects
+   - kc-routing
  guide: ...
  categories:
    - "miscellaneous"
