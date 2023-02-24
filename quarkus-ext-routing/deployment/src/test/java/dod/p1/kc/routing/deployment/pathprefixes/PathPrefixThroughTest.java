@@ -1,4 +1,4 @@
-package dod.p1.kc.routing.redirects.deployment.pathprefixes;
+package dod.p1.kc.routing.deployment.pathprefixes;
 
 import io.quarkus.test.QuarkusUnitTest;
 import io.restassured.RestAssured;
@@ -13,7 +13,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 
-public class SimplePathPrefixThroughTest {
+public class PathPrefixThroughTest {
 
   // @RegisterExtension
   // static final QuarkusUnitTest config = new QuarkusUnitTest();
@@ -21,8 +21,8 @@ public class SimplePathPrefixThroughTest {
   @RegisterExtension
   static final QuarkusUnitTest config = new QuarkusUnitTest().withApplicationRoot((jar) -> jar
           .addAsResource(new StringAsset(
-                  "quarkus.kc-routing-redirects.path-prefixes./first/second=/newfirst/newsecond\n" +
-                  "quarkus.kc-routing-redirects.path-prefixes./path1/path2=/replacement\n"),
+                  "quarkus.kc-routing.path-prefix./first/second=/newfirst/newsecond\n" +
+                  "quarkus.kc-routing.path-prefix./path1/path2=/replacement\n"),
                   "application.properties"));
 
   @Test
@@ -37,7 +37,7 @@ public class SimplePathPrefixThroughTest {
       .header("Location", is("/newfirst/newsecond?testvar1=1&testvar2=2&testvarA=A&testvarB=B"));
 
   }
-  
+
   @Test
   public void testPrePathOnly() {
     given()

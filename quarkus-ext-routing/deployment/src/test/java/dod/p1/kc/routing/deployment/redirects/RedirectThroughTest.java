@@ -1,4 +1,4 @@
-package dod.p1.kc.routing.redirects.deployment.redirects;
+package dod.p1.kc.routing.deployment.redirects;
 
 import io.quarkus.test.QuarkusUnitTest;
 import io.restassured.RestAssured;
@@ -17,7 +17,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 
-public class SimpleRedirectThroughTest {
+public class RedirectThroughTest {
 
   // @RegisterExtension
   // static final QuarkusUnitTest config = new QuarkusUnitTest();
@@ -26,9 +26,9 @@ public class SimpleRedirectThroughTest {
   static final QuarkusUnitTest config = new QuarkusUnitTest().withApplicationRoot((jar) -> jar
           .addAsResource(new StringAsset(
                   // We need a real path that root points to for follows to work
-                  "quarkus.kc-routing-redirects.urls./Follow1=/TestWebServer\n" +
-                  "quarkus.kc-routing-redirects.urls./Follow2/SubPath=/TestWebServer\n" +
-                  "quarkus.kc-routing-redirects.urls./Follow3=/DoesNotExist\n"),
+                  "quarkus.kc-routing.path-redirect./Follow1=/TestWebServer\n" +
+                  "quarkus.kc-routing.path-redirect./Follow2/SubPath=/TestWebServer\n" +
+                  "quarkus.kc-routing.path-redirect./Follow3=/DoesNotExist\n"),
                   "application.properties"));
 
   @Route(path = "TestWebServer")
