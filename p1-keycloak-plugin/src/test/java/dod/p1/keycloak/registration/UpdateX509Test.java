@@ -5,7 +5,7 @@ import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
-import org.jboss.resteasy.spi.HttpRequest;
+import org.keycloak.http.HttpRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static dod.p1.keycloak.utils.Utils.setupFileMocks;
-import static org.keycloak.services.x509.DefaultClientCertificateLookup.JAVAX_SERVLET_REQUEST_X509_CERTIFICATE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -127,7 +126,7 @@ class UpdateX509Test {
         X509Certificate x509Certificate2 = Utils.buildTestCertificate();
         certList[0] = x509Certificate2;
 
-        PowerMockito.when(requiredActionContext.getHttpRequest().getAttribute(JAVAX_SERVLET_REQUEST_X509_CERTIFICATE))
+        PowerMockito.when(requiredActionContext.getHttpRequest().getClientCertificateChain())
             .thenReturn(certList);
         PowerMockito.when(requiredActionContext.getUser()).thenReturn(userModel);
 

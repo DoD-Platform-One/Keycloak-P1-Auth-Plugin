@@ -8,7 +8,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.CertificatePolicies;
 import org.bouncycastle.asn1.x509.PolicyInformation;
-import org.jboss.resteasy.spi.HttpRequest;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.authentication.FormContext;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.authenticators.x509.AbstractX509ClientCertificateAuthenticator;

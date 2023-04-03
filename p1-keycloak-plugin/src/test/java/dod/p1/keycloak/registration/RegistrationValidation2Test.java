@@ -6,7 +6,7 @@ import dod.p1.keycloak.utils.UserModelDefaultMethodsImpl;
 import dod.p1.keycloak.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
-import org.jboss.resteasy.spi.HttpRequest;
+import org.keycloak.http.HttpRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

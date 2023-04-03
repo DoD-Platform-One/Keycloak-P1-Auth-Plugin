@@ -4,7 +4,7 @@ import org.keycloak.*;
 import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
-import org.jboss.resteasy.spi.HttpRequest;
+import org.keycloak.http.HttpRequest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
