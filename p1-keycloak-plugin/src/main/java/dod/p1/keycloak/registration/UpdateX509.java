@@ -20,8 +20,6 @@ import static dod.p1.keycloak.registration.X509Tools.isX509Registered;
 import static dod.p1.keycloak.registration.X509Tools.getX509Username;
 import static dod.p1.keycloak.registration.X509Tools.getX509IdentityFromCertChain;
 
-import static org.keycloak.services.x509.DefaultClientCertificateLookup.JAVAX_SERVLET_REQUEST_X509_CERTIFICATE;
-
 public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory {
     /**
      * Provider id.
@@ -46,8 +44,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
         RealmModel realm = context.getRealm();
         AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
 
-        X509Certificate[] certAttribute = (X509Certificate[]) context.getHttpRequest()
-                .getAttribute(JAVAX_SERVLET_REQUEST_X509_CERTIFICATE);
+        X509Certificate[] certAttribute = context.getHttpRequest().getClientCertificateChain();
         String identity = (String) getX509IdentityFromCertChain(certAttribute, realm, authenticationSession);
         context.getUser().setSingleAttribute(getInstance(realm).getUserActive509Attribute(), identity);
 
