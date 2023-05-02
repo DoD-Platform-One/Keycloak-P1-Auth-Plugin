@@ -89,7 +89,6 @@ public class KcRoutingHandler implements Handler<RoutingContext> {
       pathFiltersHandler(rc);
       pathBlocksHandler(rc);
       pathRecursiveBlocksHandler(rc);
-
     }
     /**
      * Check if IP is within CIDR range.

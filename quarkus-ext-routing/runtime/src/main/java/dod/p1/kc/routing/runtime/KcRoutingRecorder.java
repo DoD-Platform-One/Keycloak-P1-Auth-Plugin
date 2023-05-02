@@ -62,11 +62,11 @@ public class KcRoutingRecorder {
      * @param argPathFiltersMap
      */
     public void setPathFilters(final Map<String, String> argPathFiltersMap) {
-      LOGGER.debugf("KcRoutingRecorder::pathFiltersMap(%s) ", argPathFiltersMap);
+      LOGGER.debugf("KcRoutingRecorder::setPathFilters(%s) ", argPathFiltersMap);
       if (handler != null) {
         KcRoutingHandler.setPathFilters(argPathFiltersMap);
       } else {
-        LOGGER.debug("KcRoutingRecorder::setPathFiltersMap(null)");
+        LOGGER.debug("KcRoutingRecorder::setPathFilters(null)");
       }
     }
 
@@ -75,11 +75,11 @@ public class KcRoutingRecorder {
      * @param argPathBlocksMap
      */
     public void setPathBlocks(final Map<String, String> argPathBlocksMap) {
-      LOGGER.debugf("KcRoutingRecorder::pathBlocksMap(%s) ", argPathBlocksMap);
+      LOGGER.debugf("KcRoutingRecorder::setPathBlocks(%s) ", argPathBlocksMap);
       if (handler != null) {
         KcRoutingHandler.setPathBlocks(argPathBlocksMap);
       } else {
-        LOGGER.debug("KcRoutingRecorder::setpathBlocksMap(null)");
+        LOGGER.debug("KcRoutingRecorder::setPathBlocks(null)");
       }
     }
 
@@ -92,7 +92,7 @@ public class KcRoutingRecorder {
       if (handler != null) {
         KcRoutingHandler.setPathRecursiveBlocks(argPathRecursiveBlocksMap);
       } else {
-        LOGGER.debug("KcRoutingRecorder::setpathBlocksMap(null)");
+        LOGGER.debug("KcRoutingRecorder::setPathRecursiveBlocks(null)");
       }
     }
 
@@ -101,11 +101,11 @@ public class KcRoutingRecorder {
      * @param argPathAllowsMap
      */
     public void setPathAllows(final Map<String, String> argPathAllowsMap) {
-      LOGGER.debugf("KcRoutingRecorder::pathAllowsMap(%s) ", argPathAllowsMap);
+      LOGGER.debugf("KcRoutingRecorder::setPathAllows(%s) ", argPathAllowsMap);
       if (handler != null) {
         KcRoutingHandler.setPathAllows(argPathAllowsMap);
       } else {
-        LOGGER.debug("KcRoutingRecorder::setpathAllowsMap(null)");
+        LOGGER.debug("KcRoutingRecorder::setPathAllows(null)");
       }
     }
 }
