@@ -63,7 +63,7 @@ public class RegistrationValidation extends RegistrationProfile {
         user.addRequiredAction(UserModel.RequiredAction.VERIFY_EMAIL);
 
         // Make GS-15 Matt and the Cyber Humans happy
-        user.addRequiredAction("terms_and_conditions");
+        user.addRequiredAction("TERMS_AND_CONDITIONS");
 
         if (x509Username == null) {
             // This user must configure MFA for their login

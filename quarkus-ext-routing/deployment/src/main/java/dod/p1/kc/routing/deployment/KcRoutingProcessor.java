@@ -65,7 +65,7 @@ public class KcRoutingProcessor {
         pathRedirectsMap.forEach((k, v) -> {
           LOGGER.infof("Creating Redirect Routes: %s %s", k, v);
           routes.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                  .route(k)
+                  .orderedRoute(k, 1)
                   .handler(recorder.getHandler())
                   .build());
         });
@@ -74,7 +74,7 @@ public class KcRoutingProcessor {
         pathPrefixesMap.forEach((k, v) -> {
           LOGGER.infof("Creating Prefix Routes: %s %s", k, v);
           routes.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                  .route(k + "/*")
+                  .orderedRoute(k + "/*", 1)
                   .handler(recorder.getHandler())
                   .build());
         });
@@ -83,25 +83,36 @@ public class KcRoutingProcessor {
         pathFiltersMap.forEach((k, v) -> {
           LOGGER.infof("Creating Filter Routes: %s %s", k, v);
           routes.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                  .route(k)
+                  .orderedRoute(k, 1)
                   .handler(recorder.getHandler())
                   .build());
         });
         recorder.setPathFilters(pathFiltersMap);
 
+        // orderedRoute() does not route paths without a leading slash if specified with one
+        // But the block handler needs a slash to deliminate /test1 from /test11
+        // Below code scripts off slashes from all quarkus configs
+        // and after adding routes adds them back for handler.
+        // Handler adds slashes to all incoming requests before parsing
+        pathBlocksMap = pathBlocksMap.entrySet()
+          .stream()
+          .collect(Collectors.toMap(
+                    e -> e.getKey().endsWith("/") ? e.getKey().substring(0, e.getKey().length() - 1) : e.getKey(),
+                    Map.Entry::getValue, (prev, next) -> next, HashMap::new)
+                    );
+        pathBlocksMap.forEach((k, v) -> {
+          LOGGER.infof("Creating Block Routes: %s %s", k, v);
+          routes.produce(nonApplicationRootPathBuildItem.routeBuilder()
+                  .orderedRoute(k, 1)
+                  .handler(recorder.getHandler())
+                  .build());
+        });
         pathBlocksMap = pathBlocksMap.entrySet()
           .stream()
           .collect(Collectors.toMap(
                     e -> e.getKey().endsWith("/") ? e.getKey() : e.getKey() + PATH_DELIMITER,
                     Map.Entry::getValue, (prev, next) -> next, HashMap::new)
                     );
-        pathBlocksMap.forEach((k, v) -> {
-          LOGGER.infof("Creating Block Routes: %s %s", k, v);
-          routes.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                  .route(k)
-                  .handler(recorder.getHandler())
-                  .build());
-        });
         recorder.setPathBlocks(pathBlocksMap);
 
         pathRecursiveBlocksMap = pathRecursiveBlocksMap.entrySet()
@@ -113,7 +124,7 @@ public class KcRoutingProcessor {
         pathRecursiveBlocksMap.forEach((k, v) -> {
           LOGGER.infof("Creating Recursive Block Routes: %s %s", k, v);
           routes.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                  .route(k + "*")
+                  .orderedRoute(k + "*", 1)
                   .handler(recorder.getHandler())
                   .build());
         });
