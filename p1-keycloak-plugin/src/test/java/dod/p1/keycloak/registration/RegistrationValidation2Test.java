@@ -71,6 +71,8 @@ class RegistrationValidation2Test {
     UserProvider userProvider;
     @Mock
     UserModel userModel;
+    @Mock
+    GroupProvider groupProvider;
 
     public RegistrationValidation2Test() {}
 
@@ -87,6 +89,7 @@ class RegistrationValidation2Test {
         PowerMockito.when(rootAuthenticationSessionModel.getId()).thenReturn("xxx");
         PowerMockito.when(validationContext.getHttpRequest()).thenReturn(httpRequest);
         PowerMockito.when(validationContext.getRealm()).thenReturn(realmModel);
+        PowerMockito.when(keycloakSession.groups()).thenReturn(groupProvider);
 
         // setup X509Tools
         PowerMockito.when(keycloakSession.getProvider(X509ClientCertificateLookup.class)).thenReturn(x509ClientCertificateLookup);

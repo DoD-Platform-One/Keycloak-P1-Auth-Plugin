@@ -8,17 +8,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 import org.keycloak.authentication.FormContext;
 import org.keycloak.authentication.ValidationContext;
 import org.keycloak.authentication.forms.RegistrationPage;
-import org.keycloak.authentication.forms.RegistrationProfile;
+import org.keycloak.authentication.forms.RegistrationUserCreation;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.services.messages.Messages;
@@ -26,7 +27,7 @@ import org.keycloak.services.validation.Validation;
 
 import dod.p1.keycloak.common.CommonConfig;
 
-public class RegistrationValidation extends RegistrationProfile {
+public class RegistrationValidation extends RegistrationUserCreation {
 
     /**
      * constant for logging message.
@@ -72,13 +73,14 @@ public class RegistrationValidation extends RegistrationProfile {
     }
 
     private static void processX509UserAttribute(
+        final KeycloakSession session,
         final RealmModel realm,
         final UserModel user,
         final String x509Username) {
 
         if (x509Username != null) {
             // Bind the X509 attribute to the user
-            user.setSingleAttribute(getInstance(realm).getUserIdentityAttribute(), x509Username);
+            user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(), x509Username);
         }
     }
 
@@ -89,7 +91,8 @@ public class RegistrationValidation extends RegistrationProfile {
 
         String email = user.getEmail().toLowerCase();
         RealmModel realm = context.getRealm();
-        CommonConfig config = getInstance(realm);
+        KeycloakSession session = context.getSession();
+        CommonConfig config = getInstance(session, realm);
 
         long domainMatchCount = config.getEmailMatchAutoJoinGroup()
                 .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith)).count();
@@ -160,12 +163,13 @@ public class RegistrationValidation extends RegistrationProfile {
     public void success(final FormContext context) {
         UserModel user = context.getUser();
         RealmModel realm = context.getRealm();
+        KeycloakSession session = context.getSession();
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String x509Username = X509Tools.getX509Username(context);
 
         generateUniqueStringIdForMattermost(formData, user);
         joinValidUserToGroups(context, user, x509Username);
-        processX509UserAttribute(realm, user, x509Username);
+        processX509UserAttribute(session, realm, user, x509Username);
         bindRequiredActions(user, x509Username);
     }
 

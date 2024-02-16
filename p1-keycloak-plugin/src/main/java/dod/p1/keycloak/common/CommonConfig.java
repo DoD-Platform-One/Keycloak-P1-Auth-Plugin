@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import static java.lang.System.exit;
 import static org.keycloak.models.utils.KeycloakModelUtils.findGroupByPath;
+import org.keycloak.models.KeycloakSession;
 
 
 public final class CommonConfig {
@@ -45,12 +46,12 @@ public final class CommonConfig {
      */
     public static final Logger LOGGER_COMMON = LogManager.getLogger(CommonConfig.class);
 
-    private CommonConfig(final RealmModel realm) {
+    private CommonConfig(final KeycloakSession session, final RealmModel realm) {
 
         config = loadConfigFile();
 
-        autoJoinGroupX509 = convertPathsToGroupModels(realm, config.getX509().getAutoJoinGroup());
-        noEmailMatchAutoJoinGroup = convertPathsToGroupModels(realm, config.getNoEmailMatchAutoJoinGroup());
+        autoJoinGroupX509 = convertPathsToGroupModels(session, realm, config.getX509().getAutoJoinGroup());
+        noEmailMatchAutoJoinGroup = convertPathsToGroupModels(session, realm, config.getNoEmailMatchAutoJoinGroup());
 
         config.getEmailMatchAutoJoinGroup().forEach(match -> {
             boolean hasInvalidDomain = match.getDomains().stream()
@@ -60,19 +61,20 @@ public final class CommonConfig {
                         "Invalid email domain config.  All email domain matches should begin with a \".\" or \"@\".");
                 match.setDomains(new ArrayList<>());
             } else {
-                match.setGroupModels(convertPathsToGroupModels(realm, match.getGroups()));
+                match.setGroupModels(convertPathsToGroupModels(session, realm, match.getGroups()));
             }
         });
     }
 
     /**
      * get common config instance.
+     * @param session
      * @param realm
      * @return CommonConfig
      */
-    public static CommonConfig getInstance(final RealmModel realm) {
+    public static CommonConfig getInstance(final KeycloakSession session, final RealmModel realm) {
         if (instance == null) {
-            instance = new CommonConfig(realm);
+            instance = new CommonConfig(session, realm);
         }
 
         return instance;
@@ -97,10 +99,14 @@ public final class CommonConfig {
         return yamlConfig;
     }
 
-    private List<GroupModel> convertPathsToGroupModels(final RealmModel realm, final List<String> paths) {
+    private List<GroupModel> convertPathsToGroupModels(
+        final KeycloakSession session,
+        final RealmModel realm,
+        final List<String> paths) {
+
         return paths
                 .stream()
-                .map(group -> findGroupByPath(realm, group))
+                .map(group -> findGroupByPath(session, realm, group))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }

@@ -2,8 +2,8 @@ package dod.p1.kc.routing.deployment.config;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;

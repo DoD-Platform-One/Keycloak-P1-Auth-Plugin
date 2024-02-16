@@ -18,10 +18,13 @@ repositories {
 }
 dependencies {
     implementation platform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
-    implementation 'io.quarkus:quarkus-arc:2.12.3.Final'
-    implementation 'io.quarkus:quarkus-vertx-http:2.12.3.Final'
+    implementation 'io.quarkus:quarkus-arc:3.2.0.Final'
+    implementation 'io.quarkus:quarkus-vertx-http:3.2.0.Final'
     implementation 'org.springframework.security:spring-security-web:5.5.0'
     implementation 'javax.servlet:javax.servlet-api:3.1.0'
+    //implementation 'javax.enterprise:cdi-api:1.2'
+    //implementation 'jakarta.enterprise:cdi-api:3.0.0-M3'
+
 }
 
 test {
@@ -29,17 +32,18 @@ test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
 }
 
+// https://docs.gradle.org/current/userguide/jacoco_plugin.html
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.11"
     reportsDirectory = file("${buildDir}/jacoco")
 }
 
 jacocoTestReport {
     reports {
-        html.enabled true
+        html.required = true
         html.destination file("${buildDir}/jacoco/html/")
-        csv.enabled false
-        xml.enabled true
+        xml.required = true
         xml.destination file("${buildDir}/jacoco/test.xml")
+        csv.required = false
     }
 }

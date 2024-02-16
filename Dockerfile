@@ -1,6 +1,6 @@
 ARG BASE_REGISTRY=registry1.dso.mil/ironbank
-ARG BASE_IMAGE=redhat/ubi/ubi8-micro
-ARG BASE_TAG=8.7
+ARG BASE_IMAGE=redhat/ubi/ubi9-micro
+ARG BASE_TAG=9.2
 
 FROM ${BASE_REGISTRY}/${BASE_IMAGE}:${BASE_TAG}
 

@@ -21,7 +21,7 @@
             <#list sessions.sessions as session>
                 <tr>
                     <td>
-                        ${session.started?datetime} - <br> 
+                        ${session.started?datetime} - <br>
                         ${session.expires?datetime} <br>
                         <br>
                         <span class="font-weight-bold">${session.lastAccess?datetime}</span>

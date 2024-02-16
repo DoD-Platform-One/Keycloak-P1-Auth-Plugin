@@ -3,19 +3,20 @@ plugins {
     id 'maven-publish'
     id 'jacoco'
     // https://plugins.gradle.org/plugin/io.freefair.lombok
-    id 'io.freefair.lombok' version '6.5.0.3'
+    id 'io.freefair.lombok' version '8.4'
     // shadowJar plugin is required to create an uberJar with all runtime dependencies
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 group = "${rootProjectgroupId}"
 version = "${rootProjectVersion}"
-sourceCompatibility = '11'
+sourceCompatibility = '17'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 
@@ -26,19 +27,29 @@ repositories {
 dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
     testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
-    testImplementation 'org.keycloak:keycloak-services:21.0.2'
-    testImplementation 'org.keycloak:keycloak-server-spi:21.0.2'
-    testImplementation 'org.keycloak:keycloak-server-spi-private:21.0.2'
-    testImplementation 'org.keycloak:keycloak-model-legacy:21.0.2'
-    testImplementation 'org.keycloak:keycloak-crypto-default:21.0.2'
+    // testImplementation 'org.mockito:mockito-inline:5.2.0'
+    testImplementation 'org.keycloak:keycloak-services:23.0.4'
+    testImplementation 'org.keycloak:keycloak-server-spi:23.0.4'
+    testImplementation 'org.keycloak:keycloak-server-spi-private:23.0.4'
+    testImplementation 'org.keycloak:keycloak-model-legacy:23.0.4'
+    testImplementation 'org.keycloak:keycloak-crypto-default:23.0.4'
 
-    compileOnly 'org.keycloak:keycloak-services:21.0.2'
-    compileOnly 'org.keycloak:keycloak-server-spi:21.0.2'
-    compileOnly 'org.keycloak:keycloak-server-spi-private:21.0.2'
+    compileOnly 'org.keycloak:keycloak-services:23.0.4'
+    compileOnly 'org.keycloak:keycloak-server-spi:23.0.4'
+    compileOnly 'org.keycloak:keycloak-server-spi-private:23.0.4'
 
+    implementation 'com.google.auto.service:auto-service:1.1.1'
+    // implementation 'org.yaml:snakeyaml:2.2'
+    implementation 'org.yaml:snakeyaml:1.33'
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
     implementation 'org.jboss.logmanager:log4j2-jboss-logmanager:1.1.1.Final'
+    // implementation 'javax.ws.rs:javax.ws.rs-api:2.0.1'
+
+    implementation 'org.json:json:20231013'
+    implementation 'com.slack.api:bolt:1.36.1'
+    implementation 'org.freemarker:freemarker:2.3.32'
+
 }
 
 jar {
@@ -51,26 +62,29 @@ jar {
 // https://imperceptiblethoughts.com/shadow/configuration/
 shadowJar {
     // don't append anything to the end of the jar file name
-    classifier = null
+    archiveClassifier = null
 }
 
 test {
     // avoid error during unit tests for jboss logmanager
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    //jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
 }
 
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.11"
     reportsDirectory = file("${buildDir}/jacoco")
 }
 
 jacocoTestReport {
     reports {
-        html.enabled true
+        html.required = true
         html.destination file("${buildDir}/jacoco/html/")
-        csv.enabled false
-        xml.enabled true
+        xml.required = true
         xml.destination file("${buildDir}/jacoco/test.xml")
+        csv.required = false
+
+        // xml.enabled true
     }
 }
 
@@ -84,4 +98,18 @@ publishing {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+// Needed to get around reflection error in testing
+tasks.withType(Test) {
+    jvmArgs += [
+        '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util.regex=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.base=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util.stream=ALL-UNNAMED', // Add this line
+        '--add-opens', 'java.base/java.net=ALL-UNNAMED', // java.net.URI issue
+        '--add-opens', 'java.base/sun.security.jca=ALL-UNNAMED', // slack issue
+    ]
 }

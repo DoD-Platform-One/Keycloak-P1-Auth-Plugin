@@ -1,5 +1,8 @@
 package dod.p1.keycloak.registration;
 
+import java.util.List;
+import java.util.Map;
+import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.RequiredActionFactory;
@@ -10,17 +13,22 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.security.cert.X509Certificate;
 
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
 import static dod.p1.keycloak.registration.X509Tools.isX509Registered;
 import static dod.p1.keycloak.registration.X509Tools.getX509Username;
-import static dod.p1.keycloak.registration.X509Tools.getX509IdentityFromCertChain;
 
 public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory {
+
+      /**
+     * Logger.
+     */
+    private static final Logger LOGGER = Logger.getLogger(UpdateX509.class);
+
     /**
      * Provider id.
      */
@@ -33,26 +41,39 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     /**
      * Custom implementation.
      */
-    @Override
-    public void evaluateTriggers(final RequiredActionContext context) {
-        String ignore = context.getAuthenticationSession().getAuthNote(IGNORE_X509);
-        String x509Username = getX509Username(context);
-        if (x509Username == null || ignore != null && ignore.equals("true")) {
-            return;
-        }
+     @Override
+     public void evaluateTriggers(final RequiredActionContext context) {
+         //LOGGER.debugf("UpdateX509::evaluateTriggers");
+         String ignore = context.getAuthenticationSession().getAuthNote(IGNORE_X509);
+         String x509Username = getX509Username(context);
+         if (x509Username == null || ignore != null && ignore.equals("true")) {
+             //LOGGER.debugf("UpdateX509::evaluateTriggers x509Username == null");
+             return;
+         }
 
-        RealmModel realm = context.getRealm();
-        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
+         RealmModel realm = context.getRealm();
+         KeycloakSession session = context.getSession();
+         AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
 
-        X509Certificate[] certAttribute = context.getHttpRequest().getClientCertificateChain();
-        String identity = (String) getX509IdentityFromCertChain(certAttribute, realm, authenticationSession);
-        context.getUser().setSingleAttribute(getInstance(realm).getUserActive509Attribute(), identity);
+         X509Certificate[] certAttribute = context.getHttpRequest().getClientCertificateChain();
+         Map<String, List<String>> userAttrs = context.getUser().getAttributes();
+         if (userAttrs.containsKey("usercertificate")) {
+             List<String> identity = userAttrs.get("usercertificate");
+             if (identity != null && !identity.isEmpty()) {
+                 //LOGGER.debugf("UpdateX509::evaluateTriggers: usercertificate: %s", identity);
+                 context.getUser().setSingleAttribute(
+                         getInstance(session, realm).getUserActive509Attribute(),
+                         identity.get(0));
+                 // LOGGER.debugf("UpdateX509::evaluateTriggers: activecac: %s",
+                 //   getInstance(session, realm).getUserActive509Attribute());
+             }
+         }
 
-        if (!isX509Registered(context)) {
-            context.getUser().addRequiredAction(PROVIDER_ID);
-        }
+         if (!isX509Registered(context)) {
+             context.getUser().addRequiredAction(PROVIDER_ID);
+         }
 
-    }
+     }
 
     /**
      * Custom implementation.
@@ -83,10 +104,11 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
 
         String username = getX509Username(context);
         RealmModel realm = context.getRealm();
+        KeycloakSession session = context.getSession();
         if (username != null) {
             UserModel user = context.getUser();
-            user.setSingleAttribute(getInstance(realm).getUserIdentityAttribute(), username);
-            getInstance(realm).getAutoJoinGroupX509().forEach(user::joinGroup);
+            user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(), username);
+            getInstance(session, realm).getAutoJoinGroupX509().forEach(user::joinGroup);
         }
         context.success();
     }

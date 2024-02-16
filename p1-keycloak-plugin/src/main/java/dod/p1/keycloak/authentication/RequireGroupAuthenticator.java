@@ -36,7 +36,7 @@ public class RequireGroupAuthenticator implements Authenticator {
 
         RealmModel realm = context.getRealm();
         UserModel user = context.getUser();
-
+        KeycloakSession session = context.getSession();
         AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
         ClientModel client = authenticationSession.getClient();
         String clientId = client.getClientId();
@@ -62,7 +62,7 @@ public class RequireGroupAuthenticator implements Authenticator {
             String groupId = matcher.group(1);
             checkIfUserIsAuthorized(context, realm, user, logPrefix, groupId);
         } else {
-            if (CommonConfig.getInstance(realm).getIgnoredGroupProtectionClients().contains(clientId)
+            if (CommonConfig.getInstance(session, realm).getIgnoredGroupProtectionClients().contains(clientId)
                 && user != null) {
                 LOGGER.info("{} matched authorized ignored group protect client", logPrefix);
                 success(context, user);
@@ -104,8 +104,9 @@ public class RequireGroupAuthenticator implements Authenticator {
 
     private void success(final AuthenticationFlowContext context, final UserModel user) {
         RealmModel realm = context.getRealm();
+        KeycloakSession session = context.getSession();
         // Reset X509 attribute per login event
-        user.setSingleAttribute(CommonConfig.getInstance(realm).getUserActive509Attribute(), "");
+        user.setSingleAttribute(CommonConfig.getInstance(session, realm).getUserActive509Attribute(), "");
         user.addRequiredAction("TERMS_AND_CONDITIONS");
         context.success();
     }

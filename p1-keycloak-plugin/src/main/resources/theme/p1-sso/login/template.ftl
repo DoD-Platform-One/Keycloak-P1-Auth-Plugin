@@ -39,11 +39,7 @@
 
                     <div class="card-header branding row">
                         <div class="col-sm-5 p-0">
-                            <#if client?? && client.description?has_content>
-                                <img src="${client.description}"/>
-                            <#else>
-                                <img src="${url.resourcesPath}/img/p1-logo.png"/>
-                            </#if>
+                            <img src="${url.resourcesPath}/img/p1-logo.png"/>
                         </div>
                         <div class="col-sm-1">&nbsp;</div>
                         <div class="col-sm-6 my-auto">

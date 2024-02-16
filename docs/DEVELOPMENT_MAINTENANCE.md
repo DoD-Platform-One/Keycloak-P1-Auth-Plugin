@@ -57,6 +57,34 @@ cd /app
 ```
 Then open build/jacoco/html/index.html in a browser. This is the report that the pipeline uses and it typically shows less code coverage than the IDE.
 
+## Sonarqube
+References
+https://www.sonarsource.com/open-source-editions/sonarqube-community-edition/
+
+https://docs.sonarsource.com/sonarqube/latest/try-out-sonarqube/
+
+https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/test-coverage/java-test-coverage/
+
+To run your local sonarqube instance run this docker command
+```
+docker run -d --name sonarqube -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true -p 9000:9000 sonarqube:latest
+```
+#### How to Access local Sonarqube
+```
+localhost:9000
+
+login: admin
+password: admin
+```
+Sonarqube will ask you to change the password, just follow the steps.
+
+Next click on Create a local project
+In the fields use the [sonar-project-dev.properties](../sonar-project-dev.properties)
+
+Once the project is created, click in "Locally"
+Here you can generate the Token needed for the steps below.
+
+
 ### Sonarqube scan
 Deploy your own Sonarqube using Big Bang with a k8s dev environment. Use the provided [sonar-project-dev.properties](../sonar-project-dev.properties). Follow the details in that sonar-scan config. Manually create a "keycloak-plugin" sonar project in the UI which will generate a token. You will need to do a clean build first because Sonarqube uses the built jar artifact.
 ```bash

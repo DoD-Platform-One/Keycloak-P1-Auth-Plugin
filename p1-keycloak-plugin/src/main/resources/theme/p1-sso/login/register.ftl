@@ -15,7 +15,7 @@
                     <p>Use your company or government email address as your access will be based off of your validated email address.</p>
                     <p class="font-weight-bold">For assistance contact your team admin, <a
                                 href="https://sso-info.il2.dso.mil/" target="_blank">click here</a> or <a id="helpdesk"
-                                                                                                          href="mailto:help@dsop.io">email us</a>.
+                                                                                                          href="mailto:help@dso.mil">email us</a>.
                     </p>
                 </div>
             </#if>
@@ -76,7 +76,7 @@
                     </select>
                     <#if messagesPerField.existsError('user.attributes.affiliation')>
                         <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('user.attributes.affiliation'))?no_esc}</span>
-                    </#if>  
+                    </#if>
                 </div>
 
                 <div class="col-lg-6 form-group ${messagesPerField.printIfExists('user.attributes.rank','has-error')}">
@@ -138,7 +138,7 @@
                     </select>
                     <#if messagesPerField.existsError('user.attributes.rank')>
                         <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('user.attributes.rank'))?no_esc}</span>
-                    </#if>                      
+                    </#if>
                 </div>
 
             </div>
@@ -149,7 +149,7 @@
                         value="${(register.formData['user.attributes.organization']!'')}" autocomplete="company"/>
                 <#if messagesPerField.existsError('user.attributes.organization')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('user.attributes.organization'))?no_esc}</span>
-                </#if>                    
+                </#if>
             </div>
             <div class="location-input">
                 <div class="form-group">
@@ -165,7 +165,7 @@
                             value="${(register.formData.username!'')}" autocomplete="username"/>
                     <#if messagesPerField.existsError('username')>
                         <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('username'))?no_esc}</span>
-                    </#if>    
+                    </#if>
                 </div>
             </#if>
 
@@ -175,14 +175,14 @@
                         value="${(register.formData.email!'')}" autocomplete="email"/>
                 <#if messagesPerField.existsError('email')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('email'))?no_esc}</span>
-                </#if>                    
+                </#if>
             </div>
 
             <div class="form-group ${messagesPerField.printIfExists('notes','has-error')}">
                 <label for="user.attributes.notes" class="form-label ">${msg("accessRequest")}</label>
                 <textarea id="user.attributes.notes" class="form-control " name="user.attributes.notes"></textarea>
-            </div>                       
-        
+            </div>
+
             <div class="form-group ${messagesPerField.printIfExists('password','has-error')}">
                 <#if cacIdentity??>
                     <div class="alert alert-info cac-info text-white">
@@ -198,7 +198,7 @@
                         type="password" autocomplete="new-password"/>
                 <#if messagesPerField.existsError('password')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('password'))?no_esc}</span>
-                </#if>                        
+                </#if>
             </div>
 
             <div class="form-group ${messagesPerField.printIfExists('password-confirm','has-error')}">
@@ -207,9 +207,9 @@
                         type="password" autocomplete="new-password"/>
                 <#if messagesPerField.existsError('password-confirm')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span>
-                </#if>                                                
+                </#if>
             </div>
-                            
+
             <#if recaptchaRequired??>
                 <div class="form-group">
                     <div>

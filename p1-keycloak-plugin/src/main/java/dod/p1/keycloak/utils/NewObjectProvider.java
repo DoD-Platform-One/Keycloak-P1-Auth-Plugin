@@ -42,7 +42,7 @@ public final class NewObjectProvider {
      * @return Yaml
      */
     public static Yaml getYaml() {
-      return new Yaml(new Constructor(YAMLConfig.class));
+        return new Yaml(new Constructor(YAMLConfig.class));
     }
 
 }
