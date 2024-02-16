@@ -27,6 +27,7 @@ import org.keycloak.provider.Provider;
 import org.keycloak.services.clientpolicy.ClientPolicyManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.AuthenticationSessionProvider;
+
 import org.keycloak.storage.federated.UserFederatedStorageProvider;
 import org.keycloak.storage.*;
 import org.keycloak.vault.VaultTranscriber;
@@ -36,9 +37,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -52,6 +53,12 @@ import static dod.p1.keycloak.utils.Utils.setupFileMocks;
 import static dod.p1.keycloak.utils.Utils.setupX509Mocks;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
+import org.keycloak.common.crypto.UserIdentityExtractor;
+import org.keycloak.authentication.authenticators.x509.X509ClientCertificateAuthenticator;
+import org.keycloak.services.x509.X509ClientCertificateLookup;
+import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.mockito.Mock;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, X509Tools.class, FilenameUtils.class, NewObjectProvider.class })
@@ -141,29 +148,13 @@ public class RegistrationValidationTest {
                     public KeycloakContext getContext() {
                         return null;
                     }
-
                     @Override
-                    public RoleProvider roleLocalStorage() {
-                        return null;
-                    }
-
-                    @Override
-                    public GroupProvider groupLocalStorage() {
+                    public SingleUseObjectProvider singleUseObjects() {
                         return null;
                     }
 
                     @Override
                     public GroupProvider groups() {
-                        return null;
-                    }
-
-                    @Override
-                    public GroupProvider groupStorageManager() {
-                        return null;
-                    }
-
-                    @Override
-                    public RoleProvider roleStorageManager() {
                         return null;
                     }
 
@@ -283,56 +274,11 @@ public class RegistrationValidationTest {
                     }
 
                     @Override
-                    public UserProvider userCache() {
-                        return null;
-                    }
-
-                    @Override
                     public UserProvider users() {
                         UserProvider userProvider = mock(UserProvider.class);
                         when(userProvider.getUserByEmail(realmModel, "test@ss.usafa.edu"))
                                 .thenReturn(mock(UserModel.class));
                         return userProvider;
-                    }
-
-                    @Override
-                    public ClientProvider clientStorageManager() {
-                        return null;
-                    }
-
-                    @Override
-                    public UserProvider userStorageManager() {
-                        return null;
-                    }
-
-                    @Override
-                    public UserCredentialManager userCredentialManager() {
-                        return null;
-                    }
-
-                    @Override
-                    public UserProvider userLocalStorage() {
-                        return null;
-                    }
-
-                    @Override
-                    public RealmProvider realmLocalStorage() {
-                        return null;
-                    }
-
-                    @Override
-                    public ClientProvider clientLocalStorage() {
-                        return null;
-                    }
-
-                    @Override
-                    public ClientScopeProvider clientScopeLocalStorage() {
-                        return null;
-                    }
-
-                    @Override
-                    public ClientScopeProvider clientScopeStorageManager() {
-                        return null;
                     }
 
                     @Override
@@ -491,6 +437,7 @@ public class RegistrationValidationTest {
 
         };
     }
+
 
     @Test
     public void testInvalidFields() {

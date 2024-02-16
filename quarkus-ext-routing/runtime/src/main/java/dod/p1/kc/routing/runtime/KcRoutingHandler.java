@@ -10,7 +10,7 @@ import java.util.Arrays;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
 

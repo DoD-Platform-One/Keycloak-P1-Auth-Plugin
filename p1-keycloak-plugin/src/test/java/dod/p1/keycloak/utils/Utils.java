@@ -5,6 +5,7 @@ import dod.p1.keycloak.registration.X509Tools;
 import org.apache.commons.io.FilenameUtils;
 import org.keycloak.authentication.FormContext;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.api.mockito.PowerMockito;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -59,16 +60,16 @@ public class Utils {
                 "      - \"@unicorns.com\"\n" +
                 "      - \"@merica.test\"";
 
-        final File fileMock = PowerMockito.mock(File.class);
-        final FileInputStream fileInputStreamMock = PowerMockito.mock(FileInputStream.class);
+        File fileMock = PowerMockito.mock(File.class);
+        FileInputStream fileInputStreamMock = PowerMockito.mock(FileInputStream.class);
 
         InputStream stream = new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8));
 
         PowerMockito.whenNew(File.class).withAnyArguments().thenReturn(fileMock);
         PowerMockito.whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStreamMock);
 
-        Yaml yaml = new Yaml(new Constructor(YAMLConfig.class));
-        YAMLConfig yamlConfig = yaml.load(stream);
+        Yaml yaml = new Yaml();
+        YAMLConfig yamlConfig = yaml.loadAs(stream, YAMLConfig.class);
 
         final Yaml yamlMock = PowerMockito.mock(Yaml.class);
         PowerMockito.whenNew(Yaml.class).withAnyArguments().thenReturn(yamlMock);

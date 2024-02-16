@@ -3,7 +3,7 @@
     <#if section = "form">
         <#if realm.password>
             <form onsubmit="login.disabled=true;return true;" action="${url.loginAction}" method="post">
-                
+
                 <div class="form-group">
                     <label class="form-label" for="username">
                         <#if !realm.loginWithEmailAllowed>${msg("username")}
@@ -40,7 +40,7 @@
         <div class="footer-text">
             No account? <a href="/register">Click here</a> to register now.<br>
             Need additional help? <a href="https://sso-info.il2.dso.mil/" target="_blank">Click here</a> or <a
-                    id="helpdesk" href="mailto:help@dsop.io">email us</a>
+                    id="helpdesk" href="mailto:help@dso.mil">email us</a>
         </div>
     </#if>
 

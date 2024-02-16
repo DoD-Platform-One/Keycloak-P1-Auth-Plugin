@@ -10,8 +10,10 @@ import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.GroupModel;
+import org.keycloak.models.GroupProvider;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -38,9 +40,12 @@ public class RequireGroupAuthenticatorTest {
     private RealmModel realm;
     private UserModel user;
     private GroupModel group;
+    private KeycloakSession session;
     private AuthenticationSessionModel authenticationSession;
     private RootAuthenticationSessionModel parentAuthenticationSession;
     private ClientModel client;
+    private CommonConfig commonConfig;
+    private GroupProvider groupProvider;
 
     @Before
     public void setup() throws Exception {
@@ -53,17 +58,21 @@ public class RequireGroupAuthenticatorTest {
         realm = mock(RealmModel.class);
         user = mock(UserModel.class);
         group = mock(GroupModel.class);
+        session = mock(KeycloakSession.class);
         authenticationSession = mock(AuthenticationSessionModel.class);
         parentAuthenticationSession = mock(RootAuthenticationSessionModel.class);
         client = mock(ClientModel.class);
+        groupProvider = mock(GroupProvider.class);
 
         when(context.getRealm()).thenReturn(realm);
         when(context.getUser()).thenReturn(user);
+        when(context.getSession()).thenReturn(session);
         when(context.getAuthenticationSession()).thenReturn(authenticationSession);
         when(authenticationSession.getClient()).thenReturn(client);
         when(authenticationSession.getParentSession()).thenReturn(parentAuthenticationSession);
         when(parentAuthenticationSession.getId()).thenReturn("bleh");
         when(realm.getGroupById(anyString())).thenReturn(group);
+        when(session.groups()).thenReturn(groupProvider);
 
     }
 

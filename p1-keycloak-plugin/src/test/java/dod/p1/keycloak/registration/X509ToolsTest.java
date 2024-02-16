@@ -65,6 +65,8 @@ class X509ToolsTest {
     UserProvider userProvider;
     @Mock
     UserModel userModel;
+    @Mock
+    GroupProvider groupProvider;
 
     public X509ToolsTest(){};
 
@@ -81,6 +83,7 @@ class X509ToolsTest {
         PowerMockito.when(rootAuthenticationSessionModel.getId()).thenReturn("xxx");
         PowerMockito.when(validationContext.getHttpRequest()).thenReturn(httpRequest);
         PowerMockito.when(validationContext.getRealm()).thenReturn(realmModel);
+        PowerMockito.when(keycloakSession.groups()).thenReturn(groupProvider);
 
         CryptoIntegration.init(this.getClass().getClassLoader());
     }

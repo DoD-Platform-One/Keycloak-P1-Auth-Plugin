@@ -21,6 +21,7 @@ import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.*;
 import org.keycloak.policy.PasswordPolicyManagerProvider;
 import org.keycloak.policy.PolicyError;
+import org.keycloak.protocol.oidc.utils.RedirectUtils;
 import org.keycloak.services.x509.X509ClientCertificateLookup;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
@@ -36,12 +37,12 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static dod.p1.keycloak.utils.Utils.setupFileMocks;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class })
+@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class, X509Tools.class })
 @PowerMockIgnore("javax.management.*")
 class RegistrationX509PasswordTest {
 
@@ -146,6 +147,8 @@ class RegistrationX509PasswordTest {
 
         PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
         PowerMockito.when(validationContext.getEvent()).thenReturn(eventBuilder);
+        PowerMockito.when(validationContext.getSession().getProvider(PasswordPolicyManagerProvider.class))
+            .thenReturn(passwordPolicyManagerProvider);
 
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.validate(validationContext);
@@ -153,12 +156,15 @@ class RegistrationX509PasswordTest {
     }
 
     @Test
-    public void testValidate() {
-
-        MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
+    public void testValidateCondition1() {
+        // CONDITION 1
+        MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
         formData.add(RegistrationPage.FIELD_PASSWORD, "password");
         formData.add(RegistrationPage.FIELD_PASSWORD_CONFIRM, "password");
         formData.add(RegistrationPage.FIELD_EMAIL, "test.user@test.test");
+
+        mockStatic(X509Tools.class);
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn("something");
 
         PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
         PowerMockito.when(validationContext.getEvent()).thenReturn(eventBuilder);
@@ -168,15 +174,87 @@ class RegistrationX509PasswordTest {
         PowerMockito.when(validationContext.getRealm().isRegistrationEmailAsUsername()).thenReturn(true);
         PolicyError policyError = new PolicyError("anything", new Object[0]);
         PowerMockito.when(validationContext.getSession().getProvider(PasswordPolicyManagerProvider.class)
-             .validate(any(String.class), any(String.class))).thenReturn(policyError);
+            .validate(any(String.class), any(String.class))).thenReturn(policyError);
 
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.validate(validationContext);
 
+        // CONDITION Null
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn(null);
+        registrationX509Password.validate(validationContext);
+    }
+
+    @Test
+    public void testValidateCondition2() {
+        // CONDITION 1
+        MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
+        formData.add(RegistrationPage.FIELD_PASSWORD, "password");
+        formData.add(RegistrationPage.FIELD_PASSWORD_CONFIRM, "password");
+        formData.add(RegistrationPage.FIELD_EMAIL, "test.user@test.test");
+
+        mockStatic(X509Tools.class);
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn("something");
+
+        PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
+        PowerMockito.when(validationContext.getEvent()).thenReturn(eventBuilder);
+        PowerMockito.when(validationContext.getSession()).thenReturn(keycloakSession);
+        PowerMockito.when(validationContext.getSession().getProvider(PasswordPolicyManagerProvider.class))
+                .thenReturn(passwordPolicyManagerProvider);
+        PowerMockito.when(validationContext.getRealm().isRegistrationEmailAsUsername()).thenReturn(false);
+        PolicyError policyError = new PolicyError("anything", new Object[0]);
+        PowerMockito.when(validationContext.getSession().getProvider(PasswordPolicyManagerProvider.class)
+                .validate(any(String.class), any(String.class))).thenReturn(policyError);
+
+        RegistrationX509Password registrationX509Password = new RegistrationX509Password();
+        registrationX509Password.validate(validationContext);
+    }
+
+    @Test
+    public void testValidateCondition3() {
+        // CONDITION 3
+        MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
+        formData.add(RegistrationPage.FIELD_PASSWORD, "");
+        formData.add(RegistrationPage.FIELD_PASSWORD_CONFIRM, "");
+        formData.add(RegistrationPage.FIELD_EMAIL, "test.user@test.test");
+
+        mockStatic(X509Tools.class);
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn("something");
+
+        PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
+        PowerMockito.when(validationContext.getEvent()).thenReturn(eventBuilder);
+
+        RegistrationX509Password registrationX509Password = new RegistrationX509Password();
+        registrationX509Password.validate(validationContext);
+    }
+
+    @Test
+    public void testValidateCondition4() {
+        // CONDITION 3
+        MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
+        formData.add(RegistrationPage.FIELD_PASSWORD, "");
+        formData.add(RegistrationPage.FIELD_PASSWORD_CONFIRM, "password");
+        formData.add(RegistrationPage.FIELD_EMAIL, "test.user@test.test");
+
+        mockStatic(X509Tools.class);
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn("something");
+
+        PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
+        PowerMockito.when(validationContext.getEvent()).thenReturn(eventBuilder);
+        PowerMockito.when(validationContext.getSession()).thenReturn(keycloakSession);
+        PowerMockito.when(validationContext.getSession().getProvider(PasswordPolicyManagerProvider.class))
+                .thenReturn(passwordPolicyManagerProvider);
+        PowerMockito.when(validationContext.getRealm().isRegistrationEmailAsUsername()).thenReturn(false);
+        PolicyError policyError = new PolicyError("anything", new Object[0]);
+        PowerMockito.when(validationContext.getSession().getProvider(PasswordPolicyManagerProvider.class)
+                .validate(any(String.class), any(String.class))).thenReturn(policyError);
+
+        RegistrationX509Password registrationX509Password = new RegistrationX509Password();
+        registrationX509Password.validate(validationContext);
     }
 
     @Test
     public void testSuccess() {
+        // CONDITION 1
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
         formData.add(RegistrationPage.FIELD_PASSWORD, "password");
         formData.add(RegistrationPage.FIELD_PASSWORD_CONFIRM, "password");
@@ -187,6 +265,18 @@ class RegistrationX509PasswordTest {
 
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
         registrationX509Password.success(validationContext);
+
+        // CONDITION 2
+        mockStatic(X509Tools.class);
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn("something");
+        registrationX509Password.success(validationContext);
+
+        // CONDITION 3
+        formData = new MultivaluedMapImpl<>();
+        formData.add(RegistrationPage.FIELD_PASSWORD, "");
+        PowerMockito.when(validationContext.getHttpRequest().getDecodedFormParameters()).thenReturn(formData);
+        registrationX509Password.success(validationContext);
+
     }
 
     @Test
@@ -195,6 +285,12 @@ class RegistrationX509PasswordTest {
         PowerMockito.when(validationContext.getSession()).thenReturn(null);
 
         RegistrationX509Password registrationX509Password = new RegistrationX509Password();
+        registrationX509Password.buildPage(validationContext, loginFormsProvider );
+
+        // force a valid value
+        mockStatic(X509Tools.class);
+
+        PowerMockito.when(X509Tools.getX509Username(eq(validationContext))).thenReturn("something");
         registrationX509Password.buildPage(validationContext, loginFormsProvider );
     }
 

@@ -23,7 +23,7 @@ jar {
 
 task allJar(type: Jar, dependsOn: subprojects.jar) {
     duplicatesStrategy = 'include'
-    baseName = "${rootProjectName}"
+    archiveBaseName = "${rootProjectName}"
     subprojects.each { subproject ->
         from subproject.configurations.archives.allArtifacts.files.collect {
             zipTree(it)
@@ -61,8 +61,11 @@ subprojects {
 
     checkstyle {
         toolVersion = '8.29'
-        ignoreFailures = false
         showViolations = true
+
+        // Toggle these when testing without wanting to fix errors
+        ignoreFailures = false
+//         ignoreFailures = true // if checkstyle is not letting you build uncomment this line
     }
 
     // Ensure all checkstyle tasks are a dependency of the "checkstyleAll" task
@@ -76,6 +79,12 @@ subprojects {
         // This is useful for when you only want to run an individual
         // subproject's checks (e.g. ./gradlew ::subprojA::check)
         shouldRunAfter(tasks.withType(Checkstyle))
+
+        //jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
+    }
+
+    tasks.withType(AbstractCompile) {
+      //options.compilerArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
     }
 
     // help with dependency tree research
@@ -91,7 +100,19 @@ allprojects {
     }
 }
 
-task jacocoMergeAll(type: JacocoMerge) {
+// Gradle8 compiler complaining about this one
+// https://discuss.gradle.org/t/merge-jacoco-coverage-reports-for-multiproject-setups/12100/9
+//
+// JacocoMerge was used for merging coverage reports from different subprojects into a single report.
+// The same functionality is also available on the JacocoReport task. Because of the duplication, we want to
+// deprecate JacocoMerge and remove it in Gradle 8.0.
+// https://github.com/gradle/gradle/pull/16714
+//
+// JacocoMerge Task Removed
+// The deprecated JacocoMerge task type has been removed. The same functionality is also available on the JacocoReport task.
+// https://docs.gradle.org/current/userguide/upgrading_version_7.html
+
+task jacocoReport(type: JacocoReport) {
     dependsOn(subprojects.test, subprojects.jacocoTestReport)
     subprojects.each { subproject ->
         // exclude runtime subproject because there is no integration tests
@@ -103,7 +124,7 @@ task jacocoMergeAll(type: JacocoMerge) {
 
 task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
     description = 'Generates an aggregate report from all subprojects'
-    dependsOn(jacocoMergeAll)
+    dependsOn(jacocoReport)
 
     additionalSourceDirs.from =
             files(subprojects.sourceSets.main.allSource.srcDirs)
@@ -115,11 +136,11 @@ task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
             files("${buildDir}/jacoco/jacocoMergeAll.exec")
     dependencyCheckAggregate
     reports {
-        html.enabled true
+        html.required = true
         html.destination file("${buildDir}/jacoco/html/")
-        csv.enabled false
-        xml.enabled true
+        xml.required = true
         xml.destination file("${buildDir}/jacoco/test.xml")
+        csv.required = false
     }
 }
 
@@ -128,3 +149,8 @@ jacocoTestReport.finalizedBy(jacocoRootReport)
 
 // aggregate dependencyCheck reports
 dependencyCheckAnalyze.finalizedBy(dependencyCheckAggregate)
+
+test {
+    // avoid error during unit tests for jboss logmanager
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}

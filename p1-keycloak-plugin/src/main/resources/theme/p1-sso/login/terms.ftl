@@ -1,7 +1,7 @@
 <#import "template.ftl" as layout>
 <@layout.registrationLayout displayMessage=false; section>
     <#if section = "form">
-        <div id="kc-terms-text" onclick="javscript:document.getElementById('kc-accept').focus()">
+        <div id="kc-terms-text" onclick="javascript:document.getElementById('kc-accept').focus()">
             <div>
                 <div class="alert alert-info cac-info">
                     <span>Click anywhere on the terms below to move to [accept] and [cancel] actions.</span>
@@ -23,31 +23,27 @@
                     <li>This IS includes security measures (e.g., authentication and access controls) to protect USG
                         interests--not for your personal benefit or privacy.
                     </li>
-                    <li>NOTICE: There is the potential that information presented and exported from the Platform One
-                        contains FOUO or Controlled Unclassified Information (CUI). It is the responsibility of all
-                        users to ensure information extracted from Platform One is appropriately marked and properly
-                        safeguarded. If you are not sure of the safeguards necessary for the information, contact your
-                        functional lead or Information Security Officer.
+                    <li>Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative
+                           searching or monitoring of the content of privileged communications, or work product, related to
+                           personal representation or services by attorneys, psychotherapists, or clergy, and their assistants.
+                           Such communications and work product are private and confidential. See <a class="linkInline"
+                           href="https://www.my.af.mil/afp/netstorage/login_page_files_cloud_one/dod-user-agreement.html"
+                           target="_blank">User Agreement</a> for details.
                     </li>
-                    <li>As a user of this IS, you may have access to USG’s Platform One. Third-party software publishers
-                        (“Vendors”) provide proprietary software, applications, and/or source code (including any proprietary
-                        data made available through such third-party software) (collectively, “Third-Party Software”) to the USG
-                        solely in order for the USG to harden such Third-Party Software and make such hardened versions of the
-                        Third Party Software available to users of Platform One. In the event you use the IS
-                        (including Platform One) to access, download, execute, display and/or otherwise use (collectively, “Use”)
-                        such Third-Party Software, by Using the IS (including Platform One) and/or such Third-Party Software,
-                        you, on behalf of your organization, hereby agree that all Use of such Third-Party Software is governed by
-                        the Vendor’s end user license agreement (“Vendor EULA”), which may be enforced directly by Vendor and/or USG.
-                        If you do not agree to the entirety of the applicable vendor eula, you are prohibited from using all or any
-                        portion of the third-party software in any manner.
+                    <li>Internet / Intranet / Extranet-related systems, including but not limited to computer equipment, software,
+                           operating systems, storage media, and network accounts providing electronic mail, Internet browsing, and
+                           file transfer protocol (FTP) capability that are owned or managed by Platform One are the property of Platform One.
+                           These systems are to be used for organizational purposes in serving the interests of Platform One, and of our clients
+                           and customers in the course of normal operations.
                     </li>
-                    <li>Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI
-                        investigative searching or monitoring of the content of privileged communications, or work
-                        product, related to personal representation or services by attorneys, psychotherapists, or
-                        clergy, and their assistants. Such communications and work product are private and confidential.
-                        See <a class="linkInline"
-                               href="https://www.my.af.mil/afp/netstorage/login_page_files_cloud_one/dod-user-agreement.html"
-                               target="_blank">User Agreement</a> for details.
+                    <li>Accessing data, a server or an account for any purpose other than conducting Platform One business, even if you have
+                           authorized access, is prohibited. Revealing or sharing your account password, CAC credentials, or other MFA information,
+                           methods, and codes to others or allowing use of your account by others is strictly prohibited.
+                    </li>
+                    <li>There is the potential that information presented and exported from the Platform One contains Controlled Unclassified
+                           Information (CUI). It is the responsibility of all users to ensure information extracted from Platform One is appropriately
+                           marked and properly safeguarded. If you are not sure of the safeguards necessary for the information, contact your functional
+                           lead or Information Security Officer.
                     </li>
                 </ul>
             </div>

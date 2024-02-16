@@ -3,6 +3,32 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [3.3.1] - 2023-11-17
+### Updated
+- Upgrade Jacoco to version 0.8.11
+  1. Replace deprecated methods in buil.gradle with the current method
+  2. Remove JacocoMerge
+  3. Added JacocoReport
+- Upgrade gradle to version 8.4
+- Update gradle wrapper version from 7.6.3 to 8.4
+- Upgraded Lombok to version 8.4
+- Upgraded io.quarkus to version 3.5.2
+- Upgraded jakarta.enterprise to 4.0.0
+- Upgraded jakarta.inject to 2.0.1
+
+
+## [3.3.0] - 2023-09-06
+### Updated
+- Upgrade Keycloak libraries to version 23.0.0
+- Updated imports to be compatible with 23.0.X libraries
+  1. Add dependency 'javax.enterprise:cdi-api:1.2' to maven and gradle to address error 'package javax.enterprise.context does not exist' in quarkus-ext-routing/runtime and in quarkus-ext-routing/deployment
+  2. Changed javax to Jakarta in p1-keycloak-plugin build.gradle to address 'incompatible types: ... cannot be converted to javax.ws.rs.core..."
+- Update java version from 11 to 17
+- Update gradle wrapper version from 7.4.2 to 7.6.3
+- Updated dependency org.owasp:dependency-check-gradle from 7.2.1 to 8.4.0
+- Bump base image in Dockerfile from ubi8.8 to 9.2
+- Add new plugin code to bring back Theme V1 compatible
+
 ## [3.2.1] - 2023-05-02
 ### Updated
 - Fix bug with health/metrics endpoint blocking
@@ -36,7 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.0.9] - 2022-08-09
 ### Updated
 - Upgrade Keycloak to version 19.0.1
- 
+
 ## [2.0.8] - 2022-08-07
 ### Updated
 - more unit tests

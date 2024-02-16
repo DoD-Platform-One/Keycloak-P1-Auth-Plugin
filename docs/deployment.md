@@ -26,11 +26,10 @@ ls -l
 Push the plugin image to your image registry. Example:
 ```
 docker push registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-X.X.X
-``` 
-    
+```
+
 ### Deploy plugin with k8s init-container
 Example Big Bang deployment values to deploy Keycloak with the plugin are available at [development values](https://repo1.dso.mil/big-bang/bigbang/-/blob/master/docs/assets/configs/example/keycloak-dev-values.yaml) and [example operational values](https://repo1.dso.mil/big-bang/bigbang/-/blob/master/docs/assets/configs/example/keycloak-prod-values.yaml). Take note of the following details:
 - The Keycloak deployment uses the base Keycloak image from Iron Bank instead of a custom image.
 - The plugin jar is injected into the Keycloak container on startup by an init-container.
 - The init-container uses the k8s emptyDir for the volume. The emptyDir volume is shared between all containers in a pod. This is what allows the plugin jar to be copied into the Keycloak container.
-

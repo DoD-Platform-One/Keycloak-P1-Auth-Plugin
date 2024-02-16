@@ -5,7 +5,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.keycloak.models.GroupProvider;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.KeycloakSession;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -21,6 +23,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Yaml.class, File.class, FileInputStream.class, FilenameUtils.class, NewObjectProvider.class })
@@ -30,9 +33,13 @@ public class CommonConfigTest {
     @Mock
     RealmModel realmModel;
     @Mock
+    KeycloakSession keycloakSession;
+    @Mock
     File fileMock;
     @Mock
     FileInputStream fileInputStreamMock;
+    @Mock
+    GroupProvider groupProvider;
 
     @Before
     public void setupMockBehavior() throws Exception {
@@ -70,14 +77,14 @@ public class CommonConfigTest {
         PowerMockito.whenNew(File.class).withAnyArguments().thenReturn(fileMock);
         PowerMockito.whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStreamMock);
 
-        Yaml yaml = new Yaml(new Constructor(YAMLConfig.class));
-        YAMLConfig yamlConfig = yaml.load(stream);
+        Yaml yaml = new Yaml();
+        YAMLConfig yamlConfig = yaml.loadAs(stream, YAMLConfig.class);
 
         final Yaml yamlMock = PowerMockito.mock(Yaml.class);
         PowerMockito.whenNew(Yaml.class).withAnyArguments().thenReturn(yamlMock);
 
         PowerMockito.when(yamlMock.load(any(InputStream.class))).thenReturn(yamlConfig);
-
+        PowerMockito.when(keycloakSession.groups()).thenReturn(groupProvider);
     }
 
     @Test
@@ -87,7 +94,7 @@ public class CommonConfigTest {
         PowerMockito.when(FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG")))
             .thenReturn("test/filepath/file");
 
-        CommonConfig commonConfigInstance = CommonConfig.getInstance(realmModel);
+        CommonConfig commonConfigInstance = CommonConfig.getInstance(keycloakSession, realmModel);
     }
 
 }
