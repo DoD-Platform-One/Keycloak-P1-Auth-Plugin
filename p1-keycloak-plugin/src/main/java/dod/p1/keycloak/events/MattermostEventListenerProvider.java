@@ -1,7 +1,5 @@
 package dod.p1.keycloak.events;
 
-import okhttp3.RequestBody;
-import okhttp3.FormBody;
 import org.jboss.logging.Logger;
 
 import org.keycloak.events.Event;
@@ -38,9 +36,6 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
     /** The logger for logging events in the MattermostEventListenerProvider. */
     private static final Logger LOGGER = Logger.getLogger(MattermostEventListenerProvider.class);
 
-    /** Set of excluded Keycloak events in MattermostEventListenerProvider. */
-    private HashSet<EventType> excludedEvents;
-
     /** Set of included admin Keycloak events in MattermostEventListenerProvider. */
     private HashSet<ResourceType> includedAdminEvents;
 
@@ -55,6 +50,10 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
 
     /** Set of name-only resource types used by MattermostEventListenerProvider. */
     private final HashSet<ResourceType> nameOnlyResourceTypes;
+
+    // Sonarqube consider this a critical issue
+    /** COMMA_NAME constant. */
+    private static final String COMMA_NAME = ", name=";
 
     /**
      * Constructs a new MattermostEventListenerProvider.
@@ -72,19 +71,18 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
             final String serverURI,
             final KeycloakSession keycloakSession) {
         this.session = keycloakSession;
-        this.excludedEvents = excludedEventSet;
         this.includedAdminEvents = includedAdminEventSet;
         this.serverUri = serverURI;
         this.groups = groupArray;
 
-        this.allAttrResourceTypes = new HashSet<ResourceType>();
+        this.allAttrResourceTypes = new HashSet<>();
         this.allAttrResourceTypes.add(ResourceType.AUTH_EXECUTION);
         this.allAttrResourceTypes.add(ResourceType.AUTH_FLOW);
         this.allAttrResourceTypes.add(ResourceType.AUTHENTICATOR_CONFIG);
         this.allAttrResourceTypes.add(ResourceType.REQUIRED_ACTION);
         this.allAttrResourceTypes.add(ResourceType.REALM_ROLE_MAPPING);
 
-        this.nameOnlyResourceTypes = new HashSet<ResourceType>();
+        this.nameOnlyResourceTypes = new HashSet<>();
         this.nameOnlyResourceTypes.add(ResourceType.CLIENT_ROLE);
         this.nameOnlyResourceTypes.add(ResourceType.CLIENT_SCOPE_MAPPING);
         this.nameOnlyResourceTypes.add(ResourceType.CLIENT_ROLE_MAPPING);
@@ -101,9 +99,6 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
     @Override
     public void onEvent(final Event event) {
         // Ignore excluded events
-        if (excludedEvents != null && excludedEvents.contains(event.getType())) {
-            return;
-        }
       }
 
     /**
@@ -130,9 +125,6 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
      */
 
     private void send(final String stringEvent) {
-        RequestBody formBody = new FormBody.Builder()
-                  .add("json", stringEvent)
-                  .build();
         try {
           Slack slack = Slack.getInstance();
           String webhookUrl  = this.serverUri;
@@ -145,8 +137,6 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
           LOGGER.info(response); // WebhookResponse(code=200, message=OK, body=ok)
         } catch (IOException e) {
           LOGGER.error("UH OH!! " + e.toString());
-          //e.printStackTrace();
-          return;
         }
 
     }
@@ -159,7 +149,7 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
      */
     private String toString(final AdminEvent adminEvent) {
         StringBuilder sb = new StringBuilder();
-        String repPath = new String();
+        String repPath = "";
         final int limit = 4;
 
         sb.append("operationType=");
@@ -180,7 +170,7 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
         if (adminEvent.getRepresentation() != null) {
           JSONObject representation = new JSONObject(adminEvent.getRepresentation());
           if (adminEvent.getResourceType().equals(ResourceType.GROUP)) {
-            sb.append(", name=");
+            sb.append(COMMA_NAME);
             sb.append(representation.getString("name"));
             if (!representation.isNull("path")) {
               sb.append(", path=");
@@ -191,7 +181,7 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
           if (adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)) {
             LOGGER.info("groups: " + groups);
             LOGGER.info("path: " + representation.getString("path"));
-            sb.append(", name=");
+            sb.append(COMMA_NAME);
             sb.append(representation.getString("name"));
             sb.append(", path=");
             sb.append(representation.getString("path"));
@@ -211,18 +201,18 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
             sb.append(representation.getString("clientId"));
 
           if (!representation.isNull("name")) {
-              sb.append(", name=");
+              sb.append(COMMA_NAME);
               sb.append(representation.getString("name"));
             }
           } else if (adminEvent.getResourceType().equals(ResourceType.PROTOCOL_MAPPER)) {
-            sb.append(", name=");
+            sb.append(COMMA_NAME);
             sb.append(representation.getString("name"));
             sb.append(", protocol=");
             sb.append(representation.getString("protocol"));
             sb.append(", protocolMapper=");
             sb.append(representation.getString("protocolMapper"));
           } else if (nameOnlyResourceTypes.contains(adminEvent.getResourceType())) {
-            sb.append(", name=");
+            sb.append(COMMA_NAME);
             sb.append(representation.getString("name"));
           } else if (allAttrResourceTypes.contains(adminEvent.getResourceType())) {
             sb.append(", representation=");

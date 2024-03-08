@@ -65,7 +65,7 @@ public class AccountFederatedIdentityBeanTest {
 
         // Mock the static methods
         when(KeycloakModelUtils.getIdentityProviderDisplayName(any(), any())).thenReturn("MockedProviderDisplayName");
-        when(AccountFormService.isPasswordSet(any(), any(), any())).thenReturn(true);
+        when(AccountFormService.isPasswordSet(any())).thenReturn(true);
 
         // Instantiate the class to be tested
         accountFederatedIdentityBean = new AccountFederatedIdentityBean(mockKcSession, mockRealm, mockUser, URI.create("http://example.com"), "stateChecker");

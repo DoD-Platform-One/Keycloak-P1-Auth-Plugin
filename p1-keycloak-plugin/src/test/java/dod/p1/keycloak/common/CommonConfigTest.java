@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -95,6 +96,51 @@ public class CommonConfigTest {
             .thenReturn("test/filepath/file");
 
         CommonConfig commonConfigInstance = CommonConfig.getInstance(keycloakSession, realmModel);
+    }
+
+    @Test
+    public void getEmailMatchAutoJoinGroupTest(){
+        // CommonConfig
+        CommonConfig commonConfig = CommonConfig.getInstance(keycloakSession, realmModel);
+
+        // getEmailMatchAutoJoinGroup
+        assertNotNull(commonConfig.getEmailMatchAutoJoinGroup());
+    }
+
+    @Test
+    public void getUserActive509AttributeTest(){
+        // CommonConfig
+        CommonConfig commonConfig = CommonConfig.getInstance(keycloakSession, realmModel);
+
+        // getUserActive509Attribute
+        assertNotNull(commonConfig.getUserActive509Attribute());
+    }
+
+    @Test
+    public void getAutoJoinGroupX509Test(){
+        // CommonConfig
+        CommonConfig commonConfig = CommonConfig.getInstance(keycloakSession, realmModel);
+
+        // getAutoJoinGroupX509
+        assertNotNull(commonConfig.getAutoJoinGroupX509());
+    }
+
+    @Test
+    public void getNoEmailMatchAutoJoinGroupTest(){
+        // CommonConfig
+        CommonConfig commonConfig = CommonConfig.getInstance(keycloakSession, realmModel);
+
+        // getNoEmailMatchAutoJoinGroup
+        assertNotNull(commonConfig.getNoEmailMatchAutoJoinGroup());
+    }
+
+    @Test
+    public void getIgnoredGroupProtectionClientsTest(){
+        // CommonConfig
+        CommonConfig commonConfig = CommonConfig.getInstance(keycloakSession, realmModel);
+
+        // getIgnoredGroupProtectionClients
+        assertNotNull(commonConfig.getIgnoredGroupProtectionClients());
     }
 
 }

@@ -22,9 +22,17 @@ dependencies {
     implementation 'io.quarkus:quarkus-vertx-http:3.2.0.Final'
     implementation 'org.springframework.security:spring-security-web:5.5.0'
     implementation 'javax.servlet:javax.servlet-api:3.1.0'
-    //implementation 'javax.enterprise:cdi-api:1.2'
-    //implementation 'jakarta.enterprise:cdi-api:3.0.0-M3'
 
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+    testImplementation 'org.mockito:mockito-core:3.12.4'
+
+    testImplementation 'org.springframework:spring-context:3.0.1.RELEASE'
+    testImplementation 'io.quarkus:quarkus-reactive-routes:3.5.2'
+    testImplementation 'io.quarkus:quarkus-junit5-internal'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.0'
+    testImplementation 'jakarta.inject:jakarta.inject-api:2.0.1'
 }
 
 test {

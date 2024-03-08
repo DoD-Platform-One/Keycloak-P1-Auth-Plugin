@@ -2,6 +2,7 @@ package org.keycloak.services.resources.account;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.*;
+import jdk.jfr.consumer.EventStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,17 +16,18 @@ import org.keycloak.common.Profile;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.common.util.KerberosJdkProvider;
 import org.keycloak.common.util.UriUtils;
-import org.keycloak.events.EventBuilder;
-import org.keycloak.events.EventQuery;
-import org.keycloak.events.EventStoreProvider;
-import org.keycloak.events.EventType;
+import org.keycloak.credential.CredentialInput;
+import org.keycloak.events.*;
 import org.keycloak.forms.account.AccountProvider;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.locale.LocaleUpdaterProvider;
 import org.keycloak.models.*;
+import org.keycloak.models.credential.OTPCredentialModel;
 import org.keycloak.models.credential.PasswordCredentialModel;
+import org.keycloak.models.credential.dto.OTPCredentialData;
+import org.keycloak.models.utils.CredentialValidation;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.utils.RedirectUtils;
@@ -36,27 +38,30 @@ import org.keycloak.services.ForbiddenException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
+import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.services.util.DefaultClientSessionContext;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.AuthenticationSessionProvider;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.keycloak.storage.ReadOnlyException;
 import org.keycloak.urls.UrlType;
 import org.keycloak.userprofile.AttributeChangeListener;
 import org.keycloak.userprofile.UserProfile;
 import org.keycloak.userprofile.UserProfileProvider;
 import org.keycloak.userprofile.ValidationException;
 import org.keycloak.util.JsonSerialization;
+import org.keycloak.utils.CredentialHelper;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -73,7 +78,8 @@ import static org.powermock.api.mockito.PowerMockito.*;
         AuthenticationManager.AuthResult.class, AuthenticationManager.class,
         DefaultClientSessionContext.class, EventBuilder.class, AuthorizationProvider.class,
         UserProfileProvider.class, UserProfile.class, UriUtils.class, JsonSerialization.class,
-        RedirectUtils.class, Validation.class, AccountUrls.class, Urls.class
+        RedirectUtils.class, Validation.class, AccountUrls.class, Urls.class, OTPCredentialModel.class,
+        CredentialValidation.class, CredentialHelper.class, ValidationException.class,
 })
 public class AccountFormServiceTest {
 
@@ -95,6 +101,7 @@ public class AccountFormServiceTest {
     @Mock private AccountProvider accountProvider;
     @Mock private UserSessionModel userSessionModel;
     @Mock private PermissionTicketStore permissionTicketStore;
+    @Mock private OTPCredentialModel otpCredentialModel;
 
     // local variables
     private final String resourceId = "resourceId";
@@ -131,6 +138,9 @@ public class AccountFormServiceTest {
         mockStatic(UriUtils.class);
         mockStatic(JsonSerialization.class);
         mockStatic(RedirectUtils.class);
+        mockStatic(OTPCredentialModel.class);
+        mockStatic(CredentialValidation.class);
+        mockStatic(CredentialHelper.class);
 
         // mocks
         KeycloakContext keycloakContext = mock(KeycloakContext.class);
@@ -153,6 +163,9 @@ public class AccountFormServiceTest {
         AuthenticationSessionProvider authenticationSessionProvider = mock(AuthenticationSessionProvider.class);
         LocaleUpdaterProvider localeUpdaterProvider = mock(LocaleUpdaterProvider.class);
         RootAuthenticationSessionModel rootAuthenticationSessionModel = mock(RootAuthenticationSessionModel.class);
+        OTPCredentialData otpCredentialData = mock(OTPCredentialData.class);
+        Event event1 = mock(Event.class);
+        Event event2 = mock(Event.class);
 
         // keycloakSession
         when(keycloakSession.getContext()).thenReturn(keycloakContext);
@@ -193,6 +206,12 @@ public class AccountFormServiceTest {
         when(eventQuery.realm(any())).thenReturn(eventQuery);
         when(eventQuery.user(any())).thenReturn(eventQuery);
         when(eventQuery.maxResults(anyInt())).thenReturn(eventQuery);
+        when(eventQuery.getResultStream()).thenReturn(Stream.of(event1, event2));
+
+        // Event
+        // testLogPage - line 510 from AccountFormService require more data for testing
+        when(event1.getDetails()).thenReturn(null);
+        when(event2.getDetails()).thenReturn(null);
 
         // keycloakContext
         when(keycloakContext.getUri()).thenReturn(keycloakUriInfo);
@@ -210,6 +229,7 @@ public class AccountFormServiceTest {
         when(accountProvider.setFeatures(anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(accountProvider);
         when(accountProvider.setSuccess(any())).thenReturn(accountProvider);
         when(accountProvider.setError(any(), any())).thenReturn(accountProvider);
+        when(accountProvider.setPasswordSet(anyBoolean())).thenReturn(accountProvider);
 
         // httpHeaders
         when(httpHeaders.getRequestHeaders()).thenReturn(multivaluedMap);
@@ -269,6 +289,9 @@ public class AccountFormServiceTest {
         when(authResult.getToken()).thenReturn(accessToken);
         when(authResult.getUser()).thenReturn(userModel);
 
+        // userSessionModel
+        when(userSessionModel.getUser()).thenReturn(userModel);
+
         // permissionTicketStore
         when(permissionTicketStore.create(any(), any(), any(), any())).thenReturn(permissionTicket);
 
@@ -276,6 +299,7 @@ public class AccountFormServiceTest {
         when(DefaultClientSessionContext.fromClientSessionScopeParameter(any(), any())).thenReturn(defaultClientSessionContext);
 
         // eventBuilder
+        when(eventBuilder.clone()).thenReturn(eventBuilder);
         when(eventBuilder.event(any(EventType.class))).thenReturn(eventBuilder);
         when(eventBuilder.client(any(ClientModel.class))).thenReturn(eventBuilder);
         when(eventBuilder.user(any(UserModel.class))).thenReturn(eventBuilder);
@@ -285,6 +309,23 @@ public class AccountFormServiceTest {
 
         // userProfileProvider
         when(userProfileProvider.create(any(), any(), any())).thenReturn(userProfile);
+
+        // OTPCredentialModel
+        when(OTPCredentialModel.createFromPolicy(any(), any(), any())).thenReturn(otpCredentialModel);
+        when(otpCredentialModel.getOTPCredentialData()).thenReturn(otpCredentialData);
+        when(otpCredentialModel.getDecodedSecret()).thenReturn("someData".getBytes(StandardCharsets.UTF_8));
+
+        // otpCredentialData
+        when(otpCredentialData.getSubType()).thenReturn("totp");
+        when(otpCredentialData.getAlgorithm()).thenReturn("some algo");
+        when(otpCredentialData.getDigits()).thenReturn(3);
+        when(otpCredentialData.getPeriod()).thenReturn(5);
+
+        // CredentialValidation
+        when(CredentialValidation.validOTP(anyString(), any(), anyInt())).thenReturn(false);
+
+        // CredentialHelper
+        when(CredentialHelper.createOTPCredential(any(), any(), any(), anyString(), any())).thenReturn(false);
     }
 
     @Test
@@ -319,7 +360,7 @@ public class AccountFormServiceTest {
     @Test
     public void testIsPasswordSet(){
         // isPasswordSet test
-        assertTrue(AccountFormService.isPasswordSet(keycloakSession, realmModel, userModel));
+        assertTrue(AccountFormService.isPasswordSet(userModel));
     }
 
     @Test
@@ -390,7 +431,7 @@ public class AccountFormServiceTest {
         when(keycloakSession.getContext().getUri(any(UrlType.class))).thenReturn(keycloakUriInfo);
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
-        //processAccountUpdate test
+        //accountPage test
         assertNull(accountFormService.accountPage());
 
         // Condition 2
@@ -550,8 +591,9 @@ public class AccountFormServiceTest {
         assertNull(accountFormService.processAccountUpdate());
 
         // Condition 2 - ValidationException (empty error)
+        ValidationException validationException = mock(ValidationException.class);
         // throwException
-        doThrow(new ValidationException()).when(userProfile).update(anyBoolean(), any(AttributeChangeListener.class));
+        doThrow(validationException).when(userProfile).update(anyBoolean(), any(AttributeChangeListener.class));
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
         //processAccountUpdate test
@@ -573,7 +615,31 @@ public class AccountFormServiceTest {
         // processAccountUpdate test
         assertEquals(response, accountFormService.processAccountUpdate());
 
-        // Condition 4 - Action = Cancel
+        // Condition 4 - ValidationException (error with value) - EMAIL_EXISTS and USERNAME_EXISTS
+        // conditions
+        when(validationException.hasError(Messages.EMAIL_EXISTS, Messages.USERNAME_EXISTS)).thenReturn(true);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processAccountUpdate test
+        assertEquals(response, accountFormService.processAccountUpdate());
+
+        // Condition 5 - ValidationException (error with value) - READ_ONLY_USERNAME
+        // conditions
+        when(validationException.hasError(Messages.READ_ONLY_USERNAME)).thenReturn(true);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processAccountUpdate test
+        assertEquals(response, accountFormService.processAccountUpdate());
+
+        // Condition 6 - ReadOnlyException
+        // throwException
+        doThrow(new ReadOnlyException()).when(userProfile).update(anyBoolean(), any(AttributeChangeListener.class));
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processAccountUpdate test
+        assertEquals(response, accountFormService.processAccountUpdate());
+
+        // Condition 7 - Action = Cancel
         // variables
         MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap<>();
         // Add some sample values
@@ -585,7 +651,7 @@ public class AccountFormServiceTest {
         //processAccountUpdate test
         assertNotNull(accountFormService.processAccountUpdate());
 
-        // Condition 5 - Make (auth = null)
+        // Condition 8 - Make (auth = null)
         // AuthenticationManager
         when(AuthenticationManager.authenticateIdentityCookie(keycloakSession, realmModel, true)).thenReturn(null);
         // constructor
@@ -699,7 +765,38 @@ public class AccountFormServiceTest {
 //        //processTotpUpdate test
 //        assertNull(accountFormService.processTotpUpdate());
 
-        // Condition 4 - Action = Cancel
+        // Condition 3 - totp validOTP CredentialHelper = false
+        multivaluedMap = new MultivaluedHashMap<>();
+        // Add some sample values
+        multivaluedMap.add("stateChecker", "value1");
+        multivaluedMap.add("totp", "value2");
+        multivaluedMap.add("totpSecret", "value3");
+        multivaluedMap.add("userLabel", "value4");
+        // conditions
+        when(httpRequest.getDecodedFormParameters()).thenReturn(multivaluedMap);
+        when(CredentialValidation.validOTP(anyString(), any(), anyInt())).thenReturn(true);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        //processTotpUpdate test
+        assertNull(accountFormService.processTotpUpdate());
+
+        // Condition 4 - totp validOTP CredentialHelper = true
+        // conditions
+        when(CredentialHelper.createOTPCredential(any(), any(), any(), anyString(), any())).thenReturn(true);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        //processTotpUpdate test
+        assertNull(accountFormService.processTotpUpdate());
+
+        // Condition 5 - totp not validOTP
+        // conditions
+        when(CredentialValidation.validOTP(anyString(), any(), anyInt())).thenReturn(false);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        //processTotpUpdate test
+        assertNull(accountFormService.processTotpUpdate());
+
+        // Condition 6 - Action = Cancel
         // variables
         multivaluedMap = new MultivaluedHashMap<>();
         // Add some sample values
@@ -711,7 +808,7 @@ public class AccountFormServiceTest {
         //processTotpUpdate test
         assertNull(accountFormService.processTotpUpdate());
 
-        // Condition 5 - Make (auth = null)
+        // Condition 7 - Make (auth = null)
         // AuthenticationManager
         when(AuthenticationManager.authenticateIdentityCookie(keycloakSession, realmModel, true)).thenReturn(null);
         // constructor
@@ -721,20 +818,69 @@ public class AccountFormServiceTest {
     }
 
     @Test
+//    @Test (expected = ForbiddenException.class) // This is a lie, please remove
     public void testProcessPasswordUpdate(){
-        // Condition 1 - Make (auth = null)
+        // Condition 1
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processPasswordUpdate
+        assertNull(accountFormService.processPasswordUpdate());
+
+        // Condition 2 - formData contains password
+        // variables
+        MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap<>();
+        // Add some sample values
+        multivaluedMap.add("stateChecker", "value1");
+        multivaluedMap.add("password", "somePassword");
+        // conditions
+        when(httpRequest.getDecodedFormParameters()).thenReturn(multivaluedMap);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processPasswordUpdate
+        assertNull(accountFormService.processPasswordUpdate());
+
+        // Condition 3 - user.credentialManagaer is not valid
+        // conditions
+        when(userModel.credentialManager().isValid(any(CredentialInput.class))).thenReturn(true);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processPasswordUpdate
+        assertNull(accountFormService.processPasswordUpdate());
+
+        // Condition 4 - password-new populated
+        // Add some sample values
+        multivaluedMap.add("password-new", "somePassword");
+        // conditions
+        when(httpRequest.getDecodedFormParameters()).thenReturn(multivaluedMap);
+        when(userModel.credentialManager().isConfiguredFor(PasswordCredentialModel.TYPE)).thenReturn(false);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processPasswordUpdate
+        assertNull(accountFormService.processPasswordUpdate());
+
+        // Condition 5 - password-confirm populated
+        // Add some sample values
+        multivaluedMap.add("password-confirm", "somePassword");
+        // conditions
+        when(httpRequest.getDecodedFormParameters()).thenReturn(multivaluedMap);
+        // constructor
+        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
+        // processPasswordUpdate
+        assertNull(accountFormService.processPasswordUpdate());
+
+        // Condition 6
+
+        // Condition 7
+
+        // Condition 8
+
+        // Condition 9 - Make (auth = null)
         // AuthenticationManager
         when(AuthenticationManager.authenticateIdentityCookie(keycloakSession, realmModel, true)).thenReturn(null);
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
         // processPasswordUpdate test
         assertNotNull(accountFormService.processPasswordUpdate());
-
-        // Condition 2
-//        // constructor
-//        accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
-//        // eventBuilder.clone() issue
-//        assertNull(accountFormService.processPasswordUpdate());
     }
 
     @Test

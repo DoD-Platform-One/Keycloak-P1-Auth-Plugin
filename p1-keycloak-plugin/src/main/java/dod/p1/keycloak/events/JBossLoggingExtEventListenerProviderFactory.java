@@ -70,6 +70,7 @@ public class JBossLoggingExtEventListenerProviderFactory implements EventListene
      */
     @Override
     public void postInit(final KeycloakSessionFactory factory) {
+        // Performs any necessary post-initialization tasks.
     }
 
     /**
@@ -77,6 +78,7 @@ public class JBossLoggingExtEventListenerProviderFactory implements EventListene
      */
     @Override
     public void close() {
+        // Closes any resources held by the factory.
     }
 
     /**

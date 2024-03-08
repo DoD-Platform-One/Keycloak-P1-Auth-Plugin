@@ -39,7 +39,7 @@ public class LogBean {
    * @param eventList The list of events to populate the LogBean.
    */
   public LogBean(final List<Event> eventList) {
-    this.events = new LinkedList<EventBean>();
+    this.events = new LinkedList<>();
     for (Event e : eventList) {
       this.events.add(new EventBean(e));
     }
@@ -113,7 +113,7 @@ public class LogBean {
      * @return The list of details associated with the event.
      */
     public List<DetailBean> getDetails() {
-      List<DetailBean> details = new LinkedList<DetailBean>();
+      List<DetailBean> details = new LinkedList<>();
       if (event.getDetails() != null) {
         for (Map.Entry<String, String> e : event.getDetails().entrySet()) {
           details.add(new DetailBean(e));

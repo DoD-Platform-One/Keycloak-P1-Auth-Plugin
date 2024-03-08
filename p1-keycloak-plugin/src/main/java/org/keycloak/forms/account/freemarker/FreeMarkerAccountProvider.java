@@ -120,9 +120,6 @@ public class FreeMarkerAccountProvider implements AccountProvider {
   /** The FreeMarker provider for processing templates. */
   private FreeMarkerProvider freeMarker;
 
-  /** HTTP headers. */
-  private HttpHeaders headers;
-
   /** Map of additional attributes used in rendering templates. */
   private Map<String, Object> attributes;
 
@@ -167,7 +164,8 @@ public class FreeMarkerAccountProvider implements AccountProvider {
    */
   @Override
   public AccountProvider setHttpHeaders(final HttpHeaders httpHeaders) {
-    this.headers = httpHeaders;
+    // Sets the HTTP headers for the account provider.
+    // headers are never used in this class
     return this;
   }
 
@@ -221,7 +219,7 @@ public class FreeMarkerAccountProvider implements AccountProvider {
         "url",
         new UrlBean(realm, theme, baseUri, baseQueryUri, uriInfo.getRequestUri(), idTokenHint));
 
-    if (realm.isInternationalizationEnabled()) {
+    if (realm != null && realm.isInternationalizationEnabled()) {
       UriBuilder b = UriBuilder.fromUri(baseQueryUri).path(uriInfo.getPath());
       customAttributes.put("locale", new LocaleBean(realm, locale, b, messagesBundle));
     }
@@ -252,22 +250,19 @@ public class FreeMarkerAccountProvider implements AccountProvider {
         customAttributes.put("sessions", new SessionsBean(realm, sessions));
         break;
       case APPLICATIONS:
-      customAttributes.put("applications", new ApplicationsBean(session, realm, user));
+        customAttributes.put("applications", new ApplicationsBean(session, realm, user));
         customAttributes.put("advancedMsg", new AdvancedMessageFormatterMethod(locale, messagesBundle));
         break;
       case PASSWORD:
         customAttributes.put("password", new PasswordBean(passwordSet));
         break;
       case RESOURCES:
-        if (!realm.isUserManagedAccessAllowed()) {
-          return Response.status(Status.FORBIDDEN).build();
-        }
-        customAttributes.put("authorization", new AuthorizationBean(session, realm, user, uriInfo));
       case RESOURCE_DETAIL:
-        if (!realm.isUserManagedAccessAllowed()) {
+        if (realm != null && !realm.isUserManagedAccessAllowed()) {
           return Response.status(Status.FORBIDDEN).build();
         }
         customAttributes.put("authorization", new AuthorizationBean(session, realm, user, uriInfo));
+        break;
       default:
         // Handle unknown page or provide a default behavior
         break;
@@ -462,7 +457,7 @@ public class FreeMarkerAccountProvider implements AccountProvider {
   @Override
   public AccountProvider setError(
       final Response.Status responseStatus, final String errorMessage, final Object... parameters) {
-    this.status = status;
+    this.status = responseStatus;
     setMessage(MessageType.ERROR, errorMessage, parameters);
     return this;
   }
@@ -661,10 +656,6 @@ public class FreeMarkerAccountProvider implements AccountProvider {
    * @return This {@code FreeMarkerAccountProvider} instance for method chaining.
    *
    * @see FeaturesBean
-   * @see FeaturesBean#isIdentityProviderFeatureEnabled()
-   * @see FeaturesBean#isEventsHandlingEnabled()
-   * @see FeaturesBean#isPasswordUpdateFeatureSupported()
-   * @see FeaturesBean#isAuthorizationFeatureSupported()
    */
   @Override
   public AccountProvider setFeatures(
@@ -704,5 +695,7 @@ public class FreeMarkerAccountProvider implements AccountProvider {
    * Closes the account provider.
    */
   @Override
-  public void close() { }
+  public void close() {
+    // Closes the account provider.
+  }
 }

@@ -37,9 +37,6 @@ public class SessionsBean {
   /** A list containing user session information. */
   private List<UserSessionBean> events;
 
-  /** The realm associated with the user sessions. */
-  private RealmModel realm;
-
   /**
    * Constructs a {@code SessionsBean} object with the specified realm and list of user sessions.
    *

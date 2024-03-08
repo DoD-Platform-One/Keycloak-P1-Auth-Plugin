@@ -43,9 +43,6 @@ import org.keycloak.utils.TotpUtils;
  */
 public class TotpBean {
 
-  /** The Keycloak session. */
-  private final KeycloakSession session;
-
   /** The realm associated with the user. */
   private final RealmModel realm;
 
@@ -74,7 +71,7 @@ public class TotpBean {
   private static final int TOTP_SECRET_LENGTH = 20;
 
   /**
-   * Constructs a {@code TotpBean} object with the specified Keycloak session, realm, user, and URI builder.
+   * Constructs a {@code TotpBean} object with the specified realm, user, and URI builder.
    *
    * @param kcSession    The Keycloak session.
    * @param realmModel   The realm associated with the user.
@@ -86,7 +83,6 @@ public class TotpBean {
       final RealmModel realmModel,
       final UserModel user,
       final UriBuilder uriBldr) {
-    this.session = kcSession;
     this.uriBuilder = uriBldr;
     this.enabled = user.credentialManager().isConfiguredFor(OTPCredentialModel.TYPE);
     if (enabled) {
@@ -105,7 +101,7 @@ public class TotpBean {
         this.otpCredentials = otpCredentialList;
       }
     } else {
-      this.otpCredentials = Collections.EMPTY_LIST;
+      this.otpCredentials = Collections.emptyList();
     }
 
     this.realm = realmModel;

@@ -104,7 +104,7 @@ public class AccountFederatedIdentityBean {
     this.removeLinkPossible =
         availableIdentities.get() > 1
             || user.getFederationLink() != null
-            || AccountFormService.isPasswordSet(kcSession, realm, user);
+            || AccountFormService.isPasswordSet(user);
   }
 
   private FederatedIdentityModel getIdentity(

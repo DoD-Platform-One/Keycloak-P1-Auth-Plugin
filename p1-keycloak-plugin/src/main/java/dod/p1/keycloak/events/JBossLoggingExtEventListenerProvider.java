@@ -47,6 +47,16 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
     /** The set of resource types for which only the name attribute is considered in the event processing. */
     private final HashSet<ResourceType> nameOnlyResourceTypes;
 
+    // Sonarqube consider this a critical issue
+    /** COMMA_CLIENT_ID constant. */
+    private static final String COMMA_CLIENT_ID = ", clientId=";
+
+    /** COMMA_USERNAME constant. */
+    private static final String COMMA_USERNAME = ", username=";
+
+    /** COMMA_NAME constant. */
+    private static final String COMMA_NAME = ", name=";
+
     /**
      * Constructs a new instance of the event listener provider with the specified parameters.
      *
@@ -66,23 +76,16 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
         this.logger = eventLogger;
         this.successLevel = successEvent;
         this.errorLevel = errorEvent;
-
-        // this.excludedEvents = new HashSet<EventType>();
-        // this.excludedEvents.add(EventType.REFRESH_TOKEN_ERROR);
-        // this.excludedEvents.add(EventType.REFRESH_TOKEN);
-        // this.excludedEvents.add(EventType.USER_INFO_REQUEST);
-        // this.excludedEvents.add(EventType.CUSTOM_REQUIRED_ACTION);
-        // this.excludedEvents.add(EventType.CODE_TO_TOKEN);
         this.excludedEvents = excludedEventType;
 
-        this.allAttrResourceTypes = new HashSet<ResourceType>();
+        this.allAttrResourceTypes = new HashSet<>();
         this.allAttrResourceTypes.add(ResourceType.AUTH_EXECUTION);
         this.allAttrResourceTypes.add(ResourceType.AUTH_FLOW);
         this.allAttrResourceTypes.add(ResourceType.AUTHENTICATOR_CONFIG);
         this.allAttrResourceTypes.add(ResourceType.REQUIRED_ACTION);
         this.allAttrResourceTypes.add(ResourceType.REALM_ROLE_MAPPING);
 
-        this.nameOnlyResourceTypes = new HashSet<ResourceType>();
+        this.nameOnlyResourceTypes = new HashSet<>();
         this.nameOnlyResourceTypes.add(ResourceType.CLIENT_ROLE);
         this.nameOnlyResourceTypes.add(ResourceType.CLIENT_SCOPE_MAPPING);
         this.nameOnlyResourceTypes.add(ResourceType.CLIENT_ROLE_MAPPING);
@@ -108,7 +111,7 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
             sb.append(event.getType());
             sb.append(", realmId=");
             sb.append(event.getRealmId());
-            sb.append(", clientId=");
+            sb.append(COMMA_CLIENT_ID);
             sb.append(event.getClientId());
             sb.append(", userId=");
             sb.append(event.getUserId());
@@ -126,12 +129,12 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
                 boolean foundemail = false;
 
                 for (Map.Entry<String, String> e : event.getDetails().entrySet()) {
-                  if (e.getKey().equals("username")) {
-                      founduser = true;
-                  }
-                  if (e.getKey().equals("email")) {
-                      foundemail = true;
-                  }
+                    if (e.getKey().equals("username")) {
+                        founduser = true;
+                    }
+                    if (e.getKey().equals("email")) {
+                        foundemail = true;
+                    }
 
                     sb.append(", ");
                     sb.append(e.getKey());
@@ -144,22 +147,20 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
                         sb.append("'");
                     }
                 }
-                //if (event.getUserId() != null && EventType.REGISTER.equals(event.getType())) {
                 if (event.getUserId() != null && !excludedEvents.contains(event.getType())) {
-                  RealmModel realm = session.getContext().getRealm();
-                  //RealmModel realm = session.realms().getRealm(event.getRealmId());
-                  UserModel user = session.users().getUserById(realm, event.getUserId());
-                  String username = user.getUsername();
-                  String email = user.getEmail();
+                    RealmModel realm = session.getContext().getRealm();
+                    UserModel user = session.users().getUserById(realm, event.getUserId());
+                    String username = user.getUsername();
+                    String email = user.getEmail();
 
-                  if (username != null && !founduser) {
-                    sb.append(", username=");
-                    sb.append(username);
-                  }
-                  if (email != null && !foundemail) {
-                    sb.append(", email=");
-                    sb.append(email);
-                  }
+                    if (username != null && !founduser) {
+                        sb.append(COMMA_USERNAME);
+                        sb.append(username);
+                    }
+                    if (email != null && !foundemail) {
+                        sb.append(", email=");
+                        sb.append(email);
+                    }
                 }
             }
 
@@ -191,7 +192,7 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
             sb.append(adminEvent.getResourceType());
             sb.append(", realmId=");
             sb.append(adminEvent.getAuthDetails().getRealmId());
-            sb.append(", clientId=");
+            sb.append(COMMA_CLIENT_ID);
             sb.append(adminEvent.getAuthDetails().getClientId());
             sb.append(", userId=");
             sb.append(adminEvent.getAuthDetails().getUserId());
@@ -201,59 +202,55 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
             sb.append(adminEvent.getResourcePath());
 
             if (adminEvent.getRepresentation() != null) {
-              JSONObject representation = new JSONObject(adminEvent.getRepresentation());
-              if (adminEvent.getResourceType().equals(ResourceType.GROUP)) {
-                sb.append(", name=");
-                sb.append(representation.getString("name"));
-                if (!representation.isNull("path")) {
-                  sb.append(", path=");
-                  sb.append(representation.getString("path"));
+                JSONObject representation = new JSONObject(adminEvent.getRepresentation());
+                if (adminEvent.getResourceType().equals(ResourceType.GROUP)) {
+                    sb.append(COMMA_NAME);
+                    sb.append(representation.getString("name"));
+                    if (!representation.isNull("path")) {
+                        sb.append(", path=");
+                        sb.append(representation.getString("path"));
+                    }
+
                 }
+                if (adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)) {
+                    sb.append(COMMA_NAME);
+                    sb.append(representation.getString("name"));
+                    sb.append(", path=");
+                    sb.append(representation.getString("path"));
 
-              }
-              if (adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)) {
-                sb.append(", name=");
-                sb.append(representation.getString("name"));
-                sb.append(", path=");
-                sb.append(representation.getString("path"));
+                    String[] resourcePath = adminEvent.getResourcePath().split("/", limit);
 
-                String[] resourcePath = adminEvent.getResourcePath().split("/", limit);
+                    sb.append(COMMA_USERNAME);
+                    sb.append(
+                            session.users().getUserById(session.getContext().getRealm(), resourcePath[1]).getUsername()
+                    );
+                } else if (adminEvent.getResourceType().equals(ResourceType.USER)) {
+                    sb.append(COMMA_USERNAME);
+                    sb.append(representation.getString("username"));
+                    sb.append(", email=");
+                    sb.append(representation.getString("email"));
+                } else if (adminEvent.getResourceType().equals(ResourceType.CLIENT)) {
+                    sb.append(COMMA_CLIENT_ID);
+                    sb.append(representation.getString("clientId"));
 
-                //UserModel user = session.users().getUserById(resourcePath[1], session.getContext().getRealm());
-                sb.append(", username=");
-                sb.append(session.users().getUserById(session.getContext().getRealm(), resourcePath[1]).getUsername());
-
-                //GroupModel group = session.getContext().getRealm().getGroupById(resourcePath[3]);
-                // sb.append(", groupname=");
-                // sb.append(session.getContext().getRealm().getGroupById(resourcePath[3]).getName());
-
-              } else if (adminEvent.getResourceType().equals(ResourceType.USER)) {
-                sb.append(", username=");
-                sb.append(representation.getString("username"));
-                sb.append(", email=");
-                sb.append(representation.getString("email"));
-              } else if (adminEvent.getResourceType().equals(ResourceType.CLIENT)) {
-                sb.append(", clientId=");
-                sb.append(representation.getString("clientId"));
-
-                if (!representation.isNull("name")) {
-                  sb.append(", name=");
-                  sb.append(representation.getString("name"));
+                    if (!representation.isNull("name")) {
+                        sb.append(COMMA_NAME);
+                        sb.append(representation.getString("name"));
+                    }
+                } else if (adminEvent.getResourceType().equals(ResourceType.PROTOCOL_MAPPER)) {
+                    sb.append(COMMA_NAME);
+                    sb.append(representation.getString("name"));
+                    sb.append(", protocol=");
+                    sb.append(representation.getString("protocol"));
+                    sb.append(", protocolMapper=");
+                    sb.append(representation.getString("protocolMapper"));
+                } else if (nameOnlyResourceTypes.contains(adminEvent.getResourceType())) {
+                    sb.append(COMMA_NAME);
+                    sb.append(representation.getString("name"));
+                } else if (allAttrResourceTypes.contains(adminEvent.getResourceType())) {
+                    sb.append(", representation=");
+                    sb.append(adminEvent.getRepresentation());
                 }
-              } else if (adminEvent.getResourceType().equals(ResourceType.PROTOCOL_MAPPER)) {
-                sb.append(", name=");
-                sb.append(representation.getString("name"));
-                sb.append(", protocol=");
-                sb.append(representation.getString("protocol"));
-                sb.append(", protocolMapper=");
-                sb.append(representation.getString("protocolMapper"));
-              } else if (nameOnlyResourceTypes.contains(adminEvent.getResourceType())) {
-                sb.append(", name=");
-                sb.append(representation.getString("name"));
-              } else if (allAttrResourceTypes.contains(adminEvent.getResourceType())) {
-                sb.append(", representation=");
-                sb.append(adminEvent.getRepresentation());
-              }
             }
 
             if (adminEvent.getError() != null) {
@@ -262,20 +259,19 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
             }
 
             if (adminEvent.getAuthDetails().getUserId() != null) {
-              RealmModel realm = session.getContext().getRealm();
-              //RealmModel realm = session.realms().getRealm(event.getRealmId());
-              UserModel user = session.users().getUserById(realm, adminEvent.getAuthDetails().getUserId());
-              String username = user.getUsername();
-              String email = user.getEmail();
+                RealmModel realm = session.getContext().getRealm();
+                UserModel user = session.users().getUserById(realm, adminEvent.getAuthDetails().getUserId());
+                String username = user.getUsername();
+                String email = user.getEmail();
 
-              if (username != null) {
-                sb.append(", Admin_username=");
-                sb.append(username);
-              }
-              if (email != null) {
-                sb.append(", Admin_email=");
-                sb.append(email);
-              }
+                if (username != null) {
+                    sb.append(", Admin_username=");
+                    sb.append(username);
+                }
+                if (email != null) {
+                    sb.append(", Admin_email=");
+                    sb.append(email);
+                }
 
             }
 
@@ -292,6 +288,7 @@ public class JBossLoggingExtEventListenerProvider implements EventListenerProvid
      */
     @Override
     public void close() {
+        // Closes the event listener provider.
     }
 
     /**

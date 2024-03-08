@@ -1,6 +1,5 @@
 package dod.p1.keycloak.events;
 
-import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
@@ -22,14 +21,15 @@ import java.time.format.DateTimeFormatter;
  */
 public class LastLoginEventListenerProvider implements EventListenerProvider {
 
-    /** Logger for the LastLoginEventListenerProvider class. */
-    private static final Logger LOGGER = Logger.getLogger(LastLoginEventListenerProvider.class);
-
     /** The Keycloak session. */
     private final KeycloakSession session;
 
     /** The realm provider. */
     private final RealmProvider model;
+
+    // Sonarqube consider this a critical issue
+    /** LASTLOGIN constant. */
+    private static final String LASTLOGIN = "lastlogin";
 
     /**
      * Constructs a new LastLoginEventListenerProvider instance with the provided Keycloak session.
@@ -50,18 +50,14 @@ public class LastLoginEventListenerProvider implements EventListenerProvider {
     public void onEvent(final Event event) {
 
         if (EventType.LOGIN.equals(event.getType())) {
-            //log.infof("LastLoginEventListenerProvider: ## NEW %s EVENT", event.getType());
-            //log.info("-----------------------------------------------------------");
-
             RealmModel realm = this.model.getRealm(event.getRealmId());
             UserModel user = this.session.users().getUserById(realm, event.getUserId());
 
             if (user != null) {
-                //log.info("Updating last login status for user: " + event.getUserId());
 
                 Map<String, List<String>> userAttrs = user.getAttributes();
-                if (userAttrs.containsKey("lastlogin")) {
-                    List<String> userLastLogin = userAttrs.get("lastlogin");
+                if (userAttrs.containsKey(LASTLOGIN)) {
+                    List<String> userLastLogin = userAttrs.get(LASTLOGIN);
                     if (userLastLogin != null && !userLastLogin.isEmpty()) {
                         user.setSingleAttribute("priorlogin", userLastLogin.get(0));
                     }
@@ -70,7 +66,7 @@ public class LastLoginEventListenerProvider implements EventListenerProvider {
                 // Use current server time for login event
                 OffsetDateTime loginTime = OffsetDateTime.now(ZoneOffset.UTC);
                 String loginTimeS = DateTimeFormatter.ISO_INSTANT.format(loginTime);
-                user.setSingleAttribute("lastlogin", loginTimeS);
+                user.setSingleAttribute(LASTLOGIN, loginTimeS);
             }
         }
     }
@@ -83,6 +79,7 @@ public class LastLoginEventListenerProvider implements EventListenerProvider {
      */
     @Override
     public void onEvent(final AdminEvent adminEvent, final boolean includeRepresentation) {
+        // Handles the incoming admin event (unused in this implementation).
     }
 
     /**
