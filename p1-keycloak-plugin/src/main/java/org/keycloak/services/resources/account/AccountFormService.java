@@ -155,7 +155,10 @@ public class AccountFormService extends AbstractSecuredLocalService
    * or resource release.
    */
   @Override
-  public void close() { }
+  public void close() {
+    // Closes any resources associated with this class. This method is empty, indicating no specific cleanup
+    // or resource release.
+  }
 
   /** The logger for this class. */
   private static final Logger LOGGER = Logger.getLogger(AccountFormService.class);
@@ -191,6 +194,19 @@ public class AccountFormService extends AbstractSecuredLocalService
 
   /** A constant representing the maximum number of results for events. */
   private static final int MAX_EVENT_RESULTS = 30;
+
+  // Sonarqube consider this a critical issue
+  /** PSSWD constant. */
+  private static final String PSSWD = "password";
+
+  /** REFERRER constant. */
+  private static final String REFERRER = "referrer";
+
+  /** RESOURCE constant. */
+  private static final String RESOURCE = "resource";
+
+  /** INVALID_RESOURCE constant. */
+  private static final String INVALID_RESOURCE = "Invalid resource";
 
   /**
    * Constructs an instance of {@code AccountFormService} with the provided Keycloak session,
@@ -294,12 +310,10 @@ public class AccountFormService extends AbstractSecuredLocalService
    * @return A UriBuilder for the account service base URL.
    */
   public static UriBuilder accountServiceBaseUrl(final UriInfo uriInfo) {
-    UriBuilder base =
-        uriInfo
+        return uriInfo
             .getBaseUriBuilder()
             .path(RealmsResource.class)
             .path(RealmsResource.class, "getAccountService");
-    return base;
   }
 
   /**
@@ -365,7 +379,7 @@ public class AccountFormService extends AbstractSecuredLocalService
                   errorMessage.getParameters());
               authSession.removeAuthNote(ACCOUNT_MGMT_FORWARDED_ERROR_NOTE);
             } catch (IOException ioe) {
-              throw new RuntimeException(ioe);
+              throw new IllegalArgumentException(ioe);
             }
           }
         }
@@ -449,14 +463,14 @@ public class AccountFormService extends AbstractSecuredLocalService
    *
    * @return A Response object containing the password page.
    */
-  @Path("password")
+  @Path(PSSWD)
   @GET
   public Response passwordPage() {
     if (auth != null) {
-      account.setPasswordSet(isPasswordSet(session, realm, auth.getUser()));
+      account.setPasswordSet(isPasswordSet(auth.getUser()));
     }
 
-    return forwardToPage("password", AccountPages.PASSWORD);
+    return forwardToPage(PSSWD, AccountPages.PASSWORD);
   }
 
   /**
@@ -654,9 +668,9 @@ public class AccountFormService extends AbstractSecuredLocalService
     UriBuilder builder =
         AccountUrls.accountBase(session.getContext().getUri().getBaseUri())
             .path(AccountFormService.class, "sessionsPage");
-    String referrer = session.getContext().getUri().getQueryParameters().getFirst("referrer");
+    String referrer = session.getContext().getUri().getQueryParameters().getFirst(REFERRER);
     if (referrer != null) {
-      builder.queryParam("referrer", referrer);
+      builder.queryParam(REFERRER, referrer);
     }
     URI location = builder.build(realm.getName());
     return Response.seeOther(location).build();
@@ -710,9 +724,9 @@ public class AccountFormService extends AbstractSecuredLocalService
     UriBuilder builder =
         AccountUrls.accountBase(session.getContext().getUri().getBaseUri())
             .path(AccountFormService.class, "applicationsPage");
-    String referrer = session.getContext().getUri().getQueryParameters().getFirst("referrer");
+    String referrer = session.getContext().getUri().getQueryParameters().getFirst(REFERRER);
     if (referrer != null) {
-      builder.queryParam("referrer", referrer);
+      builder.queryParam(REFERRER, referrer);
     }
     URI location = builder.build(realm.getName());
     return Response.seeOther(location).build();
@@ -794,14 +808,14 @@ public class AccountFormService extends AbstractSecuredLocalService
    *
    * @return A Response object indicating the result of processing the password update.
    */
-  @Path("password")
+  @Path(PSSWD)
   @POST
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   public Response processPasswordUpdate() {
     MultivaluedMap<String, String> formData = request.getDecodedFormParameters();
 
     if (auth == null) {
-      return login("password");
+      return login(PSSWD);
     }
 
     auth.require(AccountRoles.MANAGE_ACCOUNT);
@@ -809,10 +823,10 @@ public class AccountFormService extends AbstractSecuredLocalService
     csrfCheck(formData);
     UserModel user = auth.getUser();
 
-    boolean requireCurrent = isPasswordSet(session, realm, user);
+    boolean requireCurrent = isPasswordSet(user);
     account.setPasswordSet(requireCurrent);
 
-    String password = formData.getFirst("password");
+    String password = formData.getFirst(PSSWD);
     String passwordNew = formData.getFirst("password-new");
     String passwordConfirm = formData.getFirst("password-confirm");
 
@@ -1003,7 +1017,7 @@ public class AccountFormService extends AbstractSecuredLocalService
           // authenticate
           if (session.users().getFederatedIdentitiesStream(realm, user).count() > 1
               || user.getFederationLink() != null
-              || isPasswordSet(session, realm, user)) {
+              || isPasswordSet(user)) {
             session.users().removeFederatedIdentity(realm, user, providerId);
 
             LOGGER.debugv(
@@ -1046,10 +1060,10 @@ public class AccountFormService extends AbstractSecuredLocalService
    * @param resourceId The ID of the resource (optional).
    * @return A Response object indicating the result of navigating to the resources page.
    */
-  @Path("resource")
+  @Path(RESOURCE)
   @GET
   public Response resourcesPage(@QueryParam("resource_id") final String resourceId) {
-    return forwardToPage("resource", AccountPages.RESOURCES);
+    return forwardToPage(RESOURCE, AccountPages.RESOURCES);
   }
 
   /**
@@ -1061,7 +1075,7 @@ public class AccountFormService extends AbstractSecuredLocalService
   @Path("resource/{resource_id}")
   @GET
   public Response resourceDetailPage(@PathParam("resource_id") final String resourceId) {
-    return forwardToPage("resource", AccountPages.RESOURCE_DETAIL);
+    return forwardToPage(RESOURCE, AccountPages.RESOURCE_DETAIL);
   }
 
   /**
@@ -1095,7 +1109,7 @@ public class AccountFormService extends AbstractSecuredLocalService
     MultivaluedMap<String, String> formData = request.getDecodedFormParameters();
 
     if (auth == null) {
-      return login("resource");
+      return login(RESOURCE);
     }
 
     auth.require(AccountRoles.MANAGE_ACCOUNT);
@@ -1108,7 +1122,7 @@ public class AccountFormService extends AbstractSecuredLocalService
         authorization.getStoreFactory().getResourceStore().findById(realm, null, resourceId);
 
     if (resource == null) {
-      throw ErrorResponse.error("Invalid resource", Response.Status.BAD_REQUEST);
+      throw ErrorResponse.error(INVALID_RESOURCE, Response.Status.BAD_REQUEST);
     }
 
     if (action == null) {
@@ -1141,7 +1155,7 @@ public class AccountFormService extends AbstractSecuredLocalService
 
       Set<Scope> scopesToKeep = new HashSet<>();
 
-      if (isRevokePolicyAll) {
+      if (policy != null && isRevokePolicyAll) {
         for (Scope scope : policy.getScopes()) {
           policy.removeScope(scope);
         }
@@ -1154,14 +1168,16 @@ public class AccountFormService extends AbstractSecuredLocalService
                   .findById(realm, resourceServer, id.split(":")[1]));
         }
 
-        for (Scope scope : policy.getScopes()) {
-          if (!scopesToKeep.contains(scope)) {
-            policy.removeScope(scope);
+        if (policy != null) {
+          for (Scope scope : policy.getScopes()) {
+            if (!scopesToKeep.contains(scope)) {
+              policy.removeScope(scope);
+            }
           }
         }
       }
 
-      if (policy.getScopes().isEmpty()) {
+      if (policy != null && policy.getScopes().isEmpty()) {
         for (Policy associated : policy.getAssociatedPolicies()) {
           policyStore.delete(realm, associated.getId());
         }
@@ -1190,23 +1206,21 @@ public class AccountFormService extends AbstractSecuredLocalService
       while (iterator.hasNext()) {
         PermissionTicket ticket = iterator.next();
 
-        if (isGrant) {
-          if (permissionId != null
-              && permissionId.length > 0
-              && !Arrays.asList(permissionId).contains(ticket.getId())) {
-            continue;
-          }
+        if (isGrant
+                && permissionId != null
+                && permissionId.length > 0
+                && !Arrays.asList(permissionId).contains(ticket.getId())) {
+          continue;
         }
 
         if (isGrant && !ticket.isGranted()) {
           ticket.setGrantedTimestamp(System.currentTimeMillis());
           iterator.remove();
-        } else if (isDeny || isRevoke) {
-          if (permissionId != null
-              && permissionId.length > 0
-              && Arrays.asList(permissionId).contains(ticket.getId())) {
+        } else if ((isDeny || isRevoke)
+                && permissionId != null
+                && permissionId.length > 0
+                && Arrays.asList(permissionId).contains(ticket.getId())) {
             iterator.remove();
-          }
         }
       }
 
@@ -1216,10 +1230,10 @@ public class AccountFormService extends AbstractSecuredLocalService
     }
 
     if (isRevoke || isRevokePolicy || isRevokePolicyAll) {
-      return forwardToPage("resource", AccountPages.RESOURCE_DETAIL);
+      return forwardToPage(RESOURCE, AccountPages.RESOURCE_DETAIL);
     }
 
-    return forwardToPage("resource", AccountPages.RESOURCES);
+    return forwardToPage(RESOURCE, AccountPages.RESOURCES);
   }
 
   /**
@@ -1251,7 +1265,7 @@ public class AccountFormService extends AbstractSecuredLocalService
     MultivaluedMap<String, String> formData = request.getDecodedFormParameters();
 
     if (auth == null) {
-      return login("resource");
+      return login(RESOURCE);
     }
 
     auth.require(AccountRoles.MANAGE_ACCOUNT);
@@ -1266,7 +1280,7 @@ public class AccountFormService extends AbstractSecuredLocalService
     ResourceServer resourceServer = resource.getResourceServer();
 
     if (resource == null) {
-      throw ErrorResponse.error("Invalid resource", Response.Status.BAD_REQUEST);
+      throw ErrorResponse.error(INVALID_RESOURCE, Response.Status.BAD_REQUEST);
     }
 
     if (userIds == null || userIds.length == 0) {
@@ -1340,7 +1354,7 @@ public class AccountFormService extends AbstractSecuredLocalService
       }
     }
 
-    return forwardToPage("resource", AccountPages.RESOURCE_DETAIL);
+    return forwardToPage(RESOURCE, AccountPages.RESOURCE_DETAIL);
   }
 
   /**
@@ -1350,14 +1364,14 @@ public class AccountFormService extends AbstractSecuredLocalService
    * @param action      The action to perform, such as "cancel" or "cancelRequest".
    * @return A Response object indicating the result of the action.
    */
-  @Path("resource")
+  @Path(RESOURCE)
   @POST
   public Response processResourceActions(
       @FormParam("resource_id") final String[] resourceIds, @FormParam("action") final String action) {
     MultivaluedMap<String, String> formData = request.getDecodedFormParameters();
 
     if (auth == null) {
-      return login("resource");
+      return login(RESOURCE);
     }
 
     auth.require(AccountRoles.MANAGE_ACCOUNT);
@@ -1375,7 +1389,7 @@ public class AccountFormService extends AbstractSecuredLocalService
           authorization.getStoreFactory().getResourceStore().findById(realm, null, resourceId);
 
       if (resource == null) {
-        throw ErrorResponse.error("Invalid resource", Response.Status.BAD_REQUEST);
+        throw ErrorResponse.error(INVALID_RESOURCE, Response.Status.BAD_REQUEST);
       }
 
       Map<PermissionTicket.FilterOption, String> filters =
@@ -1425,17 +1439,15 @@ public class AccountFormService extends AbstractSecuredLocalService
   /**
    * Checks if a password is set for the user.
    *
-   * @param session The Keycloak session.
-   * @param realm   The realm model.
    * @param user    The user model.
    * @return {@code true} if a password is set, {@code false} otherwise.
    */
-  public static boolean isPasswordSet(final KeycloakSession session, final RealmModel realm, final UserModel user) {
+  public static boolean isPasswordSet(final UserModel user) {
     return user.credentialManager().isConfiguredFor(PasswordCredentialModel.TYPE);
   }
 
   private String[] getReferrer() {
-    String referrer = session.getContext().getUri().getQueryParameters().getFirst("referrer");
+    String referrer = session.getContext().getUri().getQueryParameters().getFirst(REFERRER);
     if (referrer == null) {
       return null;
     }
@@ -1460,13 +1472,11 @@ public class AccountFormService extends AbstractSecuredLocalService
         }
         return new String[] {referrerName, referrerUri};
       }
-    } else if (referrerUri != null) {
-      if (client != null) {
-        referrerUri = RedirectUtils.verifyRedirectUri(session, referrerUri, client);
+    } else if (referrerUri != null && client != null) {
+      referrerUri = RedirectUtils.verifyRedirectUri(session, referrerUri, client);
 
-        if (referrerUri != null) {
-          return new String[] {referrer, referrerUri};
-        }
+      if (referrerUri != null) {
+        return new String[] {referrer, referrerUri};
       }
     }
 

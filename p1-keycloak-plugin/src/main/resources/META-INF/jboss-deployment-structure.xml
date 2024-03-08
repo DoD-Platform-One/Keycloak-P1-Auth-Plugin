@@ -1,6 +1,9 @@
 <jboss-deployment-structure>
     <deployment>
         <dependencies>
+           <module
+                  name="org.keycloak.keycloak-crypto-default"
+                  export="true"/>
             <module
                     name="org.keycloak.keycloak-core"
                     export="true"/>

@@ -3,7 +3,7 @@ Because the Platform One custom provider plugin is now decoupled from the Big Ba
 
 | **PLUGIN VERSION** | **KEYCLOAK VERSION** | **KEYCLOAK VERSION**<br>**COMPATIBILITY**
 |:-------------------|:---------------------|:---------------
-| 3.3.1              | 23.0.0               | 23.0.X
+| 3.3.1              | 23.0.4               | 23.0.X
 | 3.3.0              | 23.0.0               | 23.0.X
 | 3.2.1              | 21.0.2               | 21.0.X
 | 3.2.0              | 21.0.2               | 21.0.X

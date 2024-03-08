@@ -1,5 +1,9 @@
 package dod.p1.keycloak.registration;
 
+import dod.p1.keycloak.utils.ZacsOCSPProvider;
+import org.keycloak.utils.OCSPProvider;
+import org.keycloak.crypto.def.BCOCSPProvider;
+
 import dod.p1.keycloak.common.CommonConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,24 +28,32 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertPathValidatorException;
+
+import java.net.URI;
+
 import java.util.stream.Stream;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
 
 public final class X509Tools {
 
-    /**
-     * The LOGGER.
-     */
+    /** The LOGGER. */
     private static final Logger LOGGER = LogManager.getLogger(X509Tools.class);
-    /**
-     * The certificate policy OID.
-     */
+
+    /** The certificate policy OID. */
     private static final String CERTIFICATE_POLICY_OID = "2.5.29.32";
-    /**
-     * The max number of certificate policies to check.
-     */
+
+    /** The max number of certificate policies to check. */
     private static final int MAX_CERT_POLICIES_TO_CHECK = 10;
+
+    // Sonarqube critical fix
+    /** Get x509 identity. */
+    private static final String GET_X509_IDENTITY = "GET_X509_IDENTITY";
 
     private static String getLogPrefix(final AuthenticationSessionModel authenticationSession, final String suffix) {
         return "P1_X509_TOOLS_" + suffix + "_" + authenticationSession.getParentSession().getId();
@@ -166,15 +178,57 @@ public final class X509Tools {
      * @return Object
      */
     public static Object getX509IdentityFromCertChain(
-        final X509Certificate[] certs,
-        final KeycloakSession session,
-        final RealmModel realm,
-        final AuthenticationSessionModel authenticationSession) {
+            final X509Certificate[] certs,
+            final KeycloakSession session,
+            final RealmModel realm,
+            final AuthenticationSessionModel authenticationSession) throws CertPathValidatorException {
 
         String logPrefix = getLogPrefix(authenticationSession, "GET_X509_IDENTITY_FROM_CHAIN");
 
         if (certs == null || certs.length == 0) {
             LOGGER.info("{} no valid certs found", logPrefix);
+            return null;
+        }
+
+        // Extract issuer certificate from the certificate chain
+        X509Certificate issuerCertificate = certs.length > 1 ? certs[1] : null;
+
+        try {
+            ZacsOCSPProvider ocspProvider = new ZacsOCSPProvider();
+            List<String> responderURIs = ocspProvider.getResponderURIsPublic(certs[0]);
+            List<URI> responderURIsAsURI = responderURIs.stream()
+                    .map(URI::create)
+                    .collect(Collectors.toList());
+            X509Certificate responderCert = null;
+            Date date = null;
+            LOGGER.debug("{}: ZacsOCSPProvider - cert: {} issuer: {} responderURI: {}",
+                    getLogPrefix(authenticationSession, GET_X509_IDENTITY),
+                    certs[0],
+                    issuerCertificate,
+                    responderURIsAsURI.get(0)
+            );
+
+            // Perform OCSP check
+            BCOCSPProvider.OCSPRevocationStatus ocspStatus = ocspProvider.check(
+                    session,
+                    certs[0],  // Assuming certs[0] represents the certificate for which the OCSP check is performed
+                    issuerCertificate,
+                    responderURIsAsURI.get(0),
+                    responderCert,  // Setting to null if not needed
+                    date  // Setting to null if not needed
+            );
+            // Check the OCSP revocation status
+            if (ocspStatus.getRevocationStatus() != OCSPProvider.RevocationStatus.GOOD) {
+                LOGGER.warn("{}: ZacsOCSPProvider check failed",
+                        getLogPrefix(authenticationSession, GET_X509_IDENTITY));
+                return null;
+            } else {
+                LOGGER.debug("{}: ZacsOCSPProvider check passed",
+                        getLogPrefix(authenticationSession, GET_X509_IDENTITY));
+            }
+        } catch (CertificateEncodingException e) {
+            LOGGER.warn("{} Error while getting responder URIs from certificate: {}",
+                    logPrefix, e.getMessage());
             return null;
         }
 

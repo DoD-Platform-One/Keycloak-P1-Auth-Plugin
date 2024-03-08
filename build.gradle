@@ -1,6 +1,7 @@
 plugins {
     id 'groovy-gradle-plugin'
     id 'jacoco'
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 group = "${rootProjectgroupId}"

@@ -30,6 +30,10 @@ public class MattermostEventListenerProviderFactory implements EventListenerProv
     /** Array of groups used in the Mattermost event listener provider. */
     private String[] groups;
 
+    // Sonarqube consider this a critical issue
+    /** GROUP_MEMBERSHIP_VALUES constant. */
+    private static final String GROUP_MEMBERSHIP_VALUES = "group-membership-values";
+
     /**
      * Creates a new instance of MattermostEventListenerProvider using the provided Keycloak session.
      *
@@ -67,9 +71,9 @@ public class MattermostEventListenerProviderFactory implements EventListenerProv
         }
 
         // Initialize groups
-        if (config.getArray("group-membership-values") != null) {
-          groups = new String[config.getArray("group-membership-values").length];
-          groups = config.getArray("group-membership-values").clone();
+        if (config.getArray(GROUP_MEMBERSHIP_VALUES) != null) {
+          groups = new String[config.getArray(GROUP_MEMBERSHIP_VALUES).length];
+          groups = config.getArray(GROUP_MEMBERSHIP_VALUES).clone();
         }
 
         // Initialize Mattermost server URI
@@ -83,7 +87,7 @@ public class MattermostEventListenerProviderFactory implements EventListenerProv
      */
     @Override
     public void postInit(final KeycloakSessionFactory factory) {
-
+        // Performs post-initialization actions for the Mattermost event listener provider factory.
     }
 
     /**
@@ -91,6 +95,7 @@ public class MattermostEventListenerProviderFactory implements EventListenerProv
      */
     @Override
     public void close() {
+        // Closes and releases resources associated with the Mattermost event listener provider factory.
     }
 
     /**
@@ -101,7 +106,6 @@ public class MattermostEventListenerProviderFactory implements EventListenerProv
     @Override
     public String getId() {
         return ID;
-
     }
 
 }

@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static dod.p1.keycloak.utils.Utils.setupFileMocks;
+import static dod.p1.keycloak.utils.Utils.setupX509Mocks;
 import static org.mockito.ArgumentMatchers.*;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -140,6 +141,7 @@ class RegistrationX509PasswordTest {
 
     @Test
     public void testValidatePasswordEmpty() {
+        setupX509Mocks();
 
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
         formData.add(RegistrationPage.FIELD_PASSWORD, "");
@@ -254,6 +256,8 @@ class RegistrationX509PasswordTest {
 
     @Test
     public void testSuccess() {
+        setupX509Mocks();
+
         // CONDITION 1
         MultivaluedMapImpl<String, String>  formData = new MultivaluedMapImpl<>();
         formData.add(RegistrationPage.FIELD_PASSWORD, "password");

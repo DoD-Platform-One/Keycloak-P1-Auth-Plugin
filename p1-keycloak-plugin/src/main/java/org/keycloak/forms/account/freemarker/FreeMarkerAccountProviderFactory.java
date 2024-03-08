@@ -55,7 +55,9 @@ public class FreeMarkerAccountProviderFactory implements AccountProviderFactory 
    * @param config The configuration scope.
    */
   @Override
-  public void init(final Config.Scope config) { }
+  public void init(final Config.Scope config) {
+    // Initializes the factory with configuration.
+  }
 
   /**
    * Performs post-initialization tasks.
@@ -63,13 +65,17 @@ public class FreeMarkerAccountProviderFactory implements AccountProviderFactory 
    * @param factory The Keycloak session factory.
    */
   @Override
-  public void postInit(final KeycloakSessionFactory factory) { }
+  public void postInit(final KeycloakSessionFactory factory) {
+    // Performs post-initialization tasks.
+  }
 
   /**
    * Cleans up resources associated with the factory.
    */
   @Override
-  public void close() { }
+  public void close() {
+    // Cleans up resources associated with the factory.
+  }
 
   /**
    * Gets the identifier for this factory.

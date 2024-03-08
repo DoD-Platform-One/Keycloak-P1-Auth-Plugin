@@ -8,7 +8,7 @@ This documentation is intended to outline the manual steps so that it can be aut
 ### Build
 First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. If you want to build on your workstation without the gradle image you will need to install the appropriate versions of JDK and gradle. The java archive(jar) will be created at /build/libs/p1-keycloak-plugin-x.x.x.jar. The plugin uses semantic versioning controlled by the "version" in the top level gradle.properties configuration.
 ```
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk17:8.3 bash
 cd /app
 ./gradlew clean --build-cache assemble
 ```

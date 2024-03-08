@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [3.3.1] - 2023-11-17
 ### Updated
 - Upgrade Jacoco to version 0.8.11
-  1. Replace deprecated methods in buil.gradle with the current method
+  1. Replace deprecated methods in build.gradle with the current method
   2. Remove JacocoMerge
   3. Added JacocoReport
 - Upgrade gradle to version 8.4

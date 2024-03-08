@@ -42,7 +42,7 @@ Follow instructions in the [P1 Keycloak package repo](https://repo1.dso.mil/big-
 ### Run linting
 To run code linting locally on workstation
 ```bash
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk17:8.3 bash
 cd /app
 ./gradlew lintGradle
 ```
@@ -51,7 +51,7 @@ cd /app
 An IDE is best for running unit tests to get code coverage. You can also run unit tests from command line on workstation.
 Locally run the tests and generate the html report.
 ```bash
-docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk11:7.4.2 bash
+docker run -it --rm -v $(pwd):/app registry1.dso.mil/ironbank/opensource/gradle/gradle-jdk17:8.3 bash
 cd /app
 ./gradlew clean test jacocoTestReport --info
 ```

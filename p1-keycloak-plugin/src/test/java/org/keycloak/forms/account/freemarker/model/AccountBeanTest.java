@@ -35,8 +35,8 @@ public class AccountBeanTest {
         profileFormData1.add("lastName", "Doe");
         profileFormData1.add("username", "johndoe");
         profileFormData1.add("email", "john.doe@example.com");
-        profileFormData1.addAll("customAttribute1", Arrays.asList("value1"));
-        profileFormData1.addAll("customAttribute2", Arrays.asList("value2"));
+        profileFormData1.addAll("customAttribute1", List.of("value1"));
+        profileFormData1.addAll("customAttribute2", List.of("value2"));
 
         AccountBean accountBean1 = new AccountBean(mockUserModel, profileFormData1);
 
@@ -48,6 +48,7 @@ public class AccountBeanTest {
         assertEquals("value2", accountBean1.getAttributes().get("customAttribute2"));
         assertEquals("default1", accountBean1.getAttributes().get("customDefaultAttribute1"));
         assertEquals("default2", accountBean1.getAttributes().get("customDefaultAttribute2"));
+
         // Test case 2: ProfileFormData is null
         AccountBean accountBean2 = new AccountBean(mockUserModel, null);
 
@@ -55,8 +56,8 @@ public class AccountBeanTest {
         assertEquals("UserLastName", accountBean2.getLastName());   // Assuming default user last name
         assertEquals("UserUsername", accountBean2.getUsername());   // Assuming default user username
         assertEquals("user@example.com", accountBean2.getEmail());   // Assuming default user email
-        assertEquals(null, accountBean2.getAttributes().get("customAttribute1"));
-        assertEquals(null, accountBean2.getAttributes().get("customAttribute2"));
+        assertNull(accountBean2.getAttributes().get("customAttribute1"));
+        assertNull(accountBean2.getAttributes().get("customAttribute2"));
         assertEquals("default1", accountBean2.getAttributes().get("customDefaultAttribute1"));
         assertEquals("default2", accountBean2.getAttributes().get("customDefaultAttribute2"));
 
@@ -66,8 +67,8 @@ public class AccountBeanTest {
 
     private Map<String, List<String>> createMockAttributes() {
         Map<String, List<String>> attributes = new HashMap<>();
-        attributes.put("customDefaultAttribute1", Arrays.asList("default1"));
-        attributes.put("customDefaultAttribute2", Arrays.asList("default2"));
+        attributes.put("customDefaultAttribute1", List.of("default1"));
+        attributes.put("customDefaultAttribute2", List.of("default2"));
         return attributes;
     }
 }

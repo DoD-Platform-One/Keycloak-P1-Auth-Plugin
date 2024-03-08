@@ -6,6 +6,7 @@ import dod.p1.keycloak.utils.UserModelDefaultMethodsImpl;
 import dod.p1.keycloak.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
+import org.keycloak.authentication.FormContext;
 import org.keycloak.http.HttpRequest;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,10 +39,14 @@ import java.util.stream.Stream;
 import static dod.p1.keycloak.utils.Utils.setupFileMocks;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class})
+@PrepareForTest({ Yaml.class, FileInputStream.class, File.class,
+        CommonConfig.class, FilenameUtils.class, NewObjectProvider.class,
+        X509Tools.class,
+})
 @PowerMockIgnore("javax.management.*")
 class RegistrationValidation2Test {
 
@@ -122,6 +127,10 @@ class RegistrationValidation2Test {
 
     @Test
     public void testSuccess() {
+
+        mockStatic(X509Tools.class);
+
+        PowerMockito.when(X509Tools.getX509Username(any(FormContext.class))).thenReturn("something");
 
         UserModelDefaultMethodsImpl userModelDefaultMethodsImpl = new UserModelDefaultMethodsImpl();
         PowerMockito.when(validationContext.getUser()).thenReturn(userModelDefaultMethodsImpl);

@@ -60,7 +60,7 @@ public class AccountBean {
 
     for (Map.Entry<String, List<String>> attr : userModel.getAttributes().entrySet()) {
       List<String> attrValue = attr.getValue();
-      if (attrValue.size() > 0) {
+      if (!attrValue.isEmpty()) {
         attributes.put(attr.getKey(), attrValue.get(0));
       }
 
@@ -129,8 +129,7 @@ public class AccountBean {
    * @return A map of custom attributes.
    */
   public Map<String, String> getAttributes() {
-    //return profileFormData != null ? attributes : Collections.emptyMap();
-    return attributes != null ? attributes : Collections.emptyMap();
-
+    // attributes is never null, it can be empty, but it will never be null (check line 49)
+    return !attributes.isEmpty() ? attributes : Collections.emptyMap();
   }
 }

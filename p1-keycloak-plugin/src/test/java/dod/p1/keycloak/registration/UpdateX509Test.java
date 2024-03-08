@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static dod.p1.keycloak.utils.Utils.setupFileMocks;
+import static dod.p1.keycloak.utils.Utils.setupX509Mocks;
 import static org.mockito.ArgumentMatchers.*;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -209,6 +210,8 @@ class UpdateX509Test {
 
     @Test
     public void testRequiredActionChallengeCondition1() throws Exception {
+        setupX509Mocks();
+
         PowerMockito.when(requiredActionContext.form()).thenReturn(loginFormsProvider);
 
         UpdateX509 updateX509 = new UpdateX509();
@@ -217,6 +220,8 @@ class UpdateX509Test {
 
     @Test
     public void testRequiredActionChallengeCondition2() throws Exception {
+        setupX509Mocks();
+
         PowerMockito.when(requiredActionContext.form()).thenReturn(loginFormsProvider);
         PowerMockito.when(requiredActionContext.getUser()).thenReturn(userModel);
         PowerMockito.when(userModel.getUsername()).thenReturn("an awesome username");
@@ -227,6 +232,8 @@ class UpdateX509Test {
 
     @Test
     public void testProcessActionCancel() throws Exception {
+        setupX509Mocks();
+
         MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
         formData.add("cancel", "");
 
@@ -239,6 +246,8 @@ class UpdateX509Test {
 
     @Test
     public void testProcessAction() throws Exception {
+        setupX509Mocks();
+
         // CONDITION 1
         MultivaluedMapImpl<String, String> formData = new MultivaluedMapImpl<>();
 

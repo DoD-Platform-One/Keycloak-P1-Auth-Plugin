@@ -36,7 +36,6 @@ import org.keycloak.authorization.model.ResourceServer;
 import org.keycloak.authorization.model.Scope;
 import org.keycloak.authorization.store.PermissionTicketStore;
 import org.keycloak.common.util.Time;
-import org.keycloak.forms.account.freemarker.model.AuthorizationBean.RequesterBean;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -111,7 +110,7 @@ public class AuthorizationBean {
               .findById(realmModel, null, pathParameters.get(0));
 
       if (resourceInfo != null && !resourceInfo.getOwner().equals(userModel.getId())) {
-        throw new RuntimeException(
+        throw new IllegalStateException(
             "User [" + userModel.getUsername() + "] can not access resource [" + resourceInfo.getId() + "]");
       }
     }
@@ -607,9 +606,8 @@ public class AuthorizationBean {
      * Adds a permission for the resource.
      *
      * @param ticket                    The permission ticket.
-     * @param authorizationProvider     The authorization provider.
      */
-    private void addPermission(final PermissionTicket ticket, final AuthorizationProvider authorizationProvider) {
+    private void addPermission(final PermissionTicket ticket) {
       permissions
           .computeIfAbsent(ticket.getRequester(), key -> new RequesterBean(ticket, authorization))
           .addScope(ticket);
@@ -662,7 +660,7 @@ public class AuthorizationBean {
 
       requests
           .computeIfAbsent(resourceModel.getId(), resourceId -> getResource(resourceId))
-          .addPermission(ticket, authorization);
+          .addPermission(ticket);
     }
 
     return requests.values();
