@@ -1,3 +1,31 @@
+/* mobile optimizations
+-- see: https://repo1.dso.mil/big-bang/product/plugins/keycloak-p1-auth-plugin/-/issues/27
+*/
+
+/* Max-width based off of bootstrap.css */
+@media (max-width: 575.98px) {
+  .card-header.branding.row {
+    flex-wrap: nowrap;
+  }
+  .card-header.branding.row div:nth-child(2) {
+    max-width: 0;
+  }
+}
+
+/* Max-width based off testing */
+@media (max-width: 300px) {
+  .card-header.branding.row {
+    flex-wrap: wrap;
+  }
+}
+
+/* Overrides bootstrap.css config */
+.navbar.fixed-top {
+  position: sticky;
+}
+
+/* end mobile optimizations */
+
 #custom-header {
   align-items: center;
   background: url(../img/p1-logo.png) no-repeat;
@@ -136,7 +164,7 @@ ul#kc-totp-supported-apps {
   background-color: #fff;
   color: #333;
   font-size: 16px;
-  padding: 10px 0;
+  padding: 10px;
 }
 
 #kc-totp-secret-qr-code {
