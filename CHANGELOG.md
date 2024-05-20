@@ -3,6 +3,11 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [3.3.2] - 2024-05-03
+### Updated
+- [Style optimizations to better support mobile browsers](https://repo1.dso.mil/big-bang/product/plugins/keycloak-p1-auth-plugin/-/issues/27).
+- Updated Dockerfile to match that of [the Iron Bank version](https://repo1.dso.mil/dsop/big-bang/p1-keycloak-plugin/-/blob/master/Dockerfile?ref_type=heads).
+
 ## [3.3.1] - 2023-11-17
 ### Updated
 - Upgrade Jacoco to version 0.8.11
@@ -15,7 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Upgraded io.quarkus to version 3.5.2
 - Upgraded jakarta.enterprise to 4.0.0
 - Upgraded jakarta.inject to 2.0.1
-
 
 ## [3.3.0] - 2023-09-06
 ### Updated
