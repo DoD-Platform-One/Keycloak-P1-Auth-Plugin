@@ -23,20 +23,22 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.x509.X509ClientCertificateLookup;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.truststore.TruststoreProvider;
+import org.keycloak.Config;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertPathValidatorException;
+import javax.security.auth.x500.X500Principal;
 
 import java.net.URI;
 
 import java.util.stream.Stream;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
 
@@ -50,10 +52,6 @@ public final class X509Tools {
 
     /** The max number of certificate policies to check. */
     private static final int MAX_CERT_POLICIES_TO_CHECK = 10;
-
-    // Sonarqube critical fix
-    /** Get x509 identity. */
-    private static final String GET_X509_IDENTITY = "GET_X509_IDENTITY";
 
     private static String getLogPrefix(final AuthenticationSessionModel authenticationSession, final String suffix) {
         return "P1_X509_TOOLS_" + suffix + "_" + authenticationSession.getParentSession().getId();
@@ -168,7 +166,41 @@ public final class X509Tools {
         PolicyInformation[] policyInformation = certificatePolicies.getPolicyInformation();
         return policyInformation[policyIdentifierPos].getPolicyIdentifier().getId();
     }
+    /**
+     * Find CA In Truststore.
+     * @param session a Keycloak Session
+     * @param issuer a X500Principal
+     * @return X509Certificate
+     */
+    public static X509Certificate findCAInTruststore(
+            final KeycloakSession session,
+            final X500Principal issuer) throws GeneralSecurityException {
 
+        LOGGER.debug("ISSUER {}", issuer);
+        LOGGER.debug("SESSION {}", session);
+
+        TruststoreProvider truststoreProvider = session.getProvider(TruststoreProvider.class);
+        LOGGER.info("TRUSTSTOREPROVIDER {}", truststoreProvider);
+
+        if (truststoreProvider == null || truststoreProvider.getTruststore() == null) {
+            return null;
+        }
+        Map<X500Principal, X509Certificate> rootCerts = truststoreProvider.getRootCertificates();
+        X509Certificate ca = rootCerts.get(issuer);
+
+        LOGGER.debug("ROOTCERTS {}", rootCerts);
+        LOGGER.debug("CA {}", ca);
+
+        if (ca == null) {
+            // fallback to lookup the issuer from the list of intermediary CAs
+            ca = truststoreProvider.getIntermediateCertificates().get(issuer);
+            LOGGER.debug("GETISSUER {}", ca);
+        }
+        if (ca != null) {
+            ca.checkValidity();
+        }
+        return ca;
+    }
     /**
      * Get x509 identity from cert chain.
      * @param certs an array of CA certs
@@ -181,55 +213,58 @@ public final class X509Tools {
             final X509Certificate[] certs,
             final KeycloakSession session,
             final RealmModel realm,
-            final AuthenticationSessionModel authenticationSession) throws CertPathValidatorException {
+            final AuthenticationSessionModel authenticationSession) throws GeneralSecurityException {
 
         String logPrefix = getLogPrefix(authenticationSession, "GET_X509_IDENTITY_FROM_CHAIN");
+        String ocspEnabled = Config.scope("babyYodaOcsp").get("enabled", "false");
+        LOGGER.info("ZacsOCSPProvider Mode Set: {}", ocspEnabled);
 
         if (certs == null || certs.length == 0) {
-            LOGGER.info("{} no valid certs found", logPrefix);
-            return null;
+          LOGGER.info("{} no valid certs found", logPrefix);
+          return null;
         }
 
-        // Extract issuer certificate from the certificate chain
-        X509Certificate issuerCertificate = certs.length > 1 ? certs[1] : null;
+        X509Certificate cert = certs[0]; // simplifying the assignment; handle array checks as needed
 
-        try {
-            ZacsOCSPProvider ocspProvider = new ZacsOCSPProvider();
-            List<String> responderURIs = ocspProvider.getResponderURIsPublic(certs[0]);
-            List<URI> responderURIsAsURI = responderURIs.stream()
-                    .map(URI::create)
-                    .collect(Collectors.toList());
-            X509Certificate responderCert = null;
-            Date date = null;
-            LOGGER.debug("{}: ZacsOCSPProvider - cert: {} issuer: {} responderURI: {}",
-                    getLogPrefix(authenticationSession, GET_X509_IDENTITY),
-                    certs[0],
-                    issuerCertificate,
-                    responderURIsAsURI.get(0)
-            );
+        // OCSP Check to address revoked cert getting activecac attribute.
+        //To Enable in command:  "--spi-baby-yoda-ocsp-enabled=true"
+        //or in ENV:  KC_SPI_BABY_YODA_OCSP_ENABLED: "true"
+        //KC_SPI_TRUSTSTORE_FILE_FILE: "/opt/keycloak/certs/truststore.jks"
+        //KC_SPI_TRUSTSTORE_FILE_PASSWORD: "trust_pw"
+        if  (ocspEnabled.equals("true")) { // Don't perform this check at all if bypass
+          X509Certificate issuer = certs.length > 1 ? certs[1] : findCAInTruststore(session, cert
+                      .getIssuerX500Principal());
 
-            // Perform OCSP check
-            BCOCSPProvider.OCSPRevocationStatus ocspStatus = ocspProvider.check(
-                    session,
-                    certs[0],  // Assuming certs[0] represents the certificate for which the OCSP check is performed
-                    issuerCertificate,
-                    responderURIsAsURI.get(0),
-                    responderCert,  // Setting to null if not needed
-                    date  // Setting to null if not needed
-            );
-            // Check the OCSP revocation status
-            if (ocspStatus.getRevocationStatus() != OCSPProvider.RevocationStatus.GOOD) {
-                LOGGER.warn("{}: ZacsOCSPProvider check failed",
-                        getLogPrefix(authenticationSession, GET_X509_IDENTITY));
-                return null;
-            } else {
-                LOGGER.debug("{}: ZacsOCSPProvider check passed",
-                        getLogPrefix(authenticationSession, GET_X509_IDENTITY));
-            }
-        } catch (CertificateEncodingException e) {
-            LOGGER.warn("{} Error while getting responder URIs from certificate: {}",
-                    logPrefix, e.getMessage());
-            return null;
+          if (issuer == null) {
+                  LOGGER.error("{} No trusted CA in certificate found: {}", logPrefix, cert.getIssuerX500Principal());
+                  return null; // Stop processing since OCSP check is mandatory and CA is not trusted
+          }
+
+          try {
+              ZacsOCSPProvider ocspProvider = new ZacsOCSPProvider();
+              List<String> responderURIs = ocspProvider.getResponderURIsPublic(cert);
+              List<URI> responderURIsAsURI = responderURIs.stream()
+                      .map(URI::create).collect(Collectors.toList());
+
+              LOGGER.debug("{}: ZacsOCSPProvider - cert: {} issuer: {} responderURI: {}",
+                      logPrefix, cert, issuer, responderURIsAsURI.get(0)
+              );
+
+              // Perform OCSP check
+              BCOCSPProvider.OCSPRevocationStatus ocspStatus = ocspProvider.check(
+                      session, cert, issuer, responderURIsAsURI.get(0), null, null);
+              // Check the OCSP revocation status
+              if (ocspStatus.getRevocationStatus() != OCSPProvider.RevocationStatus.GOOD) {
+                  LOGGER.warn("{}: ZacsOCSPProvider check failed", logPrefix);
+                      return null; // Enforce mode: halt the process if OCSP check fails
+              } else {
+                  LOGGER.debug("{}: ZacsOCSPProvider check passed", logPrefix);
+              }
+          } catch (CertificateEncodingException e) {
+              LOGGER.warn("{} Error while getting responder URIs from certificate: {}",
+                      logPrefix, e.getMessage());
+              return null;
+          }
         }
 
         boolean hasValidPolicy = false;
@@ -238,7 +273,7 @@ public final class X509Tools {
         // Only check up to 10 cert policies, DoD only uses 1-2 policies
         while (!hasValidPolicy && index < MAX_CERT_POLICIES_TO_CHECK) {
             try {
-                String certificatePolicyId = getCertificatePolicyId(certs[0], index, 0);
+                String certificatePolicyId = getCertificatePolicyId(cert, index, 0);
                 if (certificatePolicyId == null) {
                     break;
                 }

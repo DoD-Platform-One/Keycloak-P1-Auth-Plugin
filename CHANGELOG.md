@@ -3,6 +3,20 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [3.3.3] - 2024-05-22
+### Updated
+- Added Confluence instructions on how to create a new Theme. Also refactor the current Theme with the
+  new way since it is kind of generic enough for other Realms to use the Theme.
+- Updated Theme, it is more dynamic, not longer hardcoded to baby-yoda.
+- Updated Snakeyml dependency to 2.2, requested by cyber. Vulnerability fixed.
+- Mobile rendering update, now it should display readable in a mobile device.
+- OCSP refactor, now a flag needs to be updated in order to be used. By default it is off.
+-       // OCSP Check to address revoked cert getting activecac attribute.
+        //To Enable in command:  "--spi-baby-yoda-ocsp-enabled=true"
+        //or in ENV:  KC_SPI_BABY_YODA_OCSP_ENABLED: "true"
+        //KC_SPI_TRUSTSTORE_FILE_FILE: "/opt/keycloak/certs/truststore.jks"
+        //KC_SPI_TRUSTSTORE_FILE_PASSWORD: "trust_pw"
+
 ## [3.3.2] - 2024-05-03
 ### Updated
 - [Style optimizations to better support mobile browsers](https://repo1.dso.mil/big-bang/product/plugins/keycloak-p1-auth-plugin/-/issues/27).
@@ -20,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Upgraded io.quarkus to version 3.5.2
 - Upgraded jakarta.enterprise to 4.0.0
 - Upgraded jakarta.inject to 2.0.1
+
 
 ## [3.3.0] - 2023-09-06
 ### Updated
