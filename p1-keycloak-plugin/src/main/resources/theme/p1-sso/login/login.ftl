@@ -33,12 +33,11 @@
                             class="btn btn-primary btn-block"
                             name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
                 </div>
-
             </form>
         </#if>
 
         <div class="footer-text">
-            No account? <a href="/register">Click here</a> to register now.<br>
+            No account? <a href="/auth/realms/${realm.name}/protocol/openid-connect/registrations?client_id=account&response_type=code">Click here</a> to register now.<br>
             Need additional help? <a href="https://sso-info.il2.dso.mil/" target="_blank">Click here</a> or <a
                     id="helpdesk" href="mailto:help@dso.mil">email us</a>
         </div>
@@ -52,7 +51,7 @@
         feedback.outerHTML = [
             '<div class="alert alert-info cac-info">',
             '<h2>New DoD PKI Detected</h2>',
-            '<div style="line-height: 2rem;">If you do not have an account yet, <a href="/register">click to register</a> now.  Otherwise, please login with your username/password to associate this CAC with your existing account.',
+            '<div>If you do not have an account yet, <a href="/auth/realms/${realm.name}/protocol/openid-connect/registrations?client_id=account&response_type=code">click to register</a> now.  Otherwise, please login with your username/password to associate this CAC with your existing account.',
             '</div></div>'
         ].join('');
     }

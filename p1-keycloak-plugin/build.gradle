@@ -24,6 +24,7 @@ repositories {
 }
 
 dependencies {
+    // Powermock is deprecated, need to update to a current version, might need test refactor.
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
     testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
     // testImplementation 'org.mockito:mockito-inline:5.2.0'
@@ -38,13 +39,11 @@ dependencies {
     compileOnly 'org.keycloak:keycloak-server-spi-private:23.0.4'
     compileOnly 'org.keycloak:keycloak-crypto-default:23.0.4'
 
-    implementation 'com.google.auto.service:auto-service:1.1.1'
-    // implementation 'org.yaml:snakeyaml:2.2'
-    implementation 'org.yaml:snakeyaml:1.33'
+    implementation 'org.yaml:snakeyaml:2.2'
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+    implementation 'com.google.auto.service:auto-service:1.1.1'
     implementation 'org.jboss.logmanager:log4j2-jboss-logmanager:1.1.1.Final'
-    // implementation 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 
     implementation 'org.json:json:20231013'
     implementation 'com.slack.api:bolt:1.36.1'

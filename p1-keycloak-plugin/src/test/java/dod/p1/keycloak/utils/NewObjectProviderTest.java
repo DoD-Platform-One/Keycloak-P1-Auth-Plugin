@@ -52,7 +52,7 @@ public class NewObjectProviderTest {
     public void testGetYaml() throws Exception {
         // Mock the Yaml constructor using PowerMockito
         Yaml mockYaml = mock(Yaml.class);
-        whenNew(Yaml.class).withArguments(new Constructor(YAMLConfig.class)).thenReturn(mockYaml);
+        whenNew(Yaml.class).withAnyArguments().thenReturn(mockYaml);
 
         // Invoke the method under test
         Yaml result = NewObjectProvider.getYaml();

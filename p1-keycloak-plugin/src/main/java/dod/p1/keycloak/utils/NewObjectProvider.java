@@ -1,6 +1,7 @@
 package dod.p1.keycloak.utils;
 
 import dod.p1.keycloak.common.YAMLConfig;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -42,7 +43,7 @@ public final class NewObjectProvider {
      * @return Yaml
      */
     public static Yaml getYaml() {
-        return new Yaml(new Constructor(YAMLConfig.class));
+        return new Yaml(new Constructor(YAMLConfig.class, new LoaderOptions()));
     }
 
 }
