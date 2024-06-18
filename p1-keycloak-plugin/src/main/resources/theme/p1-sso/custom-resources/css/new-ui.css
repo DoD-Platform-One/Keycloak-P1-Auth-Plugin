@@ -24,6 +24,23 @@
   position: sticky;
 }
 
+@media (max-width: 767px) {
+  .navbar-expand-md .navbar-nav {
+      -ms-flex-direction: column;
+      flex-direction: column;
+  }
+  .collapse:not(.show) {
+    display: block !important;
+  }
+  .navbar .nav-item.active > a {
+    border-bottom: none !important;
+  }
+}
+
+#navbarCollapse > ul > li:nth-child(5) {
+  display: none;
+}
+
 /* end mobile optimizations */
 
 #custom-header {
@@ -357,3 +374,4 @@ body.password .subtitle {
 
 .card hr {
   border-top: 1px solid rgba(255, 255, 255, 0.7);
+}

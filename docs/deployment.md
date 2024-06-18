@@ -28,22 +28,22 @@ Build an image that contains the plugin jar. The official plugin image is hosted
   
 Build the image:
 ```bash
-docker build -t registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.2 .
+docker build -t registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.4 .
 ```
 Verify the built image contains the plugin jar:
 ```bash
 docker run -it --rm \
-    registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.2 \
+    registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.4 \
     sh -c "pwd && ls -lah | grep keycloak"
 ```
 There it is:
 ```bash
 /app
--rwxr-xr-x 1 root root  23M May  3 18:33 p1-keycloak-plugin-3.3.2.jar
+-rwxr-xr-x 1 root root  23M May  3 18:33 p1-keycloak-plugin-3.3.4.jar
 ```
 Push the image to the staging registry:
 ```bash
-docker push registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.2
+docker push registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.4
 ```
 
 ### Deploy plugin with k8s init-container
@@ -58,7 +58,7 @@ Use the new recently pushed image and ensure the `cp` command matches the .jar f
 ```yaml
 extraInitContainers: |-
   - name: plugin
-    image: registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.2
+    image: registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.3.4
     imagePullPolicy: Always
     command:
     - sh
@@ -94,4 +94,4 @@ Register a new user:
   
 You should now be able to login as the new user to any of your enabled SSO servics and you can also reach the Keycloak user account profile page by going [here](https://keycloak.dev.bigbang.mil/auth/realms/baby-yoda/account).
 
-*Note: May 2024 ~ CAC auth is still inconsistent without the dev plugin from zacw and the keycloak issue regarding 23.0.7 breaking CAC*  
+*Note: May 2024 ~ CAC auth is still inconsistent without the dev plugin from zacw and the keycloak issue regarding 23.0.7 breaking CAC*
