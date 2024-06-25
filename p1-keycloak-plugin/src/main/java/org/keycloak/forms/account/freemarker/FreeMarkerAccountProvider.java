@@ -261,7 +261,7 @@ public class FreeMarkerAccountProvider implements AccountProvider {
         if (realm != null && !realm.isUserManagedAccessAllowed()) {
           return Response.status(Status.FORBIDDEN).build();
         }
-        customAttributes.put("authorization", new AuthorizationBean(session, realm, user, uriInfo));
+        customAttributes.put("authorization", new AuthorizationBean(session, user, uriInfo));
         break;
       default:
         // Handle unknown page or provide a default behavior
