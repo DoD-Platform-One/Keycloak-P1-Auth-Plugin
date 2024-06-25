@@ -114,7 +114,6 @@ public class AccountFormServiceTest {
     private final URI uri = URI.create("http://example.com");
 
     private AccountFormService accountFormService;
-
     @Before
     public void setUp() throws Exception {
 
@@ -127,8 +126,13 @@ public class AccountFormServiceTest {
 
         // mock static classes
         mockStatic(Profile.Feature.Type.class);
-        mockStatic(Profile.class);
+
+        // Fully mocking KerberosJdkProvider BEFORE making static mock for `Profile` fixes the `Bad return type` exception
         mockStatic(KerberosJdkProvider.class);
+        KerberosJdkProvider kerberosJdkProvider = mock(KerberosJdkProvider.class);
+        when(KerberosJdkProvider.getProvider()).thenReturn(kerberosJdkProvider);
+        mockStatic(Profile.class);
+
         mockStatic(UriBuilder.class);
         mockStatic(OIDCLoginProtocolService.class);
         mockStatic(AppAuthManager.class);
@@ -145,7 +149,6 @@ public class AccountFormServiceTest {
         // mocks
         KeycloakContext keycloakContext = mock(KeycloakContext.class);
         EventStoreProvider eventStoreProvider = mock(EventStoreProvider.class);
-        KerberosJdkProvider kerberosJdkProvider = mock(KerberosJdkProvider.class);
         ClientConnection clientConnection = mock(ClientConnection.class);
         LoginFormsProvider loginFormsProvider = mock(LoginFormsProvider.class);
         EventQuery eventQuery = mock(EventQuery.class);
@@ -193,7 +196,7 @@ public class AccountFormServiceTest {
         when(authorizationProvider.getStoreFactory()).thenReturn(storeFactory);
         when(authorizationProvider.getStoreFactory().getPermissionTicketStore()).thenReturn(permissionTicketStore);
         when(authorizationProvider.getStoreFactory().getScopeStore()).thenReturn(scopeStore);
-        when(authorizationProvider.getStoreFactory().getResourceStore().findById(eq(realmModel), eq(null), eq(resourceId))).thenReturn(resource);
+        when(authorizationProvider.getStoreFactory().getResourceStore().findById(eq(null), eq(resourceId))).thenReturn(resource);
 
         // loginFormsProvider
         when(loginFormsProvider.setError(anyString(), any())).thenReturn(loginFormsProvider);
@@ -247,9 +250,6 @@ public class AccountFormServiceTest {
 
         // ClientConnection
         when(clientConnection.getRemoteAddr()).thenReturn("127.0.0.1");
-
-        // kerberos
-        when(KerberosJdkProvider.getProvider()).thenReturn(kerberosJdkProvider);
 
         // Profile
         when(Profile.isFeatureEnabled(eq(Profile.Feature.AUTHORIZATION))).thenReturn(true);
@@ -1059,7 +1059,7 @@ public class AccountFormServiceTest {
         when(permissionTicket3.isGranted()).thenReturn(true);
         when(permissionTicket4.getId()).thenReturn("permission99");
         when(permissionTicket4.isGranted()).thenReturn(false);
-        when(permissionTicketStore.find(any(), any(), any(), any(), any())).thenReturn(permissionTicketList);
+        when(permissionTicketStore.find(any(), any(), any(), any())).thenReturn(permissionTicketList);
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
         // grantPermission test
@@ -1115,7 +1115,7 @@ public class AccountFormServiceTest {
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
         // grantPermission throwing error
-        when(authorizationProvider.getStoreFactory().getResourceStore().findById(eq(realmModel), eq(null), eq(resourceId))).thenReturn(null);
+        when(authorizationProvider.getStoreFactory().getResourceStore().findById(eq(null), eq(resourceId))).thenReturn(null);
         // grantPermission test
         accountFormService.grantPermission(resourceId, action, permissionId, requester);
     }
@@ -1127,7 +1127,7 @@ public class AccountFormServiceTest {
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);
         // grantPermission throwing error
-        when(authorizationProvider.getStoreFactory().getResourceStore().findById(eq(realmModel), eq(null), eq(resourceId))).thenReturn(resource);
+        when(authorizationProvider.getStoreFactory().getResourceStore().findById(eq(null), eq(resourceId))).thenReturn(resource);
         // grantPermission test
         accountFormService.grantPermission(resourceId, null, permissionId, requester);
     }
@@ -1166,7 +1166,7 @@ public class AccountFormServiceTest {
         ResourceServer resourceServer = mock(ResourceServer.class);
         // mock conditions
         when(httpRequest.getHttpMethod()).thenReturn("");
-        when(authorizationProvider.getStoreFactory().getResourceStore().findById(any(), any(), any())).thenReturn(resource);
+        when(authorizationProvider.getStoreFactory().getResourceStore().findById(any(), any())).thenReturn(resource);
         when(resource.getResourceServer()).thenReturn(resourceServer);
         // constructor
         accountFormService = new AccountFormService(keycloakSession, clientModel, eventBuilder);

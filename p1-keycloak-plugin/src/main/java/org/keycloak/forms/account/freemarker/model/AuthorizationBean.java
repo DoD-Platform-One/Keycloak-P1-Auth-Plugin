@@ -55,9 +55,6 @@ public class AuthorizationBean {
   /** The Keycloak session associated with the authorization. */
   private final KeycloakSession session;
 
-  /** The realm to which the user belongs. */
-  private final RealmModel realm;
-
   /** The user for whom authorization operations are performed. */
   private final UserModel user;
 
@@ -86,17 +83,14 @@ public class AuthorizationBean {
    * Constructs an `AuthorizationBean` instance.
    *
    * @param kcSession    The Keycloak session.
-   * @param realmModel   The realm model.
    * @param userModel    The user model.
    * @param uri          The URI information.
    */
   public AuthorizationBean(
       final KeycloakSession kcSession,
-      final RealmModel realmModel,
       final UserModel userModel,
       final UriInfo uri) {
     this.session = kcSession;
-    this.realm = realmModel;
     this.user = userModel;
     this.uriInfo = uri;
     authorization = kcSession.getProvider(AuthorizationProvider.class);
@@ -107,7 +101,7 @@ public class AuthorizationBean {
           authorization
               .getStoreFactory()
               .getResourceStore()
-              .findById(realmModel, null, pathParameters.get(0));
+              .findById(null, pathParameters.get(0));
 
       if (resourceInfo != null && !resourceInfo.getOwner().equals(userModel.getId())) {
         throw new IllegalStateException(
@@ -165,7 +159,7 @@ public class AuthorizationBean {
           authorization
               .getStoreFactory()
               .getResourceStore()
-              .findByOwner(realm, null, user.getId())
+              .findByOwner(null, user.getId())
               .stream()
               .filter(Resource::isOwnerManagedAccess)
               .map(ResourceBean::new)
@@ -191,7 +185,7 @@ public class AuthorizationBean {
           authorization.getStoreFactory().getPermissionTicketStore();
 
       userSharedResources =
-          toResourceRepresentation(ticketStore.find(realm, null, filters, null, null));
+          toResourceRepresentation(ticketStore.find(null, filters, null, null));
     }
     return userSharedResources;
   }
@@ -221,7 +215,7 @@ public class AuthorizationBean {
    */
   private ResourceBean getResource(final String id) {
     return new ResourceBean(
-        authorization.getStoreFactory().getResourceStore().findById(realm, null, id));
+        authorization.getStoreFactory().getResourceStore().findById(null, id));
   }
 
   /**
@@ -545,7 +539,6 @@ public class AuthorizationBean {
      */
     public Collection<ManagedPermissionBean> getPolicies() {
       ResourceServer resourceServerModel = getResourceServer().getResourceServerModel();
-      RealmModel realmModel = resourceServerModel.getRealm();
       Map<Policy.FilterOption, String[]> filters = new EnumMap<>(Policy.FilterOption.class);
 
       filters.put(Policy.FilterOption.TYPE, new String[] {"uma"});
@@ -560,7 +553,7 @@ public class AuthorizationBean {
           authorization
               .getStoreFactory()
               .getPolicyStore()
-              .find(realmModel, resourceServerModel, filters, null, null);
+              .find(resourceServerModel, filters, null, null);
 
       if (policies.isEmpty()) {
         return Collections.emptyList();
@@ -577,7 +570,7 @@ public class AuthorizationBean {
                 return authorization
                     .getStoreFactory()
                     .getPermissionTicketStore()
-                    .find(realmModel, resourceServerModel, filters1, -1, 1)
+                    .find(resourceServerModel, filters1, -1, 1)
                     .isEmpty();
               })
           .map(ManagedPermissionBean::new)
@@ -677,7 +670,7 @@ public class AuthorizationBean {
     return authorization
         .getStoreFactory()
         .getPermissionTicketStore()
-        .find(realm, null, filters, null, null);
+        .find(null, filters, null, null);
   }
 
   /**
