@@ -4,6 +4,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [3.5.0] - 2024-06-28
+
+### Updated
+
+- Bumped version of Keycloak libraries to 25.0.1
+- Fixed code and unit tests broken by increased version
+- Update to use Java21
+- Fix theme warning
+
 ## [3.4.0] - 2024-06-20
 
 ### Updated

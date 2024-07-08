@@ -17,6 +17,7 @@ import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.authentication.authenticators.x509.X509AuthenticatorConfigModel;
 import org.keycloak.authentication.authenticators.x509.X509ClientCertificateAuthenticator;
 import org.keycloak.models.*;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.services.x509.X509ClientCertificateLookup;
 import org.keycloak.sessions.AuthenticationSessionModel;
@@ -45,7 +46,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Yaml.class, FileInputStream.class, File.class,
         CommonConfig.class, FilenameUtils.class, NewObjectProvider.class,
-        X509Tools.class,
+        X509Tools.class, KeycloakModelUtils.class
 })
 @PowerMockIgnore("javax.management.*")
 class RegistrationValidation2Test {
@@ -83,6 +84,9 @@ class RegistrationValidation2Test {
 
     @Before
     public void setupMockBehavior() throws Exception {
+
+        // mock static classes
+        mockStatic(KeycloakModelUtils.class);
 
         setupFileMocks();
 

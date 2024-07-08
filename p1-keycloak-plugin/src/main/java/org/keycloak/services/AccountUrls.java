@@ -244,17 +244,6 @@ public class AccountUrls extends Urls {
   }
 
   /**
-   * Constructs the URI for the email verification action in login actions.
-   *
-   * @param baseUri   The base URI.
-   * @param realmName The realm name.
-   * @return The constructed URI for the email verification action.
-   */
-  public static URI loginActionEmailVerification(final URI baseUri, final String realmName) {
-    return loginActionEmailVerificationBuilder(baseUri).build(realmName);
-  }
-
-  /**
    * Gets the path for the locale cookie based on the realm name.
    *
    * @param baseUri   The base URI.

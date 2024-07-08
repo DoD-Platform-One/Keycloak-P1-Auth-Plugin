@@ -317,6 +317,9 @@ public class RegistrationValidationTest {
                     }
 
                     @Override
+                    public boolean isClosed() { return false; }
+
+                    @Override
                     public UserLoginFailureProvider loginFailures() {
                         return null;
                     }

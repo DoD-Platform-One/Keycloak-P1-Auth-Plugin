@@ -11,11 +11,11 @@ plugins {
 
 group = "${rootProjectgroupId}"
 version = "${rootProjectVersion}"
-sourceCompatibility = '17'
+sourceCompatibility = '21'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 
@@ -28,18 +28,18 @@ dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
     testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
     // testImplementation 'org.mockito:mockito-inline:5.2.0'
-    testImplementation 'org.keycloak:keycloak-services:24.0.5'
-    testImplementation 'org.keycloak:keycloak-server-spi:24.0.5'
-    testImplementation 'org.keycloak:keycloak-server-spi-private:24.0.5'
-    testImplementation 'org.keycloak:keycloak-model-legacy:24.0.5'
-    testImplementation 'org.keycloak:keycloak-crypto-default:24.0.5'
+    testImplementation 'org.keycloak:keycloak-services:25.0.1'
+    testImplementation 'org.keycloak:keycloak-server-spi:25.0.1'
+    testImplementation 'org.keycloak:keycloak-server-spi-private:25.0.1'
+//    testImplementation 'org.keycloak:keycloak-model-legacy:25.0.1'
+    testImplementation 'org.keycloak:keycloak-crypto-default:25.0.1'
 
     testImplementation 'org.jboss.resteasy:resteasy-core:6.2.4.Final'
 
-    compileOnly 'org.keycloak:keycloak-services:24.0.5'
-    compileOnly 'org.keycloak:keycloak-server-spi:24.0.5'
-    compileOnly 'org.keycloak:keycloak-server-spi-private:24.0.5'
-    compileOnly 'org.keycloak:keycloak-crypto-default:24.0.5'
+    compileOnly 'org.keycloak:keycloak-services:25.0.1'
+    compileOnly 'org.keycloak:keycloak-server-spi:25.0.1'
+    compileOnly 'org.keycloak:keycloak-server-spi-private:25.0.1'
+    compileOnly 'org.keycloak:keycloak-crypto-default:25.0.1'
 
     implementation 'org.yaml:snakeyaml:2.2'
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
