@@ -8,12 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
-import org.keycloak.models.ClientModel;
-import org.keycloak.models.GroupModel;
-import org.keycloak.models.GroupProvider;
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserModel;
-import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.*;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -29,9 +25,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class})
+@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class, KeycloakModelUtils.class })
 @PowerMockIgnore("javax.management.*")
 public class RequireGroupAuthenticatorTest {
 
@@ -50,6 +47,11 @@ public class RequireGroupAuthenticatorTest {
     @Before
     public void setup() throws Exception {
 
+        // mock static classes
+        mockStatic(KeycloakModelUtils.class);
+
+        KeycloakSessionFactory keycloakSessionFactory = mock(KeycloakSessionFactory.class);
+
         setupFileMocks();
 
         subject = new RequireGroupAuthenticator();
@@ -63,16 +65,29 @@ public class RequireGroupAuthenticatorTest {
         parentAuthenticationSession = mock(RootAuthenticationSessionModel.class);
         client = mock(ClientModel.class);
         groupProvider = mock(GroupProvider.class);
+        commonConfig = mock(CommonConfig.class);
 
+        // Context
         when(context.getRealm()).thenReturn(realm);
         when(context.getUser()).thenReturn(user);
         when(context.getSession()).thenReturn(session);
         when(context.getAuthenticationSession()).thenReturn(authenticationSession);
+
+        // Authentication Session
         when(authenticationSession.getClient()).thenReturn(client);
         when(authenticationSession.getParentSession()).thenReturn(parentAuthenticationSession);
+
+        // Parent Authentication Session
         when(parentAuthenticationSession.getId()).thenReturn("bleh");
+
+        // Realm
         when(realm.getGroupById(anyString())).thenReturn(group);
+
+        // Session
         when(session.groups()).thenReturn(groupProvider);
+        when(session.getKeycloakSessionFactory()).thenReturn(keycloakSessionFactory);
+
+        // Common Config
 
     }
 

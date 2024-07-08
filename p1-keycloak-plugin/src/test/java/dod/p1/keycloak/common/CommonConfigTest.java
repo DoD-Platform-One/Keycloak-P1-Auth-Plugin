@@ -8,13 +8,13 @@ import org.junit.runner.RunWith;
 import org.keycloak.models.GroupProvider;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -24,10 +24,10 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Yaml.class, File.class, FileInputStream.class, FilenameUtils.class, NewObjectProvider.class })
+@PrepareForTest({ Yaml.class, File.class, FileInputStream.class, FilenameUtils.class, NewObjectProvider.class, KeycloakModelUtils.class })
 @PowerMockIgnore("javax.management.*")
 public class CommonConfigTest {
 
@@ -44,6 +44,9 @@ public class CommonConfigTest {
 
     @Before
     public void setupMockBehavior() throws Exception {
+
+        // mock static classes
+        mockStatic(KeycloakModelUtils.class);
 
         final String fileContent = "x509:\n" +
                 "  userIdentityAttribute: \"usercertificate\"\n" +
