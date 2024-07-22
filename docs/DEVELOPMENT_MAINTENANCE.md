@@ -69,11 +69,9 @@ This repo includes a custom Quarkus extension for routing and redirects. It is c
 ### Build
 First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. If you want to build on your workstation without the gradle image you will need to install the appropriate versions of JDK and gradle. On mac, recommend `sdkman` to easily manage multiple java versions. The java archive(jar) will be created at `/build/libs/p1-keycloak-plugin-x.x.x.jar`. The plugin uses semantic versioning controlled by the "version" in the top level `gradle.properties` configuration.
 
-curl --location --request PUT 'https://repo1.dso.mil/api/v4/projects/12194/packages/generic/platform-one-sso/3.5.0/p1-keycloak-plugin-3.5.0.jar' --header 'Authorization: Bearer repo1-dso-milsU4KzwAaFnwWet2VmJSv' --form '=@"/Users/sam/repos/keycloak-p1-auth-plugin/build/libs/p1-keycloak-plugin-3.5.0.jar"'
-
-curl --fail-with-body --header 'Authorization: Bearer repo1-dso-milsU4KzwAaFnwWet2VmJSv' --upload-file /Users/sam/repos/keycloak-p1-auth-plugin/build/libs/p1-keycloak-plugin-3.5.0.jar "https://repo1.dso.mil/api/v4/projects/12194/packages/generic/platform-one-sso/3.5.0/p1-keycloak-plugin-3.5.0.jar"
-
-curl --fail-with-body --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file path/to/file.txt "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt"
+```bash
+curl --fail-with-body --header 'Authorization: Bearer <token>' --upload-file /Users/sam/repos/keycloak-p1-auth-plugin/build/libs/p1-keycloak-plugin-3.5.0.jar "https://repo1.dso.mil/api/v4/projects/12194/packages/generic/platform-one-sso/3.5.0/p1-keycloak-plugin-3.5.0.jar"
+```
   
 First, spin up a build container :
 ```bash
