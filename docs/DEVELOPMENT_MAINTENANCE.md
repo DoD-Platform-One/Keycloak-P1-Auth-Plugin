@@ -3,6 +3,7 @@ The Platform One custom provider plugin is now decoupled from the Big Bang Keycl
 
 | **PLUGIN VERSION** | **KEYCLOAK VERSION** | **KEYCLOAK VERSION**<br>**COMPATIBILITY** |
 |:-------------------|:---------------------|:------------------------------------------|
+| 3.5.1              | 25.0.2               | 25.0.X                                    |
 | 3.5.0              | 25.0.1               | 25.0.X                                    |
 | 3.4.0              | 24.0.5               | 24.0.X                                    |
 | 3.3.4              | 23.0.7               | 23.0.X                                    |
@@ -67,11 +68,7 @@ This repo includes a custom Quarkus extension for routing and redirects. It is c
 ## Deployment Details
 
 ### Build
-First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation. If you want to build on your workstation without the gradle image you will need to install the appropriate versions of JDK and gradle. On mac, recommend `sdkman` to easily manage multiple java versions. The java archive(jar) will be created at `/build/libs/p1-keycloak-plugin-x.x.x.jar`. The plugin uses semantic versioning controlled by the "version" in the top level `gradle.properties` configuration.
-
-```bash
-curl --fail-with-body --header 'Authorization: Bearer <token>' --upload-file /Users/sam/repos/keycloak-p1-auth-plugin/build/libs/p1-keycloak-plugin-3.5.0.jar "https://repo1.dso.mil/api/v4/projects/12194/packages/generic/platform-one-sso/3.5.0/p1-keycloak-plugin-3.5.0.jar"
-```
+First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation (note that this will usually be much slower than running locally and is more likely to fail). If you want to build on your workstation without the gradle image you will need to install the appropriate versions of JDK and gradle. On mac, recommend `sdkman` to easily manage multiple java versions. The java archive(jar) will be created at `/build/libs/p1-keycloak-plugin-x.x.x.jar`. The plugin uses semantic versioning controlled by the "version" in the top level `gradle.properties` configuration.
   
 First, spin up a build container :
 ```bash
@@ -85,7 +82,7 @@ docker run -it --rm \
 Then build the app :
 ```bash
 cd /app
-./gradlew clean --build-cache assemble
+./gradlew clean build
 ```
 
 ### Build a plugin image

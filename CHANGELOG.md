@@ -4,6 +4,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [3.5.1] - 2024-07-22
+
+### Updated
+
+- Bumped version of Keycloak libraries to 25.0.2
+
 ## [3.5.0] - 2024-06-28
 
 ### Updated
