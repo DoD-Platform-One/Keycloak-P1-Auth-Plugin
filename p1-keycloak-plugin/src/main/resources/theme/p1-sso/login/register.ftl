@@ -1,5 +1,5 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm'); section>
+<@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm','email-confirm'); section>
     <#if section = "form">
         <form action="/chuck-norris-calendar-goes-straight-from-march-31st-to-april-2nd-because-no-one-fools-chuck-norris"
               id="baby-yoda-form" method="post">
@@ -175,6 +175,15 @@
                         value="${(register.formData.email!'')}" autocomplete="email"/>
                 <#if messagesPerField.existsError('email')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('email'))?no_esc}</span>
+                </#if>
+            </div>
+
+            <div class="form-group ${messagesPerField.printIfExists('email-confirm','has-error')}">
+                <label for="email-confirm" class="form-label">${msg("emailConfirm")}</label>
+                <input id="email-confirm" class="form-control" name="email-confirm" type="text"
+                        autocomplete="email"/>
+                <#if messagesPerField.existsError('email-confirm')>
+                    <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('email-confirm'))?no_esc}</span>
                 </#if>
             </div>
 

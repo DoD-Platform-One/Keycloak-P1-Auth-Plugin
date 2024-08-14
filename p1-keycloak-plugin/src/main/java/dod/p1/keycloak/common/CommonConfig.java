@@ -5,6 +5,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.keycloak.Config;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.RealmModel;
 import org.yaml.snakeyaml.Yaml;
@@ -124,9 +125,17 @@ public final class CommonConfig {
 
     /**
      * get user identity attribute.
+     * @param realm
      * @return String
      */
-    public String getUserIdentityAttribute() {
+    public String getUserIdentityAttribute(final RealmModel realm) {
+
+        String multiRealmEnabled = Config.scope("multiRealm").get("enabled", "false");
+
+        if (multiRealmEnabled.equals("true") && !realm.getName().equals("baby-yoda")) {
+            return config.getX509().getUserIdentityAttribute() + "_" + realm.getName();
+        }
+
         return config.getX509().getUserIdentityAttribute();
     }
 

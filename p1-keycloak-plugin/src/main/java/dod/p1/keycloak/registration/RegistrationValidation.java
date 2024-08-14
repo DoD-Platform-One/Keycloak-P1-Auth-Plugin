@@ -80,7 +80,7 @@ public class RegistrationValidation extends RegistrationUserCreation {
 
         if (x509Username != null) {
             // Bind the X509 attribute to the user
-            user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(), x509Username);
+            user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(realm), x509Username);
         }
     }
 
@@ -97,35 +97,75 @@ public class RegistrationValidation extends RegistrationUserCreation {
         long domainMatchCount = config.getEmailMatchAutoJoinGroup()
                 .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith)).count();
 
+        // Sonarqube was complaining about this strings
+        String joiningUserLog = "Joining user {} to group: {}";
+        String encounterNullGroupLog = "Encountered null group for user: {}";
+        String failedToJoinUserLog = "Failed to join user {} to group: {}";
+
+        // In each of the next 3 checks we will have to make sure that the group is null.
+        // Sometimes for some reason it is and this will cause an exception that will make
+        // keycloak end up in a limbo state. The following conditions takes care of it and now
+        // keycloak can continue with account creation and assignment without getting into limbo state.
         if (x509Username != null) {
             // User is a X509 user - Has a CAC
-            CommonConfig.LOGGER_COMMON.info(
-        "{} {} / {} found with X509: {}",
-                LOGGING_USER_TEXT, user.getId(), user.getUsername(), x509Username);
-            config.getAutoJoinGroupX509().forEach(user::joinGroup);
+            CommonConfig.LOGGER_COMMON.info("{} {} / {} found with X509: {}",
+                    LOGGING_USER_TEXT, user.getId(), user.getUsername(), x509Username);
+            config.getAutoJoinGroupX509().forEach(group -> {
+                if (group != null) {
+                    CommonConfig.LOGGER_COMMON.info(joiningUserLog, user.getUsername(), group.getName());
+                    try {
+                        user.joinGroup(group);
+                    } catch (Exception e) {
+                        CommonConfig.LOGGER_COMMON.error(failedToJoinUserLog,
+                                user.getUsername(), group.getName(), e);
+                    }
+                } else {
+                    CommonConfig.LOGGER_COMMON.warn(encounterNullGroupLog, user.getUsername());
+                }
+            });
         } else {
-          if (domainMatchCount != 0) {
-            // User is not a X509 user but is in the whitelist
-            CommonConfig.LOGGER_COMMON.info(
-        "{} {} / {}: Email found in whitelist",
-                LOGGING_USER_TEXT, user.getUsername(), email);
-            config.getEmailMatchAutoJoinGroup()
-                  .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
-                  .forEach(match -> {
-                    CommonConfig.LOGGER_COMMON.info(
-                "Adding user {} to group(s): {}",
-                        user.getUsername(), match.getGroups());
-                    match.getGroupModels().forEach(user::joinGroup);
-                  });
-
-        } else {
-            // User is not a X509 user or in whitelist
-            CommonConfig.LOGGER_COMMON.info(
-        "{} {} / {}: Email Not found in whitelist",
-                LOGGING_USER_TEXT, user.getUsername(), email);
-            config.getNoEmailMatchAutoJoinGroup().forEach(user::joinGroup);
-            user.setSingleAttribute("public-registrant", "true");
-          }
+            if (domainMatchCount != 0) {
+                // User is not a X509 user but is in the whitelist
+                CommonConfig.LOGGER_COMMON.info("{} {} / {}: Email found in whitelist",
+                        LOGGING_USER_TEXT, user.getUsername(), email);
+                config.getEmailMatchAutoJoinGroup()
+                      .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
+                      .forEach(match -> {
+                          CommonConfig.LOGGER_COMMON.info("Adding user {} to group(s): {}",
+                                  user.getUsername(), match.getGroups());
+                          match.getGroupModels().forEach(group -> {
+                              if (group != null) {
+                                  CommonConfig.LOGGER_COMMON.info(joiningUserLog, user.getUsername(), group.getName());
+                                  try {
+                                      user.joinGroup(group);
+                                  } catch (Exception e) {
+                                      CommonConfig.LOGGER_COMMON.error(failedToJoinUserLog,
+                                              user.getUsername(), group.getName(), e);
+                                  }
+                              } else {
+                                  CommonConfig.LOGGER_COMMON.warn(encounterNullGroupLog, user.getUsername());
+                              }
+                          });
+                      });
+            } else {
+                // User is not a X509 user or in whitelist
+                CommonConfig.LOGGER_COMMON.info("{} {} / {}: Email Not found in whitelist",
+                        LOGGING_USER_TEXT, user.getUsername(), email);
+                config.getNoEmailMatchAutoJoinGroup().forEach(group -> {
+                    if (group != null) {
+                        CommonConfig.LOGGER_COMMON.info(joiningUserLog, user.getUsername(), group.getName());
+                        try {
+                            user.joinGroup(group);
+                        } catch (Exception e) {
+                            CommonConfig.LOGGER_COMMON.error(failedToJoinUserLog,
+                                    user.getUsername(), group.getName(), e);
+                        }
+                    } else {
+                        CommonConfig.LOGGER_COMMON.warn(encounterNullGroupLog, user.getUsername());
+                    }
+                });
+                user.setSingleAttribute("public-registrant", "true");
+            }
         }
     }
 
@@ -226,6 +266,7 @@ public class RegistrationValidation extends RegistrationUserCreation {
         List<FormMessage> errors = new ArrayList<>();
         String username = formData.getFirst(Validation.FIELD_USERNAME);
         String email = formData.getFirst(Validation.FIELD_EMAIL);
+        String emailConfirm = formData.getFirst("email-confirm");
 
         String eventError = Errors.INVALID_REGISTRATION;
 
@@ -272,6 +313,11 @@ public class RegistrationValidation extends RegistrationUserCreation {
             context.getEvent().detail(Details.EMAIL, email);
             errors.add(new FormMessage(RegistrationPage.FIELD_EMAIL,
                     "Please check your email address, it seems to be invalid"));
+        }
+
+        if (Validation.isBlank(emailConfirm) || !Validation.isEmailValid(emailConfirm) || !email.equals(emailConfirm)) {
+            errors.add(new FormMessage("email-confirm",
+                    "Email addresses do not match. Please try again."));
         }
 
         if (context.getSession().users().getUserByEmail(context.getRealm(), email) != null) {

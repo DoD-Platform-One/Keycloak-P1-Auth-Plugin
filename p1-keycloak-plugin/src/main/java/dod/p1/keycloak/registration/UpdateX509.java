@@ -2,6 +2,10 @@ package dod.p1.keycloak.registration;
 
 import java.util.List;
 import java.util.Map;
+
+import dod.p1.keycloak.common.CommonConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.Config;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.RequiredActionFactory;
@@ -31,6 +35,11 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
     private static final String IGNORE_X509 = "IGNORE_X509";
 
     /**
+     * common logger.
+     */
+    public static final Logger LOGGER = LogManager.getLogger(UpdateX509.class);
+
+    /**
      * Evaluates triggers for the X509 update process.
      *
      * @param context The RequiredActionContext providing context information.
@@ -47,8 +56,10 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
          KeycloakSession session = context.getSession();
 
          Map<String, List<String>> userAttrs = context.getUser().getAttributes();
-         if (userAttrs.containsKey("usercertificate")) {
-             List<String> identity = userAttrs.get("usercertificate");
+
+         if (userAttrs.containsKey(CommonConfig.getInstance(session, realm).getUserIdentityAttribute(realm))) {
+             List<String> identity = userAttrs.get(CommonConfig.getInstance(session, realm)
+                                                .getUserIdentityAttribute(realm));
              if (identity != null && !identity.isEmpty()) {
                  context.getUser().setSingleAttribute(
                          getInstance(session, realm).getUserActive509Attribute(),
@@ -96,10 +107,29 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
         String username = getX509Username(context);
         RealmModel realm = context.getRealm();
         KeycloakSession session = context.getSession();
+
         if (username != null) {
             UserModel user = context.getUser();
-            user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(), username);
-            getInstance(session, realm).getAutoJoinGroupX509().forEach(user::joinGroup);
+            String userIdentityAttribute = getInstance(session, realm).getUserIdentityAttribute(realm);
+            LOGGER.info("Setting user identity attribute: {} for user: {}",
+                    userIdentityAttribute,
+                    user.getUsername());
+            user.setSingleAttribute(userIdentityAttribute, username);
+
+            // In each of the next check we will have to make sure that the group is null.
+            // Sometimes for some reason it is and this will cause an exception that will make
+            // keycloak end up in a limbo state. The following condition takes care of it and now
+            // keycloak can continue with account assignment without getting into limbo state.
+            getInstance(session, realm).getAutoJoinGroupX509().forEach(group -> {
+                if (group != null) {
+                    LOGGER.info("Joining user: {} to group: {}",
+                            user.getUsername(), group.getName());
+                    user.joinGroup(group);
+                } else {
+                    LOGGER.error("Encountered null group for user: {}. Skipping group join operation.",
+                            user.getUsername());
+                }
+            });
         }
         context.success();
     }

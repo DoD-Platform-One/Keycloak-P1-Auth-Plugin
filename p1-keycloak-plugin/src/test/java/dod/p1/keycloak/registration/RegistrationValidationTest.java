@@ -459,7 +459,8 @@ public class RegistrationValidationTest {
         Assert.assertTrue(errorFields.contains("user.attributes.rank"));
         Assert.assertTrue(errorFields.contains("user.attributes.organization"));
         Assert.assertTrue(errorFields.contains("email"));
-        Assert.assertEquals(8, errors.size());
+        Assert.assertTrue(errorFields.contains("email-confirm"));
+        Assert.assertEquals(9, errors.size());
     }
 
     @Test
@@ -475,6 +476,7 @@ public class RegistrationValidationTest {
         valueMap.putSingle("user.attributes.organization", "Com");
         valueMap.putSingle("user.attributes.location", "42");
         valueMap.putSingle("email", "test@gmail.com");
+        valueMap.putSingle("email-confirm", "test@gmail.com");
 
         ValidationContext context = setupVariables(errorEvent, errors, valueMap);
 
@@ -484,6 +486,7 @@ public class RegistrationValidationTest {
 
         // test an email address already in use
         valueMap.putSingle("email", "test@ss.usafa.edu");
+        valueMap.putSingle("email-confirm", "test@ss.usafa.edu");
         errorEvent = new String[1];
         errors = new ArrayList<>();
         context = setupVariables(errorEvent, errors, valueMap);
@@ -509,6 +512,7 @@ public class RegistrationValidationTest {
         valueMap.putSingle("user.attributes.organization", "Com");
         valueMap.putSingle("user.attributes.location", "42");
         valueMap.putSingle("email", "test@gmail.com");
+        valueMap.putSingle("email-confirm", "test@gmail.com");
 
         ValidationContext context = setupVariables(errorEvent, errors, valueMap);
 
@@ -518,6 +522,7 @@ public class RegistrationValidationTest {
 
         // test valid IL2 email with custom domains
         valueMap.putSingle("email", "rando@supercool.unicorns.com");
+        valueMap.putSingle("email-confirm", "rando@supercool.unicorns.com");
         errorEvent = new String[1];
         errors = new ArrayList<>();
         context = setupVariables(errorEvent, errors, valueMap);
@@ -529,6 +534,7 @@ public class RegistrationValidationTest {
 
         // test valid IL4 email with custom domains
         valueMap.putSingle("email", "test22@ss.usafa.edu");
+        valueMap.putSingle("email-confirm", "test22@ss.usafa.edu");
         errorEvent = new String[1];
         errors = new ArrayList<>();
         context = setupVariables(errorEvent, errors, valueMap);
