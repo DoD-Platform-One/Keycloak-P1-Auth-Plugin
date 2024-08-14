@@ -71,7 +71,7 @@ public final class X509Tools {
 
         if (username != null) {
             Stream<UserModel> users = session.users().searchForUserByUserAttributeStream(realm,
-                    CommonConfig.getInstance(session, realm).getUserIdentityAttribute(), username);
+                    CommonConfig.getInstance(session, realm).getUserIdentityAttribute(realm), username);
             return users != null && users.count() > 0;
         }
         return false;

@@ -3,6 +3,19 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [3.5.2] - 2024-08-12
+
+### Updated
+
+- Update help@dsop.io email in P1-SSO theme
+- Added email confirmation field in registration page
+- Multi-Realm now supported
+-        // Need to update this fields because of KC 25 update
+         // KC_HOSTNAME: "https://<YOUR HOSTNAME>/auth"
+         // KC_HOSTNAME_ADMIN: "https://<YOUR ADMIN HOSTNAME>/auth"
+         
+-        // This field is required for the plugin to support multiple realms
+         // KC_SPI_MULTI_REALM_ENABLED: "true"
 
 ## [3.5.1] - 2024-07-22
 
@@ -37,10 +50,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Mobile rendering update, now it should display readable in a mobile device.
 - OCSP refactor, now a flag needs to be updated in order to be used. By default it is off.
 -       // OCSP Check to address revoked cert getting activecac attribute.
-        //To Enable in command:  "--spi-baby-yoda-ocsp-enabled=true"
-        //or in ENV:  KC_SPI_BABY_YODA_OCSP_ENABLED: "true"
-        //KC_SPI_TRUSTSTORE_FILE_FILE: "/opt/keycloak/certs/truststore.jks"
-        //KC_SPI_TRUSTSTORE_FILE_PASSWORD: "trust_pw"
+        // To Enable in command:  "--spi-baby-yoda-ocsp-enabled=true"
+        // or in ENV:  KC_SPI_BABY_YODA_OCSP_ENABLED: "true"
+        // KC_SPI_TRUSTSTORE_FILE_FILE: "/opt/keycloak/certs/truststore.jks"
+        // KC_SPI_TRUSTSTORE_FILE_PASSWORD: "trust_pw"
 
 ## [3.3.2] - 2024-05-03
 

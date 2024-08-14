@@ -265,7 +265,7 @@ class UpdateX509Test {
         mockStatic(CommonConfig.class);
         CommonConfig commonConfig = PowerMockito.mock(CommonConfig.class);
         PowerMockito.when(CommonConfig.getInstance(eq(keycloakSession), eq(realmModel))).thenReturn(commonConfig);
-        PowerMockito.when(commonConfig.getUserIdentityAttribute()).thenReturn("an attribute");
+        PowerMockito.when(commonConfig.getUserIdentityAttribute(eq(realmModel))).thenReturn("an attribute");
         PowerMockito.when(commonConfig.getAutoJoinGroupX509()).thenReturn(PowerMockito.mock(Stream.class));
 
         updateX509.processAction(requiredActionContext);

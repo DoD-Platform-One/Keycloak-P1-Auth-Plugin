@@ -5,6 +5,7 @@ import org.keycloak.*;
 import dod.p1.keycloak.utils.NewObjectProvider;
 import dod.p1.keycloak.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
+import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.crypto.def.BCOCSPProvider;
 import org.keycloak.http.HttpRequest;
 import org.junit.Assert;
@@ -16,17 +17,20 @@ import org.keycloak.common.crypto.*;
 import org.keycloak.authentication.authenticators.x509.X509AuthenticatorConfigModel;
 import org.keycloak.authentication.authenticators.x509.X509ClientCertificateAuthenticator;
 import org.keycloak.models.*;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.x509.X509ClientCertificateLookup;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URI;
+import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,16 +38,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static dod.p1.keycloak.registration.X509Tools.isX509Registered;
+import static dod.p1.keycloak.registration.X509Tools.*;
 import static dod.p1.keycloak.utils.Utils.setupFileMocks;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
+import static org.powermock.api.mockito.PowerMockito.*;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class, BCOCSPProvider.class, ZacsOCSPProvider.class })
+@PrepareForTest({ FilenameUtils.class, NewObjectProvider.class, BCOCSPProvider.class, ZacsOCSPProvider.class,
+        Config.class, Config.ConfigProvider.class, Config.Scope.class})
 @PowerMockIgnore("javax.management.*")
 class X509ToolsTest {
 
@@ -75,6 +79,8 @@ class X509ToolsTest {
     UserModel userModel;
     @Mock
     GroupProvider groupProvider;
+    @Mock
+    RequiredActionContext requiredActionContext;
 //    @Mock
 //    ZacsOCSPProvider ocspProvider;
 
@@ -84,6 +90,15 @@ class X509ToolsTest {
     public void setupMockBehavior() throws Exception {
 
         setupFileMocks();
+
+        // Local Vars
+        Config.Scope scope = Mockito.mock(Config.Scope.class);
+
+        // mock static classes
+        // Config
+        mockStatic(Config.class);
+        PowerMockito.when(Config.scope("babyYodaOcsp")).thenReturn(scope);
+        PowerMockito.when(Config.scope("babyYodaOcsp").get("enabled", "false")).thenReturn("false");
 
         // Vars
         List<String> stringList = new ArrayList<>();
@@ -100,14 +115,24 @@ class X509ToolsTest {
 //        PowerMockito.when(ocspProvider.getResponderURIsPublic(any())).thenReturn(stringList);
 
         // common mock implementations
+        // Validation Context
         PowerMockito.when(validationContext.getSession()).thenReturn(keycloakSession);
-        PowerMockito.when(keycloakSession.getContext()).thenReturn(keycloakContext);
-        PowerMockito.when(keycloakSession.getContext().getAuthenticationSession()).thenReturn(authenticationSessionModel);
-        PowerMockito.when(authenticationSessionModel.getParentSession()).thenReturn(rootAuthenticationSessionModel);
-        PowerMockito.when(rootAuthenticationSessionModel.getId()).thenReturn("xxx");
         PowerMockito.when(validationContext.getHttpRequest()).thenReturn(httpRequest);
         PowerMockito.when(validationContext.getRealm()).thenReturn(realmModel);
+
+        // RequiredActionContext
+        PowerMockito.when(requiredActionContext.getSession()).thenReturn(keycloakSession);
+
+        // KeycloakSession
+        PowerMockito.when(keycloakSession.getContext()).thenReturn(keycloakContext);
+        PowerMockito.when(keycloakSession.getContext().getAuthenticationSession()).thenReturn(authenticationSessionModel);
         PowerMockito.when(keycloakSession.groups()).thenReturn(groupProvider);
+
+        // AuthenticationSessionModel
+        PowerMockito.when(authenticationSessionModel.getParentSession()).thenReturn(rootAuthenticationSessionModel);
+
+        // RootAuthenticationSessionModel
+        PowerMockito.when(rootAuthenticationSessionModel.getId()).thenReturn("xxx");
 
         CryptoIntegration.init(this.getClass().getClassLoader());
     }
@@ -115,9 +140,34 @@ class X509ToolsTest {
     @Test
     public void testIsX509RegisteredFalse() {
 
+        // ValidationContext
         boolean isRegistered = isX509Registered(validationContext);
         Assert.assertFalse(isRegistered);
 
+        // RequiredActionContext
+        isRegistered = isX509Registered(requiredActionContext);
+        Assert.assertFalse(isRegistered);
+    }
+
+    @Test
+    public void testGetX509UsernameNull() {
+
+        // ValidationContext
+        String getUsernameNull = getX509Username(validationContext);
+        Assert.assertNull(getUsernameNull);
+
+        // RequiredActionContext
+        getUsernameNull = getX509Username(requiredActionContext);
+        Assert.assertNull(getUsernameNull);
+    }
+
+    @Test
+    public void testGetX509IdentityFromCertChainNull() throws GeneralSecurityException {
+        Object getX509Null = getX509IdentityFromCertChain(null, keycloakSession, realmModel, authenticationSessionModel);
+        Assert.assertNull(getX509Null);
+
+        getX509Null = getX509IdentityFromCertChain(new X509Certificate[0], keycloakSession, realmModel, authenticationSessionModel);
+        Assert.assertNull(getX509Null);
     }
 
     @Test
@@ -131,25 +181,29 @@ class X509ToolsTest {
         certList[0] = x509Certificate2;
         PowerMockito.when(x509ClientCertificateLookup.getCertificateChain(httpRequest)).thenReturn(certList);
 
-//        PowerMockito.when(realmModel.getAuthenticatorConfigsStream()).thenAnswer( (stream) -> {
-//            return Stream.of(authenticatorConfigModel);
-//        });
-//
-//        // create map
-//        Map<String, String> mapSting = new HashMap<>();
-//        mapSting.put("x509-cert-auth.mapper-selection.user-attribute-name","test");
-//        PowerMockito.when(authenticatorConfigModel.getConfig()).thenReturn(mapSting);
-//
-//        PowerMockito.when(x509ClientCertificateAuthenticator
-//                .getUserIdentityExtractor(any(X509AuthenticatorConfigModel.class))).thenReturn(userIdentityExtractor);
-//        PowerMockito.when(keycloakSession.users()).thenReturn(userProvider);
-//        PowerMockito.when(userProvider.searchForUserByUserAttributeStream( any(RealmModel.class), anyString(), anyString() ))
-//                .thenAnswer( (stream) -> {
-//                    return Stream.of(userModel);
-//                });
+        PowerMockito.when(realmModel.getAuthenticatorConfigsStream()).thenAnswer( (stream) -> {
+            return Stream.of(authenticatorConfigModel);
+        });
 
-//        boolean isRegistered = isX509Registered(validationContext);
+        // create map
+        Map<String, String> mapSting = new HashMap<>();
+        mapSting.put("x509-cert-auth.mapper-selection.user-attribute-name","test");
+        PowerMockito.when(authenticatorConfigModel.getConfig()).thenReturn(mapSting);
+
+        PowerMockito.when(x509ClientCertificateAuthenticator
+                .getUserIdentityExtractor(any(X509AuthenticatorConfigModel.class))).thenReturn(userIdentityExtractor);
+        PowerMockito.when(keycloakSession.users()).thenReturn(userProvider);
+        PowerMockito.when(userProvider.searchForUserByUserAttributeStream( any(RealmModel.class), anyString(), anyString() ))
+                .thenAnswer( (stream) -> {
+                    return Stream.of(userModel);
+                });
+
+        // Mock Static Config class
+        PowerMockito.when(Config.scope("babyYodaOcsp").get("enabled", "false")).thenReturn("true");
+
+        boolean isRegistered = isX509Registered(validationContext);
 //        Assert.assertTrue(isRegistered);
-//        Assert.assertFalse(isRegistered);
+        Assert.assertFalse(isRegistered);
+
     }
 }
