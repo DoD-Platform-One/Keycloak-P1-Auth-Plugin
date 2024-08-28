@@ -3,13 +3,19 @@ package dod.p1.keycloak.registration;
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
 
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.authentication.FormContext;
 import org.keycloak.authentication.ValidationContext;
 import org.keycloak.authentication.forms.RegistrationPage;
@@ -18,16 +24,20 @@ import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.AuthenticationExecutionModel;
-import org.keycloak.models.RealmModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
 
 import dod.p1.keycloak.common.CommonConfig;
+import org.keycloak.services.x509.X509ClientCertificateLookup;
+
 
 public class RegistrationValidation extends RegistrationUserCreation {
+    /** Logger. **/
+    private static final Logger LOGGER = LogManager.getLogger(RegistrationValidation.class);
 
     /**
      * constant for logging message.
@@ -44,31 +54,46 @@ public class RegistrationValidation extends RegistrationUserCreation {
     public static final String PROVIDER_ID = "registration-validation-action";
 
     /**
+     * Name for form element containing the user affiliation value.
+     */
+    public static final String USER_ATTRIBUTES_AFFILIATION = "user.attributes.affiliation";
+
+    /**
      * Requirement choices.
      */
     private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
             AuthenticationExecutionModel.Requirement.REQUIRED };
 
     /**
-     * The minimum length of user name.
+     * The minimum length of username.
      */
     private static final int MIN_USER_NAME_LENGTH = 3;
 
     /**
-     * The max length of user name.
+     * The max length of username.
      */
     private static final int MAX_USER_NAME_LENGTH = 22;
 
+
+    /**
+     * Sets requirements for post registration actions by user for completion of user registration.
+     * @param user contains user information and allows for updating of user attributes
+     * @param x509Username the username taken from a CAC card if present
+     */
     private static void bindRequiredActions(final UserModel user, final String x509Username) {
         // Default actions for all users
-        user.addRequiredAction(UserModel.RequiredAction.VERIFY_EMAIL);
-
         // Make GS-15 Matt and the Cyber Humans happy
         user.addRequiredAction("TERMS_AND_CONDITIONS");
-
+        LOGGER.info("x509Username: {}", x509Username);
         if (x509Username == null) {
+            //Non CAC users will require email verification but not CAC users
+            user.addRequiredAction(UserModel.RequiredAction.VERIFY_EMAIL);
             // This user must configure MFA for their login
             user.addRequiredAction(UserModel.RequiredAction.CONFIGURE_TOTP);
+        } else {
+            //Allow CAC users to bypass email verification step
+            LOGGER.debug("Setting CAC user emailVerified to true.");
+            user.setEmailVerified(true);
         }
     }
 
@@ -77,7 +102,6 @@ public class RegistrationValidation extends RegistrationUserCreation {
         final RealmModel realm,
         final UserModel user,
         final String x509Username) {
-
         if (x509Username != null) {
             // Bind the X509 attribute to the user
             user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(realm), x509Username);
@@ -88,7 +112,6 @@ public class RegistrationValidation extends RegistrationUserCreation {
         final FormContext context,
         final UserModel user,
         final String x509Username) {
-
         String email = user.getEmail().toLowerCase();
         RealmModel realm = context.getRealm();
         KeycloakSession session = context.getSession();
@@ -179,7 +202,6 @@ public class RegistrationValidation extends RegistrationUserCreation {
     private static void generateUniqueStringIdForMattermost(
         final MultivaluedMap<String, String> formData,
         final UserModel user) {
-
         String email = formData.getFirst(Validation.FIELD_EMAIL);
 
         byte[] encodedEmail;
@@ -221,6 +243,20 @@ public class RegistrationValidation extends RegistrationUserCreation {
         String x509Username = X509Tools.getX509Username(context);
         if (x509Username != null) {
             form.setAttribute("cacIdentity", x509Username);
+            try {
+                KeycloakSession kcSession = context.getSession();
+                X509ClientCertificateLookup provider = kcSession.getProvider(X509ClientCertificateLookup.class);
+                final X509Certificate[] certs = provider.getCertificateChain(context.getHttpRequest());
+                if (certs.length > 0) {
+                    form.setFormData(buildFormFromX509(context, certs));
+                }
+                LOGGER.info(X509Tools.getX509IdentityFromCertChain(context.getHttpRequest().
+                        getClientCertificateChain(), kcSession, context.getRealm(),
+                        context.getAuthenticationSession()));
+            } catch (GeneralSecurityException e) {
+                LOGGER.error(String.format("Unable to read certificate chain. Reg form won't be filled by CAC. %1s$",
+                        e));
+            }
         }
     }
 
@@ -266,7 +302,7 @@ public class RegistrationValidation extends RegistrationUserCreation {
         List<FormMessage> errors = new ArrayList<>();
         String username = formData.getFirst(Validation.FIELD_USERNAME);
         String email = formData.getFirst(Validation.FIELD_EMAIL);
-        String emailConfirm = formData.getFirst("email-confirm");
+        String emailConfirm = formData.getFirst("confirmEmail");
 
         String eventError = Errors.INVALID_REGISTRATION;
 
@@ -290,8 +326,8 @@ public class RegistrationValidation extends RegistrationUserCreation {
             errors.add(new FormMessage(RegistrationPage.FIELD_LAST_NAME, Messages.MISSING_LAST_NAME));
         }
 
-        if (Validation.isBlank(formData.getFirst("user.attributes.affiliation"))) {
-            errors.add(new FormMessage("user.attributes.affiliation", "Please specify your organization affiliation."));
+        if (Validation.isBlank(formData.getFirst(USER_ATTRIBUTES_AFFILIATION))) {
+            errors.add(new FormMessage(USER_ATTRIBUTES_AFFILIATION, "Please specify your organization affiliation."));
         }
 
         if (Validation.isBlank(formData.getFirst("user.attributes.rank"))) {
@@ -316,7 +352,7 @@ public class RegistrationValidation extends RegistrationUserCreation {
         }
 
         if (Validation.isBlank(emailConfirm) || !Validation.isEmailValid(emailConfirm) || !email.equals(emailConfirm)) {
-            errors.add(new FormMessage("email-confirm",
+            errors.add(new FormMessage("confirmEmail",
                     "Email addresses do not match. Please try again."));
         }
 
@@ -336,7 +372,12 @@ public class RegistrationValidation extends RegistrationUserCreation {
 
     }
 
-    private void mattermostUsernameValidation(final List<FormMessage> errors, final String username) {
+    /**
+     * Validates the mattermost username.
+     * @param errors - List of FormMessage objects for storing error messages that will be displayed on front end.
+     * @param username - The Mattermost username to validate
+     */
+    protected void mattermostUsernameValidation(final List<FormMessage> errors, final String username) {
         if (!Validation.isBlank(username)) {
             if (!username.matches("[A-Za-z0-9-_.]+")) {
                 errors.add(new FormMessage(Validation.FIELD_USERNAME,
@@ -353,4 +394,28 @@ public class RegistrationValidation extends RegistrationUserCreation {
         }
     }
 
+    /**
+     *
+     * @param context - allows access to form data for population from CAC valus
+     * @param certs - the CAC certificates which contain pertinent user information
+     * @return a MultiValuedMap containing CAC data to display in form
+     */
+    protected MultivaluedMap<String, String> buildFormFromX509(final FormContext context,
+                                                               final X509Certificate[] certs) {
+        String  x509Username = X509Tools.getX509Username(context);
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        String[] subjectNameArray = certs[0].getSubjectX500Principal().getName().split(",");
+        String firstName = subjectNameArray[0].split("\\.")[1];
+        String lastName = subjectNameArray[0].split("\\.")[0].replace("CN=", "");
+        String affiliation = subjectNameArray[1].replace("OU=", "");
+        String translatedAffiliation = X509Tools.translateAffiliationShortName(affiliation);
+
+        MultivaluedMap<String, String> retFormData = new MultivaluedHashMap<>(formData);
+        retFormData.add("cacIdentity", x509Username);
+        retFormData.add(RegistrationPage.FIELD_FIRST_NAME, firstName);
+        retFormData.add(RegistrationPage.FIELD_LAST_NAME, lastName);
+        retFormData.add(USER_ATTRIBUTES_AFFILIATION, translatedAffiliation);
+        LOGGER.debug(retFormData);
+        return retFormData;
+    }
 }

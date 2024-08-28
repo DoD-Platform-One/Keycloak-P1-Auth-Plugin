@@ -1,5 +1,6 @@
 package dod.p1.keycloak.registration;
 import dod.p1.keycloak.utils.ZacsOCSPProvider;
+import org.junit.Ignore;
 import org.keycloak.*;
 
 import dod.p1.keycloak.utils.NewObjectProvider;
@@ -29,6 +30,8 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+
+import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
@@ -36,6 +39,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static dod.p1.keycloak.registration.X509Tools.*;

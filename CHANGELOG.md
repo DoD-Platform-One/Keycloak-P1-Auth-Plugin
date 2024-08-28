@@ -3,6 +3,18 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [3.5.4] - 2024-08-27
+
+### Updated
+
+- Registration form updates include:
+  - Reading of First Name, Last Name, Affiliation from CAC card and auto population of them
+  - UI restriction of email domains to gov and business emails
+  - UI restriction of password requirements
+  - UI disablement of password confirmation until password field passes requirements check
+  - Appearance of username field once the entered email contains '@' sign and disappearance if it is removed.
+  - Auto-population of username with email prefix(all chars preceeding '@' sign)
+
 ## [3.5.3] - 2024-08-23
 
 ### Updated
