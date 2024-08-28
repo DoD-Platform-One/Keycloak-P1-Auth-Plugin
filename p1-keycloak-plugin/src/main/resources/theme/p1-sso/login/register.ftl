@@ -1,5 +1,5 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm','email-confirm'); section>
+<@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm','confirmEmail', 'cacIdentity'); section>
     <#if section = "form">
         <form action="/chuck-norris-calendar-goes-straight-from-march-31st-to-april-2nd-because-no-one-fools-chuck-norris"
               id="baby-yoda-form" method="post">
@@ -19,6 +19,10 @@
                     </p>
                 </div>
             </#if>
+
+            <div id="top-caps-lock-warning" style="color: red; display: none; text-align: center;">
+            Warning: Caps Lock is On
+            </div>
 
             <div class="row">
 
@@ -176,17 +180,18 @@
                 <#if messagesPerField.existsError('email')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('email'))?no_esc}</span>
                 </#if>
+                <br>
             </div>
 
-            <div class="form-group ${messagesPerField.printIfExists('email-confirm','has-error')}">
-                <label for="email-confirm" class="form-label">${msg("emailConfirm")}</label>
-                <input id="email-confirm" class="form-control" name="email-confirm" type="text"
-                        autocomplete="email"/>
-                <#if messagesPerField.existsError('email-confirm')>
-                    <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('email-confirm'))?no_esc}</span>
+            <div class="form-group">
+                <label for="confirmEmail" class="form-label">Confirm email</label>
+                <input id="confirmEmail" class="form-control" name="confirmEmail" type="text" value="${(register.formData.confirmEmail!'')}" autocomplete="email"/>
+                <#if messagesPerField.existsError('confirmEmail')>
+                    <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('confirmEmail'))?no_esc}</span>
                 </#if>
+                <br>
+                <span id="email-mismatch-error" style="color: red; display: none;">Error: Emails Don't Match</span>
             </div>
-
             <div class="form-group ${messagesPerField.printIfExists('notes','has-error')}">
                 <label for="user.attributes.notes" class="form-label ">${msg("accessRequest")}</label>
                 <textarea id="user.attributes.notes" class="form-control " name="user.attributes.notes"></textarea>
@@ -210,15 +215,37 @@
                 </#if>
             </div>
 
+            <div class="form-group">
+                <label>Show Password</label>
+                <input type="checkbox" id="show-password-checkbox">
+            </div>
+
+            <div class="form-group" style="color: white;">
+                <label>Password Requirements</label>
+                <ul id="password-requirements">
+                    <li id="password-length" style="color: red;">15 Character Minimum</li>
+                    <li id="password-uppercase" style="color: red;">1 Uppercase Letter</li>
+                    <li id="password-lowercase" style="color: red;">1 Lowercase Letter</li>
+                    <li id="password-numeric" style="color: red;">1 Numeric Character</li>
+                    <li id="password-special" style="color: red;">2 Special Characters: [~!@#$%^&*()_+=\-‘[\]\/?><]</li>
+                    <li id="password-repeating" style="color: red;">No Repeating Characters</li>
+                </ul>
+            </div>
             <div class="form-group ${messagesPerField.printIfExists('password-confirm','has-error')}">
-                <label for="password-confirm" class="form-label ">${msg("passwordConfirm")}</label>
-                <input id="password-confirm" class="form-control " name="password-confirm"
-                        type="password" autocomplete="new-password"/>
+                <label for="password-confirm" class="form-label" style="display: none;">${msg("passwordConfirm")}</label>
+                <input id="password-confirm" class="form-control " name="password-confirm" style="display:none;"
+                        type="password" autocomplete="new-password" readonly />
                 <#if messagesPerField.existsError('password-confirm')>
                     <span class="message-details" aria-live="polite">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span>
                 </#if>
+                <br>
+                <span id="password-mismatch-error" style="color: red; display: none;">Error: Passwords Don't Match</span>
             </div>
 
+             <div class="form-group">
+                <label for="show-confirm-password-checkbox" style="display:none;">Show Password</label>
+                <input type="checkbox" id="show-confirm-password-checkbox" style="display:none;">
+            </div>
             <#if recaptchaRequired??>
                 <div class="form-group">
                     <div>
@@ -227,6 +254,10 @@
                     </div>
                 </div>
             </#if>
+
+            <div id="bottom-caps-lock-warning" style="color: red; display: none; text-align: center;">
+            Warning: Caps Lock is On
+            </div>
 
             <div class="form-group">
                 <div id="kc-form-buttons">
@@ -239,6 +270,7 @@
         </form>
 
         <div class="footer-text" id="footer-text">
+            Already registered? <a href="/auth">Click here</a> to login now.<br>
             You must be a human to register, confidence is increased as you interact with this page.
             <br><br>
             <a>Currently only <span id="confidence">1</span>% convinced you're not a robot.</a>
@@ -265,7 +297,6 @@
         window.addEventListener('scroll', tracker, true);
 
         const confidence = document.getElementById('confidence');
-        const footer = document.getElementById('footer-text');
 
         function tracker() {
             if (complete) {
@@ -284,10 +315,295 @@
 
                 location.value = '42';
 
-                footer.parentNode.removeChild(footer);
                 form.setAttribute('action', '${url.registrationAction?no_esc}');
                 register.removeAttribute('disabled');
             }
         }
     }());
+</script>
+
+<script>
+    // Script to control the visibility, readonly status, and auto-population of the username field and label
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailField = document.getElementById('email');
+        const usernameField = document.getElementById('username');
+        const usernameLabel = document.querySelector('label[for="username"]');
+
+        // Initially hide both the username field and label
+        usernameField.style.display = 'none';
+        usernameLabel.style.display = 'none';
+
+        // Listen for changes in the email field
+        emailField.addEventListener('input', function () {
+            const emailValue = emailField.value.trim();
+            if (emailValue.includes('@')) {
+                // If the email field contains the "@" symbol, show the username field and title
+                usernameField.style.display = 'block';
+                usernameLabel.style.display = 'block';
+
+                // Make the username field readonly so the user can't change it
+                usernameField.setAttribute('readonly', 'readonly');
+
+                // Auto-populate the username field with the email prefix
+                const emailParts = emailValue.split('@');
+                const usernameValue = emailParts[0];
+                usernameField.value = usernameValue;
+            } else {
+                // If the email field does not contain the "@" symbol, hide the username field and label
+                usernameField.style.display = 'none';
+                usernameLabel.style.display = 'none';
+
+                // Remove the readonly attribute if previously set
+                usernameField.removeAttribute('readonly');
+            }
+        });
+    });
+</script>
+
+<script>
+    // Script to control the visibility of the Caps Lock warning divs
+    const topCapsLockWarning = document.getElementById('top-caps-lock-warning');
+    const bottomCapsLockWarning = document.getElementById('bottom-caps-lock-warning');
+
+    let capsLockActive = false;
+
+    document.addEventListener('keydown', function (event) {
+        if (event.getModifierState && event.getModifierState('CapsLock')) {
+            capsLockActive = true;
+            showCapsLockWarning();
+        }
+    });
+
+    document.addEventListener('keyup', function (event) {
+        if (!event.getModifierState || !event.getModifierState('CapsLock')) {
+            capsLockActive = false;
+            hideCapsLockWarning();
+        }
+    });
+
+    function showCapsLockWarning() {
+        topCapsLockWarning.style.display = 'block';
+        bottomCapsLockWarning.style.display = 'block';
+        topCapsLockWarning.style.fontSize = '40px';
+        topCapsLockWarning.style.fontWeight = 'bold';
+        bottomCapsLockWarning.style.fontSize = '40px';
+        bottomCapsLockWarning.style.fontWeight = 'bold';
+    }
+
+    function hideCapsLockWarning() {
+        if (!capsLockActive) {
+            topCapsLockWarning.style.display = 'none';
+            bottomCapsLockWarning.style.display = 'none';
+        }
+    }
+</script>
+
+<script>
+    // Script to show and hide the password using a checkbox
+    function togglePasswordVisibility(inputId) {
+        const passwordInput = document.getElementById(inputId);
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+        } else {
+            passwordInput.type = 'password';
+        }
+    }
+
+    // Event listeners added to the checkboxes
+    document.addEventListener('DOMContentLoaded', function () {
+        const showPasswordCheckbox = document.getElementById('show-password-checkbox');
+        const showConfirmPasswordCheckbox = document.getElementById('show-confirm-password-checkbox');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('password-confirm');
+
+        // Toggle password visibility when the "Show Password" checkbox is checked
+        showPasswordCheckbox.addEventListener('change', function () {
+            togglePasswordVisibility('password');
+        });
+
+        // Toggle confirm password visibility when the "Show Password" checkbox is checked
+        showConfirmPasswordCheckbox.addEventListener('change', function () {
+            togglePasswordVisibility('password-confirm');
+        });
+    });
+</script>
+
+<script>
+    // Script to update password requirements color and enable/disable the confirm password field
+    function updatePasswordRequirements() {
+        const credInput = document.getElementById('password');
+        const confirmCredInput = document.getElementById('password-confirm');
+        const confirmCredLabel = confirmCredInput.labels[0] //document.getElementById('password-confirm-label');
+        const showConfirmCredCheckbox = document.getElementById('show-confirm-password-checkbox');
+        const showConfirmCredCheckboxLabel = showConfirmCredCheckbox.labels[0]
+        const credRequirements = document.getElementById('password-requirements');
+        const credLength = document.getElementById('password-length');
+        const credUppercase = document.getElementById('password-uppercase');
+        const credLowercase = document.getElementById('password-lowercase');
+        const credNumeric = document.getElementById('password-numeric');
+        const credSpecial = document.getElementById('password-special');
+        const credRepeating = document.getElementById('password-repeating');
+        const cred = credInput.value;
+        const confirmCred = confirmCredInput.value;
+
+        // Password requirements
+        const requirements = {
+            length: cred.length >= 15,
+            uppercase: /[A-Z]/.test(cred),
+            lowercase: /[a-z]/.test(cred),
+            numeric: /[0-9]/.test(cred),
+            special: /[~!@#$%^&*()_+=\-‘[\]\/?><]/.test(cred),
+            repeating: !/(.)\1{1,}/.test(cred),
+        };
+
+        const specialCharCount = (cred.match(/[~!@#$%^&*()_+=\-‘[\]\/?><]/g) || []).length;
+
+        // Update the requirements color and special character check
+        credLength.style.color = requirements.length ? 'green' : 'red';
+        credUppercase.style.color = requirements.uppercase ? 'green' : 'red';
+        credLowercase.style.color = requirements.lowercase ? 'green' : 'red';
+        credNumeric.style.color = requirements.numeric ? 'green' : 'red';
+        credSpecial.style.color = specialCharCount >= 2 ? 'green' : 'red';
+        credRepeating.style.color = requirements.repeating ? 'green' : 'red';
+
+        // Check if all requirements are green
+        //const allColorsGreen = Object.values(requirements).every(color => color === 'green');
+        const allColorsGreen = Object.values(requirements).every(test => test === true);
+        const isConfirmCredEnabled = allColorsGreen;
+       if (isConfirmCredEnabled) {
+            confirmCredLabel.style.display = 'block';
+            confirmCredInput.style.display = 'block';
+            confirmCredInput.removeAttribute('readonly')
+            showConfirmCredCheckbox.style.display = 'inline'
+            showConfirmCredCheckboxLabel.style.display = 'inline';
+        } else {
+            confirmCredLabel.style.display = 'none';
+            confirmCredInput.style.display = 'none';
+            showConfirmCredCheckbox.style.display = 'none';
+            showConfirmCredCheckboxLabel.style.display = 'none';
+            confirmCredInput.value = '';
+        }
+    }
+
+    // Event listener for password input changes
+    document.getElementById('password').addEventListener('input', updatePasswordRequirements);
+    document.getElementById('password-confirm').addEventListener('input', updatePasswordRequirements);
+</script>
+
+<script>
+    // Script for checking email mismatches and displaying the error message
+        document.addEventListener('DOMContentLoaded', function () {
+            const emailInput = document.getElementById('email');
+            const confirmEmailInput = document.getElementById('confirmEmail');
+            const emailMismatchError = document.getElementById('email-mismatch-error');
+
+            // Function to check for email mismatches
+            function checkEmailMismatches() {
+                const emailValue = emailInput.value.trim();
+                const confirmEmailValue = confirmEmailInput.value.trim();
+
+                if (emailValue !== confirmEmailValue) {
+                    emailMismatchError.style.display = 'block';
+                } else {
+                    emailMismatchError.style.display = 'none';
+                }
+            }
+
+            // Event listener to the confirm email field
+            confirmEmailInput.addEventListener('blur', checkEmailMismatches);
+    });
+</script>
+
+<script>
+    // Script for checking passowrd mismatches and displaying the error message
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('password-confirm');
+        const passwordMismatchError = document.getElementById('password-mismatch-error');
+        const registerButton = document.getElementById('do-register');
+
+        function checkPasswordMismatches() {
+            const passwordValue = passwordInput.value.trim();
+            const confirmPasswordValue = confirmPasswordInput.value.trim();
+
+            if (passwordValue !== confirmPasswordValue) {
+                passwordMismatchError.style.display = 'block';
+                 registerButton.disabled = true;
+            } else {
+                passwordMismatchError.style.display = 'none';
+                 registerButton.disabled = false;
+            }
+        }
+
+        confirmPasswordInput.addEventListener('keyup', checkPasswordMismatches);
+        passwordInput.addEventListener('keyup', checkPasswordMismatches);
+    });
+</script>
+
+<script type="module"> //Script to prompt the user with an error if they enter an email domanin that is not allowed
+    const disallowedDomains = [ //Array of disallowed domains
+        "gmail.com",
+        "aol.com",
+        "live.com",
+        "yahoo.com",
+        "proton.me",
+        "protonmail.com",
+        "icloud.com",
+        "hotmail.com",
+        "hotmail.co.uk",
+        "hotmail.fr",
+        "msn.com",
+        "yahoo.fr",
+        "wanadoo.fr",
+        "orange.fr",
+        "comcast.net",
+        "yahoo.co.uk",
+        "yahoo.com.br",
+        "yahoo.co.in",
+        "rediffmail.com",
+        "free.fr",
+        "gmx.de",
+        "web.de",
+        "yandex.ru",
+        "ymail.com",
+        "libero.it",
+        "outlook.com",
+        "uol.com.br",
+        "bol.com.br",
+        "mail.ru",
+        "cox.net",
+        "hotmail.it",
+        "sbcglobal.net",
+        "sfr.fr",
+        "live.fr",
+        "verizon.net",
+        "live.co.uk",
+        "googlemail.com",
+        "yahoo.es",
+        "ig.com.br",
+        "live.nl"
+    ];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailInput = document.getElementById('email');
+        const emailErrorMessage = document.createElement('span');
+        const form = document.getElementById('baby-yoda-form');
+
+        emailInput.addEventListener('input', function () {
+            const email = emailInput.value.trim();
+            const domain = email.substring(email.lastIndexOf('@') + 1);
+
+            if (disallowedDomains.includes(domain)) {
+                emailErrorMessage.textContent = 'Error: Email domain is not allowed. Please use your company or goverment domain.';
+                emailErrorMessage.style.color = 'red';
+                emailInput.parentNode.appendChild(emailErrorMessage);
+                form.querySelector('input[type="submit"]').disabled = true;
+            } else {
+                emailErrorMessage.textContent = '';
+                if ( emailInput.parentNode.contains(emailErrorMessage)){ emailInput.parentNode.removeChild(emailErrorMessage);}
+                form.querySelector('input[type="submit"]').disabled = false;
+            }
+        });
+    });
 </script>

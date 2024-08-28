@@ -1,11 +1,11 @@
 package dod.p1.keycloak.registration;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.List;
 import java.util.Map;
 
 import dod.p1.keycloak.common.CommonConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.keycloak.Config;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.RequiredActionFactory;
@@ -14,11 +14,9 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
 import static dod.p1.keycloak.registration.X509Tools.isX509Registered;
 import static dod.p1.keycloak.registration.X509Tools.getX509Username;
@@ -28,17 +26,13 @@ import static dod.p1.keycloak.registration.X509Tools.getX509Username;
  */
 public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory {
 
-    /** Provider id. */
+    /** Provider id. **/
     private static final String PROVIDER_ID = "UPDATE_X509";
 
-    /** Ignore x509. */
+    /** Ignore x509. **/
     private static final String IGNORE_X509 = "IGNORE_X509";
-
-    /**
-     * common logger.
-     */
-    public static final Logger LOGGER = LogManager.getLogger(UpdateX509.class);
-
+    /** Logger. **/
+    private static final Logger LOGGER = LogManager.getLogger(UpdateX509.class);
     /**
      * Evaluates triggers for the X509 update process.
      *
@@ -97,6 +91,7 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
      */
     @Override
     public void processAction(final RequiredActionContext context) {
+        LOGGER.debug("processAction() method");
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         if (formData.containsKey("cancel")) {
             context.getAuthenticationSession().setAuthNote(IGNORE_X509, "true");

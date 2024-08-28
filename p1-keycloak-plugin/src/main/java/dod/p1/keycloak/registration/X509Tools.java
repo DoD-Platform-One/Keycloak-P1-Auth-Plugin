@@ -3,7 +3,6 @@ package dod.p1.keycloak.registration;
 import dod.p1.keycloak.utils.ZacsOCSPProvider;
 import org.keycloak.utils.OCSPProvider;
 import org.keycloak.crypto.def.BCOCSPProvider;
-
 import dod.p1.keycloak.common.CommonConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,9 +11,9 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.CertificatePolicies;
 import org.bouncycastle.asn1.x509.PolicyInformation;
-import org.keycloak.http.HttpRequest;
 import org.keycloak.authentication.FormContext;
 import org.keycloak.authentication.RequiredActionContext;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.authentication.authenticators.x509.AbstractX509ClientCertificateAuthenticator;
 import org.keycloak.authentication.authenticators.x509.X509AuthenticatorConfigModel;
 import org.keycloak.authentication.authenticators.x509.X509ClientCertificateAuthenticator;
@@ -25,33 +24,33 @@ import org.keycloak.services.x509.X509ClientCertificateLookup;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.truststore.TruststoreProvider;
 import org.keycloak.Config;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Map;
 import java.security.cert.CertificateEncodingException;
 import javax.security.auth.x500.X500Principal;
-
-import java.net.URI;
-
 import java.util.stream.Stream;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Map;
 
 import static dod.p1.keycloak.common.CommonConfig.getInstance;
 
 public final class X509Tools {
-
-    /** The LOGGER. */
+    /**
+     * The LOGGER.
+     */
     private static final Logger LOGGER = LogManager.getLogger(X509Tools.class);
 
     /** The certificate policy OID. */
     private static final String CERTIFICATE_POLICY_OID = "2.5.29.32";
 
-    /** The max number of certificate policies to check. */
+    /** The max number of certificate policies to check. **/
     private static final int MAX_CERT_POLICIES_TO_CHECK = 10;
+    /** Name of the file containing the affiliation code translations from CAC to front end view. **/
+    public static final String AFFILIATION_PROPERTY_FILENAME = "affiliation.props";
 
     private static String getLogPrefix(final AuthenticationSessionModel authenticationSession, final String suffix) {
         return "P1_X509_TOOLS_" + suffix + "_" + authenticationSession.getParentSession().getId();
@@ -96,7 +95,7 @@ public final class X509Tools {
     }
 
     /**
-     * Get x509 user name from identity.
+     * Get x509 username from identity.
      * @param session
      * @param httpRequest
      * @param realm
@@ -124,7 +123,7 @@ public final class X509Tools {
     }
 
     /**
-     * Get x509 user name from required action context.
+     * Get x509 username from required action context.
      * @param context a Keycloak required action context
      * @return String
      */
@@ -225,7 +224,6 @@ public final class X509Tools {
         }
 
         X509Certificate cert = certs[0]; // simplifying the assignment; handle array checks as needed
-
         // OCSP Check to address revoked cert getting activecac attribute.
         //To Enable in command:  "--spi-baby-yoda-ocsp-enabled=true"
         //or in ENV:  KC_SPI_BABY_YODA_OCSP_ENABLED: "true"
@@ -332,4 +330,17 @@ public final class X509Tools {
         return null;
     }
 
+    /**
+     * Used for translating the affiliation value from a CAC to the affiliation presented as an option on the
+     * registration page.
+     * @param affiliationFromCac - the value found for the affiliation on the CAC card.
+     * @return - The translated value if one can be found, the untranslated value from the CAC card if a translation
+     * cannot be found
+     */
+    public static String translateAffiliationShortName(final String affiliationFromCac) {
+        String translatedAffiliation =  CacAffiliations.getLongName(affiliationFromCac);
+        LOGGER.debug("affiliationFromCac: {}", affiliationFromCac);
+        LOGGER.debug("translatedAffiliation: {}", translatedAffiliation);
+        return translatedAffiliation;
+    }
 }
