@@ -3,11 +3,17 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
-## [3.5.5] - 2024-08-28
+## [3.5.6] - 2024-09-16
 
 ### Updated
 
 - Bumped version of Keycloak libraries to 25.0.4
+
+## [3.5.5] - 2024-09-16
+
+### Updated
+
+- Update Dockerfile with microdnf commands
 
 ## [3.5.4] - 2024-08-27
 
