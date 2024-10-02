@@ -3,7 +3,8 @@ The Platform One custom provider plugin is now decoupled from the Big Bang Keycl
 
 | **PLUGIN VERSION** | **KEYCLOAK VERSION** | **KEYCLOAK VERSION**<br>**COMPATIBILITY** |
 |:-------------------|:---------------------|:------------------------------------------|
-| 3.5.6              | 25.0.4               | 25.0.X 
+| 3.5.7              | 25.0.6               | 25.0.X                                    |
+| 3.5.6              | 25.0.4               | 25.0.X                                    |
 | 3.5.5              | 25.0.2               | 25.0.X                                    |
 | 3.5.4              | 25.0.2               | 25.0.X                                    |
 | 3.5.3              | 25.0.2               | 25.0.X                                    |
