@@ -7,14 +7,6 @@
         "account",
         "login"
       ]
-    },
-    {
-      "name": "tcode-sso",
-      "types": [
-        "admin",
-        "account",
-        "login"
-      ]
     }
   ]
 }

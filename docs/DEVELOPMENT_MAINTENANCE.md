@@ -3,6 +3,8 @@ The Platform One custom provider plugin is now decoupled from the Big Bang Keycl
 
 | **PLUGIN VERSION** | **KEYCLOAK VERSION** | **KEYCLOAK VERSION**<br>**COMPATIBILITY** |
 |:-------------------|:---------------------|:------------------------------------------|
+| 3.6.5              | 26.1.2               | 26.1.X
+| 3.5.8              | 25.0.6               | 25.0.X
 | 3.5.7              | 25.0.6               | 25.0.X                                    |
 | 3.5.6              | 25.0.4               | 25.0.X                                    |
 | 3.5.5              | 25.0.2               | 25.0.X                                    |
@@ -75,7 +77,7 @@ This repo includes a custom Quarkus extension for routing and redirects. It is c
 
 ### Build
 First build this plugin project to create a jar file. This is a Java Gradle project. You can build it from an IDE or from command line. Here is how to build it from a docker container without installing dependencies on your workstation (note that this will usually be much slower than running locally and is more likely to fail). If you want to build on your workstation without the gradle image you will need to install the appropriate versions of JDK and gradle. On mac, recommend `sdkman` to easily manage multiple java versions. The java archive(jar) will be created at `/build/libs/p1-keycloak-plugin-x.x.x.jar`. The plugin uses semantic versioning controlled by the "version" in the top level `gradle.properties` configuration.
-  
+
 First, spin up a build container :
 ```bash
 docker run -it --rm \
@@ -92,12 +94,12 @@ cd /app
 ```
 
 ### Build a plugin image
-Build an image that contains the plugin jar. The official plugin image is hosted in [Iron Bank](https://ironbank.dso.mil/repomap/details;registry1Path=big-bang%252Fp1-keycloak-plugin) available to be pulled at `registry1.dso.mil/ironbank/big-bang/p1-keycloak-plugin:X.X.X`. Note that the Dockerfile matches the Dockerfile from the [Iron Bank dsop repository](https://repo1.dso.mil/dsop/big-bang/p1-keycloak-plugin/-/blob/development/Dockerfile). 
+Build an image that contains the plugin jar. The official plugin image is hosted in [Iron Bank](https://ironbank.dso.mil/repomap/details;registry1Path=big-bang%252Fp1-keycloak-plugin) available to be pulled at `registry1.dso.mil/ironbank/big-bang/p1-keycloak-plugin:X.X.X`. Note that the Dockerfile matches the Dockerfile from the [Iron Bank dsop repository](https://repo1.dso.mil/dsop/big-bang/p1-keycloak-plugin/-/blob/development/Dockerfile).
 
 DO NOT configure production deployments using an image from the `bigbang-staging` registry1.dso.mil project. This project is for development testing only by the Big Bang Product team. _The below commands are for example only._
 
 On Mac, recommend using Colima to build.
-  
+
 Build the image:
 ```bash
 docker build --platform linux/amd64 -t registry1.dso.mil/bigbang-staging/keycloak-p1-auth-plugin/init-container:test-3.5.0 .

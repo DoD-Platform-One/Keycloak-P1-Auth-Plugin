@@ -212,7 +212,8 @@ public class UrlBean {
       LOGGER.warn("Failed to load properties", ex);
     }
     if (commonPath == null || commonPath.isEmpty()) {
-      commonPath = "/common/keycloak";
+      // Get default common path from theme properties or system property
+      commonPath = System.getProperty("keycloak.theme.common.path", "/common/keycloak");
     }
     return uri.getPath() + "/" + commonPath;
   }

@@ -1,1 +1,2 @@
 dod.p1.keycloak.authentication.RequireGroupAuthenticatorFactory
+dod.p1.keycloak.authentication.OCSPCheckAuthenticatorFactory

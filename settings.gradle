@@ -1,14 +1,15 @@
 rootProject.name = "${rootProjectName}"
 
-include 'p1-keycloak-plugin','deployment','runtime'
+include 'p1-keycloak-plugin', 'deployment', 'runtime'
 project(':deployment').projectDir = file('quarkus-ext-routing/deployment')
 project(':runtime').projectDir = file('quarkus-ext-routing/runtime')
 
 buildscript {
     repositories {
         mavenCentral()
+        gradlePluginPortal() // Add this repository to resolve the plugin artifact
     }
     dependencies {
-        classpath 'org.owasp:dependency-check-gradle:9.2.0'
+        classpath 'org.owasp:dependency-check-gradle:12.1.0'
     }
 }

@@ -1,26 +1,22 @@
 package org.keycloak.forms.account.freemarker.model;
 
-import java.util.Map;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Arrays;
-
-import org.keycloak.forms.account.freemarker.model.AccountBean;
-import org.keycloak.models.UserModel;
-
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.keycloak.models.UserModel;
 
-import static org.junit.Assert.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AccountBeanTest {
+class AccountBeanTest {
 
     @Test
-    public void testAccountBean() {
-
+    void testAccountBean() {
         // Mock UserModel
         UserModel mockUserModel = mock(UserModel.class);
         when(mockUserModel.getUsername()).thenReturn("UserUsername");
@@ -52,17 +48,14 @@ public class AccountBeanTest {
         // Test case 2: ProfileFormData is null
         AccountBean accountBean2 = new AccountBean(mockUserModel, null);
 
-        assertEquals("UserFirstName", accountBean2.getFirstName()); // Assuming default user first name
-        assertEquals("UserLastName", accountBean2.getLastName());   // Assuming default user last name
-        assertEquals("UserUsername", accountBean2.getUsername());   // Assuming default user username
-        assertEquals("user@example.com", accountBean2.getEmail());   // Assuming default user email
+        assertEquals("UserFirstName", accountBean2.getFirstName());
+        assertEquals("UserLastName", accountBean2.getLastName());
+        assertEquals("UserUsername", accountBean2.getUsername());
+        assertEquals("user@example.com", accountBean2.getEmail());
         assertNull(accountBean2.getAttributes().get("customAttribute1"));
         assertNull(accountBean2.getAttributes().get("customAttribute2"));
         assertEquals("default1", accountBean2.getAttributes().get("customDefaultAttribute1"));
         assertEquals("default2", accountBean2.getAttributes().get("customDefaultAttribute2"));
-
-        //assertTrue(accountBean2.getAttributes().isEmpty());
-        // Add more test cases as needed
     }
 
     private Map<String, List<String>> createMockAttributes() {

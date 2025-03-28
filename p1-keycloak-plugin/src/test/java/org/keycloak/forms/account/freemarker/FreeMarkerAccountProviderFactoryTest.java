@@ -1,11 +1,11 @@
 package org.keycloak.forms.account.freemarker;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.KeycloakSession;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class FreeMarkerAccountProviderFactoryTest {
@@ -16,7 +16,8 @@ public class FreeMarkerAccountProviderFactoryTest {
         KeycloakSession session = mock(KeycloakSession.class);
 
         // Ensure that the create method returns a non-null instance of FreeMarkerAccountProvider
-        assertEquals(FreeMarkerAccountProvider.class, factory.create(session).getClass());
+        assertEquals(FreeMarkerAccountProvider.class, factory.create(session).getClass(),
+                "Expected an instance of FreeMarkerAccountProvider");
     }
 
     @Test
@@ -50,7 +51,6 @@ public class FreeMarkerAccountProviderFactoryTest {
         FreeMarkerAccountProviderFactory factory = new FreeMarkerAccountProviderFactory();
 
         // Ensure that the getId method returns "freemarker"
-        assertEquals("freemarker", factory.getId());
+        assertEquals("freemarker", factory.getId(), "Expected factory ID to be 'freemarker'");
     }
 }
-

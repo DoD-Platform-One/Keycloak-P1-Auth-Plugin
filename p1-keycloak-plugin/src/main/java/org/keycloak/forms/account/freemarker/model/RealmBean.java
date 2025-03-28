@@ -56,7 +56,7 @@ public class RealmBean {
    */
   public String getDisplayName() {
     String displayName = realm.getDisplayName();
-    if (displayName != null && displayName.length() > 0) {
+    if (displayName != null && !displayName.isEmpty()) {
       return displayName;
     } else {
       return getName();
@@ -71,7 +71,7 @@ public class RealmBean {
    */
   public String getDisplayNameHtml() {
     String displayNameHtml = realm.getDisplayNameHtml();
-    if (displayNameHtml != null && displayNameHtml.length() > 0) {
+    if (displayNameHtml != null && !displayNameHtml.isEmpty()) {
       return displayNameHtml;
     } else {
       return getDisplayName();

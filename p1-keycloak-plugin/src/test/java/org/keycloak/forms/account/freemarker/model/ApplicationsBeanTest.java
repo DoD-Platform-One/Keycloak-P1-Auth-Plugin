@@ -1,74 +1,85 @@
 package org.keycloak.forms.account.freemarker.model;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.keycloak.common.util.MultivaluedHashMap;
-import org.keycloak.models.KeycloakUriInfo;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.keycloak.models.*;
+import org.keycloak.models.ClientModel;
+import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.Constants;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakContext;
+import org.keycloak.models.UserSessionProvider;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserConsentModel;
+import org.keycloak.models.UserModel;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.services.managers.UserSessionManager;
 import org.keycloak.services.resources.admin.permissions.AdminPermissions;
 import org.keycloak.services.resources.admin.permissions.RealmsPermissionEvaluator;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ UserSessionManager.class, AdminPermissions.class, TokenManager.class,
-})
-public class ApplicationsBeanTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ApplicationsBeanTest {
 
+    @Mock
     private KeycloakSession keycloakSession;
-    private UserSessionProvider userSessionProvider;
+    @Mock
     private RealmModel realm;
+    @Mock
     private UserModel user;
+    @Mock
     private ClientModel client;
+    @Mock
     private KeycloakContext context;
-    private KeycloakUriInfo keycloakUriInfo;
-    private UserProvider userProvider;
+    @Mock
+    private org.keycloak.models.KeycloakUriInfo keycloakUriInfo;
+    @Mock
+    private org.keycloak.models.UserProvider userProvider;
+
     private Map<String, ClientScopeModel> clientScopeModelMap;
 
-    @Before
-    public void setUp() throws URISyntaxException {
-        URI uri = new URI("ApplicationBeanTest.com");
+    @BeforeEach
+    void setUp() throws URISyntaxException {
+        URI uri = new URI("http://ApplicationBeanTest.com");
 
-        keycloakSession = mock(KeycloakSession.class);
-        userSessionProvider = mock(UserSessionProvider.class);
-        realm = mock(RealmModel.class);
-        user = mock(UserModel.class);
-        client = mock(ClientModel.class);
-        context = mock(KeycloakContext.class);
-        keycloakUriInfo = mock(KeycloakUriInfo.class);
-        userProvider = mock(UserProvider.class);
+        // Stub keycloakSession.sessions() to return a non-null UserSessionProvider.
+        UserSessionProvider usp = mock(UserSessionProvider.class);
+        when(keycloakSession.sessions()).thenReturn(usp);
+        // Stub getOfflineUserSessionsStream() to return an empty stream.
+        when(usp.getOfflineUserSessionsStream(realm, user)).thenReturn(Stream.empty());
 
-        // Mocking the behavior of relevant methods in KeycloakSession and RealmModel
-        when(keycloakSession.sessions()).thenReturn(userSessionProvider);
         when(keycloakSession.users()).thenReturn(userProvider);
         when(keycloakSession.getContext()).thenReturn(context);
         when(context.getUri()).thenReturn(keycloakUriInfo);
         when(context.getUri(any())).thenReturn(keycloakUriInfo);
         when(keycloakUriInfo.getBaseUri()).thenReturn(uri);
 
-        // realm
-        when(realm.getRole("offline_access")).thenReturn(mock(RoleModel.class));
+        // Mock realm: for example, offline_access role.
+        RoleModel offlineAccessRole = mock(RoleModel.class);
+        when(realm.getRole("offline_access")).thenReturn(offlineAccessRole);
 
-        // Vars
         clientScopeModelMap = new HashMap<>();
         clientScopeModelMap.put("scope1", mock(ClientScopeModel.class));
         clientScopeModelMap.put("scope2", mock(ClientScopeModel.class));
     }
 
     @Test
-    public void testAdminClient(){
+    void testAdminClient() {
         // Condition 1
         when(client.getClientId()).thenReturn(Constants.ADMIN_CLI_CLIENT_ID);
         assertTrue(ApplicationsBean.isAdminClient(client));
@@ -83,57 +94,57 @@ public class ApplicationsBeanTest {
     }
 
     @Test
-    public void testApplicationBeanGenericCase() throws Exception {
+    void testApplicationBeanGenericCase() throws Exception {
         ApplicationsBean applicationsBean = new ApplicationsBean(keycloakSession, realm, user);
-
-        assertNotNull(applicationsBean.getApplications());
+        assertNotNull(applicationsBean.getApplications(), "getApplications() should not return null");
     }
 
     @Test
-    public void testApplicationEntryInnerClass() throws Exception {
-        // Mock getRootUrl() and getBaseUrl() methods in ClientModel
+    void testApplicationEntryInnerClass() throws Exception {
         when(client.getRootUrl()).thenReturn("http://example.com");
         when(client.getBaseUrl()).thenReturn("/app");
 
-        // Create an instance of ApplicationEntry
-        List<RoleModel> realmRolesAvailableList = Arrays.asList(mock(RoleModel.class));
+        List<RoleModel> realmRolesAvailableList = Collections.singletonList(mock(RoleModel.class));
         MultivaluedHashMap<String, ApplicationsBean.ClientRoleEntry> resourceRolesAvailableMap = new MultivaluedHashMap<>();
         List<String> clientScopesGrantedList = Arrays.asList("scope1", "scope2");
         List<String> additionalGrantsList = Arrays.asList("grant1", "grant2");
 
         ApplicationsBean.ApplicationEntry applicationEntry = new ApplicationsBean.ApplicationEntry(
-                keycloakSession, realmRolesAvailableList, resourceRolesAvailableMap, client,
-                clientScopesGrantedList, additionalGrantsList);
+                keycloakSession,
+                realmRolesAvailableList,
+                resourceRolesAvailableMap,
+                client,
+                clientScopesGrantedList,
+                additionalGrantsList
+        );
 
-        // Test methods
-        assertEquals("http://example.com/app", applicationEntry.getEffectiveUrl());
-        assertEquals(client, applicationEntry.getClient());
-        assertEquals(realmRolesAvailableList, applicationEntry.getRealmRolesAvailable());
-        assertEquals(resourceRolesAvailableMap, applicationEntry.getResourceRolesAvailable());
-        assertEquals(clientScopesGrantedList, applicationEntry.getClientScopesGranted());
-        assertEquals(additionalGrantsList, applicationEntry.getAdditionalGrants());
+        assertEquals("http://example.com/app", applicationEntry.getEffectiveUrl(), "Effective URL mismatch");
+        assertEquals(client, applicationEntry.getClient(), "Client mismatch");
+        assertEquals(realmRolesAvailableList, applicationEntry.getRealmRolesAvailable(), "Realm roles mismatch");
+        assertEquals(resourceRolesAvailableMap, applicationEntry.getResourceRolesAvailable(), "Resource roles mismatch");
+        assertEquals(clientScopesGrantedList, applicationEntry.getClientScopesGranted(), "Granted scopes mismatch");
+        assertEquals(additionalGrantsList, applicationEntry.getAdditionalGrants(), "Additional grants mismatch");
     }
 
     @Test
-    public void testClientRoleEntryInnerClass() {
-
+    void testClientRoleEntryInnerClass() {
         String clientID = "clientID";
         String clientName = "clientName";
         String roleName = "roleName";
         String roleDescription = "roleDescription";
 
-        ApplicationsBean.ClientRoleEntry clientRoleEntry = new ApplicationsBean.ClientRoleEntry(clientID, clientName, roleName, roleDescription);
+        ApplicationsBean.ClientRoleEntry clientRoleEntry = new ApplicationsBean.ClientRoleEntry(
+                clientID, clientName, roleName, roleDescription
+        );
 
-        assertEquals(clientID, clientRoleEntry.getClientId());
-        assertEquals(clientName, clientRoleEntry.getClientName());
-        assertEquals(roleName, clientRoleEntry.getRoleName());
-        assertEquals(roleDescription, clientRoleEntry.getRoleDescription());
+        assertEquals(clientID, clientRoleEntry.getClientId(), "clientId mismatch");
+        assertEquals(clientName, clientRoleEntry.getClientName(), "clientName mismatch");
+        assertEquals(roleName, clientRoleEntry.getRoleName(), "roleName mismatch");
+        assertEquals(roleDescription, clientRoleEntry.getRoleDescription(), "roleDescription mismatch");
     }
 
     @Test
-    public void getApplicationsConditionsTest1() throws Exception {
-        // Condition 1
-        // clientModel
+    void getApplicationsConditionsTest1() throws Exception {
         ClientModel client1 = mock(ClientModel.class);
         ClientModel client2 = mock(ClientModel.class);
 
@@ -151,46 +162,40 @@ public class ApplicationsBeanTest {
         when(client2.getClientScopes(eq(false))).thenReturn(clientScopeModelMap);
         when(client2.isConsentRequired()).thenReturn(false);
 
-        // Stream clientModel
         Stream<ClientModel> clientsStream = Stream.of(client1, client2);
 
-        // Role Models
         RoleModel roleModel1 = mock(RoleModel.class);
         when(roleModel1.getContainer()).thenReturn(realm);
 
         RoleModel roleModel2 = mock(RoleModel.class);
         when(roleModel2.getContainer()).thenReturn(client);
 
-        // Set RoleModel
         Set<RoleModel> roleModelSet = new HashSet<>();
         roleModelSet.add(roleModel1);
         roleModelSet.add(roleModel2);
 
-        // AdminPermissions
-        mockStatic(AdminPermissions.class);
-        when(AdminPermissions.realms(any(), any(), any())).thenReturn(mock(RealmsPermissionEvaluator.class));
-        when(AdminPermissions.realms(any(), any(), any()).isAdmin()).thenReturn(true);
+        try (var mockedAdminPermissions = mockStatic(AdminPermissions.class);
+             var mockedTokenManager = mockStatic(TokenManager.class)) {
 
-        // TockenManager
-        mockStatic(TokenManager.class);
-        when(TokenManager.getAccess(any(), any(), any())).thenReturn(roleModelSet);
+            RealmsPermissionEvaluator mockRealmPermEval = mock(RealmsPermissionEvaluator.class);
+            mockedAdminPermissions.when(() -> AdminPermissions.realms(any(), any(), any()))
+                                  .thenReturn(mockRealmPermEval);
+            when(mockRealmPermEval.isAdmin()).thenReturn(true);
 
-        // realm
-        when(realm.getClientsStream()).thenReturn(clientsStream);
-        when(realm.getName()).thenReturn("realm");
-        when(realm.getClientByClientId(anyString())).thenReturn(client);
+            mockedTokenManager.when(() -> TokenManager.getAccess(any(), any(), any()))
+                              .thenReturn(roleModelSet);
 
-        // constructor
-        ApplicationsBean applicationsBean = new ApplicationsBean(keycloakSession, realm, user);
+            when(realm.getClientsStream()).thenReturn(clientsStream);
+            when(realm.getName()).thenReturn("realm");
+            when(realm.getClientByClientId(anyString())).thenReturn(client);
 
-        // condition
-        assertNotNull(applicationsBean.getApplications());
+            ApplicationsBean applicationsBean = new ApplicationsBean(keycloakSession, realm, user);
+            assertNotNull(applicationsBean.getApplications(), "Applications should not be null");
+        }
     }
 
     @Test
-    public void getApplicationsConditionsTest2() throws Exception {
-        // Condition 2
-        // clientModel
+    void getApplicationsConditionsTest2() throws Exception {
         ClientModel client1 = mock(ClientModel.class);
         ClientModel client2 = mock(ClientModel.class);
 
@@ -208,35 +213,20 @@ public class ApplicationsBeanTest {
         when(client2.getClientScopes(eq(false))).thenReturn(clientScopeModelMap);
         when(client2.isConsentRequired()).thenReturn(false);
 
-        // Stream clientModel
         Stream<ClientModel> clientsStream = Stream.of(client1, client2);
 
-        // AdminPermissions
-        mockStatic(AdminPermissions.class);
-        when(AdminPermissions.realms(any(), any(), any())).thenReturn(mock(RealmsPermissionEvaluator.class));
-        when(AdminPermissions.realms(any(), any(), any()).isAdmin()).thenReturn(false);
+        try (var mockedAdminPermissions = mockStatic(AdminPermissions.class)) {
+            RealmsPermissionEvaluator mockRealmPermEval = mock(RealmsPermissionEvaluator.class);
+            mockedAdminPermissions.when(() -> AdminPermissions.realms(any(), any(), any()))
+                                  .thenReturn(mockRealmPermEval);
+            when(mockRealmPermEval.isAdmin()).thenReturn(false);
 
-//        // UserConsentModel
-//        UserConsentModel consent1 = mock(UserConsentModel.class);
-//        UserConsentModel consent2 = mock(UserConsentModel.class);
-//
-//        when(consent1.getClient()).thenReturn(client1);
-//        when(consent2.getClient()).thenReturn(client2);
-//
-//        Stream<UserConsentModel> userContentModelStream = Stream.of(consent1, consent2);
-//
-//        // userProvider
-//        when(userProvider.getConsentsStream(any(), any())).thenReturn(userContentModelStream);
+            when(realm.getClientsStream()).thenReturn(clientsStream);
+            when(realm.getName()).thenReturn("realm");
+            when(realm.getClientByClientId(anyString())).thenReturn(client);
 
-        // realm
-        when(realm.getClientsStream()).thenReturn(clientsStream);
-        when(realm.getName()).thenReturn("realm");
-        when(realm.getClientByClientId(anyString())).thenReturn(client);
-
-        // constructor
-        ApplicationsBean applicationsBean = new ApplicationsBean(keycloakSession, realm, user);
-
-        // condition
-        assertNotNull(applicationsBean.getApplications());
+            ApplicationsBean applicationsBean = new ApplicationsBean(keycloakSession, realm, user);
+            assertNotNull(applicationsBean.getApplications(), "Applications should not be null");
+        }
     }
 }

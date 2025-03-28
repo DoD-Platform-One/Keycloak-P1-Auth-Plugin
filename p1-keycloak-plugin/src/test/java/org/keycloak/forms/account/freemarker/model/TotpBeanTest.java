@@ -1,152 +1,171 @@
 package org.keycloak.forms.account.freemarker.model;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.keycloak.authentication.otp.OTPApplicationProvider;
-import org.keycloak.credential.CredentialModel;
+import jakarta.ws.rs.core.UriBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.OTPPolicy;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.keycloak.forms.account.freemarker.model.TotpBean;
-import jakarta.ws.rs.core.UriBuilder;
-import org.keycloak.models.utils.HmacOTP;
-import org.keycloak.utils.TotpUtils;
-import org.keycloak.models.SubjectCredentialManager;
 import org.keycloak.models.credential.OTPCredentialModel;
-import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.credential.CredentialModel;
+import org.keycloak.models.OTPPolicy;
+import org.keycloak.models.SubjectCredentialManager;
 import org.keycloak.models.utils.RepresentationToModel;
+import org.keycloak.utils.CredentialHelper;
+import org.keycloak.utils.TotpUtils;
+import org.keycloak.authentication.otp.OTPApplicationProvider;
 
 import java.net.URI;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-import org.keycloak.utils.CredentialHelper;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({HmacOTP.class, TotpUtils.class, CredentialModel.class, CredentialHelper.class, RepresentationToModel.class})
-public class TotpBeanTest {
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mockStatic;
 
+/**
+ * Refactored test class for {@link TotpBean} using JUnit 5 and Mockito inline mock maker
+ * to replace PowerMock functionality.
+ */
+class TotpBeanTest {
+
+    @Mock
     private KeycloakSession session;
+    @Mock
     private RealmModel realm;
+    @Mock
     private UserModel user;
+    @Mock
     private UriBuilder uriBuilder;
+    @Mock
     private OTPPolicy otpPolicy;
 
-    @Before
-    public void setUp() {
-        PowerMockito.mockStatic(HmacOTP.class);
-        PowerMockito.mockStatic(TotpUtils.class);
-
-        session = PowerMockito.mock(KeycloakSession.class);
-        realm = PowerMockito.mock(RealmModel.class);
-        user = PowerMockito.mock(UserModel.class);
-        uriBuilder = PowerMockito.mock(UriBuilder.class);
-        otpPolicy = PowerMockito.mock(OTPPolicy.class);
-
-        // Mock the credentialManager() method to return a non-null value
-        SubjectCredentialManager credentialManager = PowerMockito.mock(SubjectCredentialManager.class);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        // Stub the realm's OTPPolicy so TotpUtils.qrCode() doesn't receive a null.
+        when(realm.getOTPPolicy()).thenReturn(otpPolicy);
+        // Use the SubjectCredentialManager returned by user.credentialManager()
+        SubjectCredentialManager credentialManager = mock(SubjectCredentialManager.class);
         when(user.credentialManager()).thenReturn(credentialManager);
     }
 
     @Test
-    public void testTotpBeanEnabled() throws Exception {
-        when(user.credentialManager().isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(true);
+    void testTotpBeanEnabled() throws Exception {
+        SubjectCredentialManager credentialManager = user.credentialManager();
+        when(credentialManager.isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(true);
 
-        CredentialModel credentialModelMock = PowerMockito.mock(CredentialModel.class);
+        CredentialModel credentialModelMock = mock(CredentialModel.class);
         when(credentialModelMock.getType()).thenReturn(CredentialModel.TOTP);
         when(credentialModelMock.getSecretData()).thenReturn("totpSecret");
-        Collections.singletonList(credentialModelMock);
-
-        when(user.credentialManager().getStoredCredentialsByTypeStream(any())).thenReturn(
-                Stream.of(credentialModelMock));
+        // Return a stream with one mocked credential
+        when(credentialManager.getStoredCredentialsByTypeStream(any()))
+                .thenReturn(Stream.of(credentialModelMock));
 
         when(realm.getOTPPolicy()).thenReturn(otpPolicy);
 
-        List<OTPApplicationProvider> applicationProviders = Collections.singletonList(
-                PowerMockito.mock(OTPApplicationProvider.class));
-        when(session.getAllProviders(OTPApplicationProvider.class)).thenReturn(new java.util.HashSet<>(applicationProviders));
-        when(applicationProviders.get(0).supports(otpPolicy)).thenReturn(true);
-        when(applicationProviders.get(0).getName()).thenReturn("testApplication");
+        // Prepare a single OTPApplicationProvider that supports the mocked OTPPolicy
+        OTPApplicationProvider applicationProvider = mock(OTPApplicationProvider.class);
+        when(applicationProvider.supports(otpPolicy)).thenReturn(true);
+        when(applicationProvider.getName()).thenReturn("testApplication");
 
+        // Return a set with our one application provider
+        when(session.getAllProviders(eq(OTPApplicationProvider.class)))
+                .thenReturn(new HashSet<>(List.of(applicationProvider)));
+
+        // Mock URI building
         when(uriBuilder.replaceQueryParam(eq("mode"), any(String.class))).thenReturn(uriBuilder);
         when(uriBuilder.build()).thenReturn(new URI("http://example.com"));
-        when(HmacOTP.generateSecret(20)).thenReturn("20_Characters_needed");
 
-        when(TotpUtils.encode(any(String.class))).thenReturn("Something_here");
-        when(TotpUtils.qrCode(any(String.class), eq(realm), eq(user))).thenReturn("Something_else_here");
+        // Static mocks for HmacOTP and TotpUtils
+        try (var hmacOTPMock = mockStatic(org.keycloak.models.utils.HmacOTP.class);
+             var totpUtilsMock = mockStatic(TotpUtils.class)) {
 
-        TotpBean totpBean = new TotpBean(session, realm, user, uriBuilder);
+            hmacOTPMock.when(() -> org.keycloak.models.utils.HmacOTP.generateSecret(20))
+                       .thenReturn("20_Characters_needed");
+            totpUtilsMock.when(() -> TotpUtils.encode(anyString())).thenReturn("Something_here");
+            totpUtilsMock.when(() -> TotpUtils.qrCode(anyString(), eq(realm), eq(user)))
+                         .thenReturn("Something_else_here");
 
-        assertEquals(true, totpBean.isEnabled());
-        assertEquals("Expected TOTP secret length", 20, totpBean.getTotpSecret().length());
+            // Instantiate TotpBean
+            TotpBean totpBean = new TotpBean(session, realm, user, uriBuilder);
 
-        assertNotNull("Encoded TOTP secret should not be null", totpBean.getTotpSecretEncoded());
-        assertNotNull("Totp secret QR code should not be null", totpBean.getTotpSecretQrCode());
+            // Verify
+            assertTrue(totpBean.isEnabled(), "TOTP should be enabled for the user");
+            assertEquals(20, totpBean.getTotpSecret().length(),
+                    "Expected generated TOTP secret of length 20");
 
-        // Assuming there's a specific format for manual and QR URLs
-        assertNotNull(totpBean.getManualUrl());
-        assertFalse(totpBean.getManualUrl().isEmpty());
+            assertNotNull(totpBean.getTotpSecretEncoded(), "Encoded TOTP secret should not be null");
+            assertNotNull(totpBean.getTotpSecretQrCode(), "TOTP secret QR code should not be null");
 
-        assertNotNull(totpBean.getQrUrl());
-        assertFalse(totpBean.getQrUrl().isEmpty());
+            assertNotNull(totpBean.getManualUrl(), "Manual URL should not be null or empty");
+            assertFalse(totpBean.getManualUrl().isEmpty(), "Manual URL should not be empty");
 
-        assertNotNull("OTP policy should not be null", totpBean.getPolicy());
+            assertNotNull(totpBean.getQrUrl(), "QR URL should not be null or empty");
+            assertFalse(totpBean.getQrUrl().isEmpty(), "QR URL should not be empty");
 
-        assertFalse("Supported applications should not be empty", totpBean.getSupportedApplications().isEmpty());
-
-        assertFalse("OTP credentials should not be empty", totpBean.getOtpCredentials().isEmpty());
+            assertNotNull(totpBean.getPolicy(), "OTP Policy should not be null");
+            assertFalse(totpBean.getSupportedApplications().isEmpty(),
+                    "Supported applications should not be empty");
+            assertFalse(totpBean.getOtpCredentials().isEmpty(),
+                    "OTP credentials should not be empty");
+        }
     }
 
     @Test
-    public void testTotpBeanDisabled() throws Exception {
-        when(user.credentialManager().isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(false);
+    void testTotpBeanDisabled() throws Exception {
+        SubjectCredentialManager credentialManager = user.credentialManager();
+        when(credentialManager.isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(false);
 
-        TotpBean totpBean = new TotpBean(session, realm, user, uriBuilder);
+        try (var totpUtilsMock = mockStatic(TotpUtils.class)) {
+            // Ensure TotpUtils.qrCode returns a dummy value to avoid NPE.
+            totpUtilsMock.when(() -> TotpUtils.qrCode(anyString(), eq(realm), eq(user)))
+                         .thenReturn("Something_else_here");
 
-        assertTrue("OTP Credentials is empty.", totpBean.getOtpCredentials().isEmpty());
+            TotpBean totpBean = new TotpBean(session, realm, user, uriBuilder);
+
+            assertTrue(totpBean.getOtpCredentials().isEmpty(),
+                    "OTP credentials should be empty when TOTPs are not configured");
+        }
     }
 
     @Test
-    public void testTotpBeanEnabledEmptyList() throws Exception {
-        // Mock the necessary dependencies
-        when(user.credentialManager().isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(true);
-    
-        // Mock an empty list of CredentialModel
-        List<CredentialModel> emptyCredentialList = Collections.emptyList();
-        when(user.credentialManager().getStoredCredentialsByTypeStream(any())).thenReturn(emptyCredentialList.stream());
-    
-        // Simulate the scenario where the credential is configured on the user storage side
-        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-        PowerMockito.mockStatic(CredentialHelper.class);
-        when(CredentialHelper.createUserStorageCredentialRepresentation(OTPCredentialModel.TYPE)).thenReturn(credentialRepresentation);
-    
-        // Mock the behavior of RepresentationToModel.toModel(credentialRepresentation)
-        CredentialModel credentialModelMock = PowerMockito.mock(CredentialModel.class);
-        PowerMockito.mockStatic(RepresentationToModel.class);
-        when(RepresentationToModel.toModel(credentialRepresentation)).thenReturn(credentialModelMock);
-    
-        TotpBean totpBean = new TotpBean(session, realm, user, uriBuilder);
-    
-        // Assertions
-        assertTrue(totpBean.isEnabled());
-        assertEquals(1, totpBean.getOtpCredentials().size());
-        assertFalse("OTP Credentials is empty.", totpBean.getOtpCredentials().isEmpty());
+    void testTotpBeanEnabledEmptyList() throws Exception {
+        SubjectCredentialManager credentialManager = user.credentialManager();
+        when(credentialManager.isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(true);
+        when(credentialManager.getStoredCredentialsByTypeStream(any()))
+                .thenReturn(Stream.empty());
+
+        var credentialRepresentation = new org.keycloak.representations.idm.CredentialRepresentation();
+        try (var credentialHelperMock = mockStatic(CredentialHelper.class);
+             var repToModelMock = mockStatic(RepresentationToModel.class);
+             var totpUtilsMock = mockStatic(TotpUtils.class)) {
+
+            credentialHelperMock.when(() ->
+                    CredentialHelper.createUserStorageCredentialRepresentation(OTPCredentialModel.TYPE)
+            ).thenReturn(credentialRepresentation);
+
+            var credentialModelMock = mock(CredentialModel.class);
+            repToModelMock.when(() ->
+                    RepresentationToModel.toModel(credentialRepresentation)
+            ).thenReturn(credentialModelMock);
+
+            totpUtilsMock.when(() -> TotpUtils.qrCode(anyString(), eq(realm), eq(user)))
+                         .thenReturn("Something_else_here");
+
+            TotpBean totpBean = new TotpBean(session, realm, user, uriBuilder);
+
+            assertTrue(totpBean.isEnabled(),
+                    "Expected TOTP to be considered enabled when user is configured");
+            assertEquals(1, totpBean.getOtpCredentials().size(),
+                    "There should be exactly one OTP credential after user-storage fallback");
+            assertFalse(totpBean.getOtpCredentials().isEmpty(),
+                    "OTP Credentials should not be empty with fallback");
+        }
     }
 }

@@ -3,6 +3,40 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [3.6.6] - 2025-3-10
+
+### Updated
+
+- Support for Keycloak 26.1.3
+- New OCSP provider to replace Keycloaks built in ocsp provider as part of the x509 auth flow. This allows disabling nonce for specific OCSP providers as well as skipping OCSP checking completely for whitelisted providers.
+  - Configure with environment variables:
+    ```
+    KC_SPI_BABY_YODA_OCSP_ENABLED: "true"
+    KC_SPI_BABY_YODA_OCSP_NONCE_IGNORE_LIST: "ocsp.northropgrumman.com,ocsp.external.lmco.com,ocsp.managed.entrust.com,eca.ocsp.identrust.com,ecas2.ocsp.identrust.com,ocsp.pki.va.gov,ocsp.treasury.gov,ocsp.dimc.dhs.gov"
+    KC_SPI_BABY_YODA_OCSP_IGNORE_LIST: "ocsp.example.mil"
+    KC_SPI_BABY_YODA_OCSP_CACHE_ENABLED: "true"
+    KC_SPI_BABY_YODA_OCSP_CACHE_TTL_HOURS: "23"
+    ```
+  - See README.md for detailed configuration instructions.
+- UpdateX509 Required Action now pulls various attributes off PIV and stores as user attributes.
+- Test Coverage has been updated from JUnit4 to JUnit5 and from PowerMockito to Mockito.
+- Cleaned up all Sonarqube issues. Rewrote a lot of code to address complexity and duplication errors.
+- Increased Test Coverage across all files by roughly 800 new tests.
+- Optimized gradle build to run faster.
+- Created a new WelcomeEmail Event Listener which sends a custom email to all new users. Currently template is hardcoded in plugin but next release will have a configuration file or variable to pull content from. 
+
+## [3.5.8] - 2024-10-08
+
+### Updated
+
+- Removed left over TCODE reference in the themes file (keycloak-themes.json)
+- Updated RegistrationValidation.java to only allow baby-yoda realm to use autoJoinGroup feature.
+  - This method was causing issues with other realms, the proper fix will come in a later release.
+- Update tests to adapt to changes in RegistrationValidation.java
+- Removed the auto-population of username and made the field editable.
+- Added back email confirmation during registration to CAC users.
+
+
 ## [3.5.7] - 2024-10-02
 
 ### Updated
@@ -49,7 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 -        // Need to update this fields because of KC 25 update
          // KC_HOSTNAME: "https://<YOUR HOSTNAME>/auth"
          // KC_HOSTNAME_ADMIN: "https://<YOUR ADMIN HOSTNAME>/auth"
-         
+
 -        // This field is required for the plugin to support multiple realms
          // KC_SPI_MULTI_REALM_ENABLED: "true"
 

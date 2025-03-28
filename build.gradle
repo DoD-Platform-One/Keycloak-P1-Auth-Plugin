@@ -1,7 +1,7 @@
 plugins {
     id 'groovy-gradle-plugin'
     id 'jacoco'
-    id "org.sonarqube" version "4.4.1.3373"
+    id "org.sonarqube" version "5.1.0.4882"
 }
 
 group = "${rootProjectgroupId}"
@@ -9,26 +9,26 @@ version = "${rootProjectVersion}"
 
 repositories {
     mavenCentral()
-    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url = "https://plugins.gradle.org/m2/" }
     gradlePluginPortal()
 }
 
-subprojects.each {
-subproject -> evaluationDependsOn(subproject.name)
+// Evaluate subprojects early
+subprojects.each { subproject ->
+    evaluationDependsOn(subproject.name)
 }
 
+// Disable the default jar task (a multi-project jar is built with allJar)
 jar {
-    // disable the default jar task. A multi project jar is built with allJar task
     enabled = false
 }
 
+// Aggregate jar task for multi-project build
 task allJar(type: Jar, dependsOn: subprojects.jar) {
     duplicatesStrategy = 'include'
     archiveBaseName = "${rootProjectName}"
     subprojects.each { subproject ->
-        from subproject.configurations.archives.allArtifacts.files.collect {
-            zipTree(it)
-        }
+        from subproject.configurations.archives.allArtifacts.files.collect { zipTree(it) }
     }
 }
 
@@ -38,85 +38,69 @@ artifacts {
 
 description = 'Keycloak Plugin Parent'
 
-
-// https://stackoverflow.com/questions/57803277/run-checkstyles-in-subprojects-before-all-tests-in-all-subprojects
-// Create a lifecycle task in the root project.
-// make this depend on all checkstyle tasks from subprojects (see below)
+// ----- Checkstyle configuration -----
+// Create a lifecycle task that depends on all Checkstyle tasks
 def checkstyleAllTask = task("checkstyleAll")
 
-// register task "listGradle" for CI pipeline
 tasks.register('lintGradle') {
-    dependsOn checkstyleAll
+    dependsOn checkstyleAllTask
 }
-
-// Make 'lintGradle' task depend on lifecycle task
 lintGradle.dependsOn(checkstyleAllTask)
 
 subprojects {
-
-    //CHECKSTYLE
+    // Apply the Checkstyle plugin
     apply plugin: "checkstyle"
 
-    // ignore all lint errors for test code
+    // Exclude all files for test Checkstyle if desired
     checkstyleTest.exclude('**/**')
 
     checkstyle {
-        toolVersion = '8.29'
+        toolVersion = '10.20.0'
         showViolations = true
-
-        // Toggle these when testing without wanting to fix errors
         ignoreFailures = false
-//        ignoreFailures = true // if checkstyle is not letting you build uncomment this line
     }
 
-    // Ensure all checkstyle tasks are a dependency of the "checkstyleAll" task
+    // Make all Checkstyle tasks part of the lifecycle task
     checkstyleAllTask.dependsOn(tasks.withType(Checkstyle))
 
     tasks.withType(Test) {
-        // Indicate that testing tasks should run after the "checkstyleAll" task
+        // Ensure tests run after Checkstyle tasks
         shouldRunAfter(checkstyleAllTask)
-
-        // Indicate that testing tasks should run after any checksytle tasks.
-        // This is useful for when you only want to run an individual
-        // subproject's checks (e.g. ./gradlew ::subprojA::check)
         shouldRunAfter(tasks.withType(Checkstyle))
-
-        //jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
+        // Example: Uncomment if you need additional JVM arguments
+        // jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
     }
 
     tasks.withType(AbstractCompile) {
-      //options.compilerArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
+        // Example: Uncomment to add compiler arguments
+        // options.compilerArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
     }
 
-    // help with dependency tree research
-    // ./gradlew allDeps
+    // Task for generating dependency reports
     task allDeps(type: DependencyReportTask) {}
 }
 
+// ----- Dependency-Check Configuration -----
 allprojects {
-    //DEPENDENCYCHECK
+    // Apply the dependency-check plugin only once
     apply plugin: "org.owasp.dependencycheck"
     dependencyCheck {
+        autoUpdate = false
         format = "ALL"
+        nvd {
+            // Use the environment variable if set
+            apiKey = System.getenv('NVD_API_KEY')
+            //delay = 500
+            //autoUpdate = false
+        }
     }
 }
 
-// Gradle8 compiler complaining about this one
-// https://discuss.gradle.org/t/merge-jacoco-coverage-reports-for-multiproject-setups/12100/9
-//
-// JacocoMerge was used for merging coverage reports from different subprojects into a single report.
-// The same functionality is also available on the JacocoReport task. Because of the duplication, we want to
-// deprecate JacocoMerge and remove it in Gradle 8.0.
-// https://github.com/gradle/gradle/pull/16714
-//
-// JacocoMerge Task Removed
-// The deprecated JacocoMerge task type has been removed. The same functionality is also available on the JacocoReport task.
-// https://docs.gradle.org/current/userguide/upgrading_version_7.html
-
+// ----- Jacoco Reporting Configuration -----
 task jacocoReport(type: JacocoReport) {
     dependsOn(subprojects.test, subprojects.jacocoTestReport)
     subprojects.each { subproject ->
-        // exclude runtime subproject because there is no integration tests
+        // Exclude 'runtime' subproject if there are no integration tests
         if (subproject.name != 'runtime') {
             executionData subproject.tasks.withType(Test)
         }
@@ -125,33 +109,41 @@ task jacocoReport(type: JacocoReport) {
 
 task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
     description = 'Generates an aggregate report from all subprojects'
-    dependsOn(jacocoReport)
+    dependsOn jacocoReport
 
-    additionalSourceDirs.from =
-            files(subprojects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories.from =
-            files(subprojects.sourceSets.main.allSource.srcDirs)
-    classDirectories.from =
-            files(subprojects.sourceSets.main.output)
-    executionData.from =
-            files("${buildDir}/jacoco/jacocoMergeAll.exec")
+    additionalSourceDirs.from = files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.from = files(subprojects.sourceSets.main.output)
+    executionData.from = files("${buildDir}/jacoco/jacocoMergeAll.exec")
+    // Ensure dependency-check aggregate runs as part of this report
     dependencyCheckAggregate
     reports {
-        html.required = true
-        html.destination file("${buildDir}/jacoco/html/")
-        xml.required = true
-        xml.destination file("${buildDir}/jacoco/test.xml")
-        csv.required = false
+        html {
+            required = true
+            destination = file("${buildDir}/jacoco/html/")
+        }
+        xml {
+            required = true
+            destination = file("${buildDir}/jacoco/test.xml")
+        }
+        csv {
+            required = false
+        }
+    }
+
+    // Optionally, create a task to package the report as a jar
+    task owaspCheck(type: Jar) {
+        dependsOn tasks.findByName("dependencyCheckAnalyze")
     }
 }
 
-// make jacocoRootReport run after jacocoTestReport
-jacocoTestReport.finalizedBy(jacocoRootReport)
+// Ensure jacocoRootReport runs after jacocoTestReport
+jacocoTestReport.finalizedBy jacocoRootReport
 
-// aggregate dependencyCheck reports
-dependencyCheckAnalyze.finalizedBy(dependencyCheckAggregate)
+// Aggregate dependency-check reports
+dependencyCheckAnalyze.finalizedBy dependencyCheckAggregate
 
 test {
-    // avoid error during unit tests for jboss logmanager
+    // Set system property for JBoss Log Manager to avoid test errors
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
 }

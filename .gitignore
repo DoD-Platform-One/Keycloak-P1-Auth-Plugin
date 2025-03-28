@@ -1,13 +1,14 @@
-# IDE
+# IDE files
 .idea
 .vscode/
 .DS_Store
 
-# build
+# Build outputs
 .gradle
 build
 **/bin
 target
 
-# scan
+# Scan and dependency-check cache folders
 .scannerwork
+oswap

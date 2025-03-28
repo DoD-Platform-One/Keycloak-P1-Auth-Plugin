@@ -91,6 +91,7 @@ public class RequireGroupAuthenticator implements Authenticator {
             LOGGER.warn("{} invalid group {}", logPrefix, groupId);
             context.failure(AuthenticationFlowError.CLIENT_DISABLED);
         } else {
+
             // Check if the user is a member of the specified group
             if (isMemberOfGroup(realm, user, group, logPrefix)) {
                 LOGGER.info("{} matched authorized group", logPrefix);
@@ -103,10 +104,13 @@ public class RequireGroupAuthenticator implements Authenticator {
     }
 
     private void success(final AuthenticationFlowContext context, final UserModel user) {
+        LOGGER.debug("RequireGroupAuthenticator: success called on user: {}", user);
         RealmModel realm = context.getRealm();
         KeycloakSession session = context.getSession();
+
         // Reset X509 attribute per login event
         user.setSingleAttribute(CommonConfig.getInstance(session, realm).getUserActive509Attribute(), "");
+
         user.addRequiredAction("TERMS_AND_CONDITIONS");
         context.success();
     }

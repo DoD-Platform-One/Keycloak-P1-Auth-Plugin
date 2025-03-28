@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.authentication.FormContext;
@@ -82,18 +82,13 @@ public class RegistrationValidation extends RegistrationUserCreation {
      */
     private static void bindRequiredActions(final UserModel user, final String x509Username) {
         // Default actions for all users
-        // Make GS-15 Matt and the Cyber Humans happy
+        user.addRequiredAction(UserModel.RequiredAction.VERIFY_EMAIL);
         user.addRequiredAction("TERMS_AND_CONDITIONS");
+
         LOGGER.info("x509Username: {}", x509Username);
         if (x509Username == null) {
-            //Non CAC users will require email verification but not CAC users
-            user.addRequiredAction(UserModel.RequiredAction.VERIFY_EMAIL);
             // This user must configure MFA for their login
             user.addRequiredAction(UserModel.RequiredAction.CONFIGURE_TOTP);
-        } else {
-            //Allow CAC users to bypass email verification step
-            LOGGER.debug("Setting CAC user emailVerified to true.");
-            user.setEmailVerified(true);
         }
     }
 
@@ -105,92 +100,190 @@ public class RegistrationValidation extends RegistrationUserCreation {
         if (x509Username != null) {
             // Bind the X509 attribute to the user
             user.setSingleAttribute(getInstance(session, realm).getUserIdentityAttribute(realm), x509Username);
+            // Bind the active509 attribute to the user
+            user.setSingleAttribute(getInstance(session, realm).getUserActive509Attribute(), x509Username);
         }
     }
 
+    /**
+     * Join a user to a single group, handling null checks and exceptions.
+     *
+     * @param user the user to join to the group
+     * @param group the group to join
+     * @param logMessages log message templates for different scenarios
+     */
+    private static void joinUserToGroup(
+            final UserModel user,
+            final org.keycloak.models.GroupModel group,
+            final LogMessages logMessages) {
+        if (group == null) {
+            CommonConfig.LOGGER_COMMON.warn(logMessages.getEncounterNullGroup(), user.getUsername());
+            return;
+        }
+        CommonConfig.LOGGER_COMMON.info(logMessages.getJoiningUser(), user.getUsername(), group.getName());
+        try {
+            user.joinGroup(group);
+        } catch (Exception e) {
+            CommonConfig.LOGGER_COMMON.error(logMessages.getFailedToJoinUser(),
+                    user.getUsername(), group.getName(), e);
+        }
+    }
+
+    /**
+     * Container for log message templates.
+     */
+    private static class LogMessages {
+        /** Message template for joining a user to a group. */
+        private final String joiningUser;
+        /** Message template for encountering a null group. */
+        private final String encounterNullGroup;
+        /** Message template for failing to join a user to a group. */
+        private final String failedToJoinUser;
+
+        /**
+         * Constructor for LogMessages.
+         *
+         * @param joiningUserTemplate joining user log message template
+         * @param encounterNullGroupTemplate null group log message template
+         * @param failedToJoinUserTemplate failed join log message template
+         */
+        LogMessages(final String joiningUserTemplate, final String encounterNullGroupTemplate,
+                final String failedToJoinUserTemplate) {
+            this.joiningUser = joiningUserTemplate;
+            this.encounterNullGroup = encounterNullGroupTemplate;
+            this.failedToJoinUser = failedToJoinUserTemplate;
+        }
+
+        /**
+         * Get the joining user message template.
+         * @return the joining user message template
+         */
+        public String getJoiningUser() {
+            return joiningUser;
+        }
+
+        /**
+         * Get the encounter null group message template.
+         * @return the encounter null group message template
+         */
+        public String getEncounterNullGroup() {
+            return encounterNullGroup;
+        }
+
+        /**
+         * Get the failed to join user message template.
+         * @return the failed to join user message template
+         */
+        public String getFailedToJoinUser() {
+            return failedToJoinUser;
+        }
+    }
+
+    /**
+     * Handle X509 user group assignments.
+     *
+     * @param user the user model
+     * @param x509Username the X509 username
+     * @param config the common configuration
+     * @param logMessages log message templates
+     */
+    private static void handleX509UserGroups(
+            final UserModel user,
+            final String x509Username,
+            final CommonConfig config,
+            final LogMessages logMessages) {
+        CommonConfig.LOGGER_COMMON.info("{} {} / {} found with X509: {}",
+                LOGGING_USER_TEXT, user.getId(), user.getUsername(), x509Username);
+        config.getAutoJoinGroupX509().forEach(group ->
+            joinUserToGroup(user, group, logMessages)
+        );
+    }
+
+    /**
+     * Handle email domain matched user group assignments.
+     *
+     * @param user the user model
+     * @param email the user's email
+     * @param config the common configuration
+     * @param logMessages log message templates
+     */
+    private static void handleEmailMatchedGroups(
+            final UserModel user,
+            final String email,
+            final CommonConfig config,
+            final LogMessages logMessages) {
+        CommonConfig.LOGGER_COMMON.info("{} {} / {}: Email found in whitelist",
+                LOGGING_USER_TEXT, user.getUsername(), email);
+        config.getEmailMatchAutoJoinGroup()
+              .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
+              .forEach(match -> {
+                  CommonConfig.LOGGER_COMMON.info("Adding user {} to group(s): {}",
+                          user.getUsername(), match.getGroups());
+                  match.getGroupModels().forEach(group ->
+                      joinUserToGroup(user, group, logMessages)
+                  );
+              });
+    }
+
+    /**
+     * Handle non-matched email domain user group assignments.
+     *
+     * @param user the user model
+     * @param email the user's email
+     * @param config the common configuration
+     * @param logMessages log message templates
+     */
+    private static void handleNonMatchedEmailGroups(
+            final UserModel user,
+            final String email,
+            final CommonConfig config,
+            final LogMessages logMessages) {
+        CommonConfig.LOGGER_COMMON.info("{} {} / {}: Email Not found in whitelist",
+                LOGGING_USER_TEXT, user.getUsername(), email);
+        config.getNoEmailMatchAutoJoinGroup().forEach(group ->
+            joinUserToGroup(user, group, logMessages)
+        );
+        user.setSingleAttribute("public-registrant", "true");
+    }
+
+    /**
+     * Join a valid user to appropriate groups based on X509 status and email domain.
+     *
+     * @param context the form context
+     * @param user the user model
+     * @param x509Username the X509 username if available, null otherwise
+     */
     private static void joinValidUserToGroups(
-        final FormContext context,
-        final UserModel user,
-        final String x509Username) {
+            final FormContext context,
+            final UserModel user,
+            final String x509Username) {
         String email = user.getEmail().toLowerCase();
         RealmModel realm = context.getRealm();
         KeycloakSession session = context.getSession();
-        CommonConfig config = getInstance(session, realm);
+        CommonConfig config = CommonConfig.getInstance(session, realm);
+        LogMessages logMessages = new LogMessages(
+                "Joining user {} to group: {}",
+                "Encountered null group for user: {}",
+                "Failed to join user {} to group: {}");
 
-        long domainMatchCount = config.getEmailMatchAutoJoinGroup()
-                .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith)).count();
-
-        // Sonarqube was complaining about this strings
-        String joiningUserLog = "Joining user {} to group: {}";
-        String encounterNullGroupLog = "Encountered null group for user: {}";
-        String failedToJoinUserLog = "Failed to join user {} to group: {}";
-
-        // In each of the next 3 checks we will have to make sure that the group is null.
-        // Sometimes for some reason it is and this will cause an exception that will make
-        // keycloak end up in a limbo state. The following conditions takes care of it and now
-        // keycloak can continue with account creation and assignment without getting into limbo state.
+        // Handle X509 users
         if (x509Username != null) {
-            // User is a X509 user - Has a CAC
-            CommonConfig.LOGGER_COMMON.info("{} {} / {} found with X509: {}",
-                    LOGGING_USER_TEXT, user.getId(), user.getUsername(), x509Username);
-            config.getAutoJoinGroupX509().forEach(group -> {
-                if (group != null) {
-                    CommonConfig.LOGGER_COMMON.info(joiningUserLog, user.getUsername(), group.getName());
-                    try {
-                        user.joinGroup(group);
-                    } catch (Exception e) {
-                        CommonConfig.LOGGER_COMMON.error(failedToJoinUserLog,
-                                user.getUsername(), group.getName(), e);
-                    }
-                } else {
-                    CommonConfig.LOGGER_COMMON.warn(encounterNullGroupLog, user.getUsername());
-                }
-            });
+            handleX509UserGroups(user, x509Username, config, logMessages);
+            return;
+        }
+
+        // For non-X509 users, check email domain matches
+        long domainMatchCount = config.getEmailMatchAutoJoinGroup()
+                .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
+                .count();
+
+        if (domainMatchCount > 0) {
+            handleEmailMatchedGroups(user, email, config, logMessages);
         } else {
-            if (domainMatchCount != 0) {
-                // User is not a X509 user but is in the whitelist
-                CommonConfig.LOGGER_COMMON.info("{} {} / {}: Email found in whitelist",
-                        LOGGING_USER_TEXT, user.getUsername(), email);
-                config.getEmailMatchAutoJoinGroup()
-                      .filter(collection -> collection.getDomains().stream().anyMatch(email::endsWith))
-                      .forEach(match -> {
-                          CommonConfig.LOGGER_COMMON.info("Adding user {} to group(s): {}",
-                                  user.getUsername(), match.getGroups());
-                          match.getGroupModels().forEach(group -> {
-                              if (group != null) {
-                                  CommonConfig.LOGGER_COMMON.info(joiningUserLog, user.getUsername(), group.getName());
-                                  try {
-                                      user.joinGroup(group);
-                                  } catch (Exception e) {
-                                      CommonConfig.LOGGER_COMMON.error(failedToJoinUserLog,
-                                              user.getUsername(), group.getName(), e);
-                                  }
-                              } else {
-                                  CommonConfig.LOGGER_COMMON.warn(encounterNullGroupLog, user.getUsername());
-                              }
-                          });
-                      });
-            } else {
-                // User is not a X509 user or in whitelist
-                CommonConfig.LOGGER_COMMON.info("{} {} / {}: Email Not found in whitelist",
-                        LOGGING_USER_TEXT, user.getUsername(), email);
-                config.getNoEmailMatchAutoJoinGroup().forEach(group -> {
-                    if (group != null) {
-                        CommonConfig.LOGGER_COMMON.info(joiningUserLog, user.getUsername(), group.getName());
-                        try {
-                            user.joinGroup(group);
-                        } catch (Exception e) {
-                            CommonConfig.LOGGER_COMMON.error(failedToJoinUserLog,
-                                    user.getUsername(), group.getName(), e);
-                        }
-                    } else {
-                        CommonConfig.LOGGER_COMMON.warn(encounterNullGroupLog, user.getUsername());
-                    }
-                });
-                user.setSingleAttribute("public-registrant", "true");
-            }
+            handleNonMatchedEmailGroups(user, email, config, logMessages);
         }
     }
+
 
     /**
      * Add a custom user attribute (mattermostid) to enable direct mattermost <>
@@ -254,8 +347,7 @@ public class RegistrationValidation extends RegistrationUserCreation {
                         getClientCertificateChain(), kcSession, context.getRealm(),
                         context.getAuthenticationSession()));
             } catch (GeneralSecurityException e) {
-                LOGGER.error(String.format("Unable to read certificate chain. Reg form won't be filled by CAC. %1s$",
-                        e));
+                LOGGER.error("Unable to read certificate chain. Reg form won't be filled by CAC: {}", e.getMessage());
             }
         }
     }
@@ -293,31 +385,15 @@ public class RegistrationValidation extends RegistrationUserCreation {
     }
 
     /**
-     * This implementation is not intended to be overridden.
+     * Validate required user profile fields.
+     *
+     * @param formData the form data
+     * @param errors the list of errors to add to
      */
-    @Override
-    public void validate(final ValidationContext context) {
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-
-        List<FormMessage> errors = new ArrayList<>();
-        String username = formData.getFirst(Validation.FIELD_USERNAME);
-        String email = formData.getFirst(Validation.FIELD_EMAIL);
-        String emailConfirm = formData.getFirst("confirmEmail");
-
-        String eventError = Errors.INVALID_REGISTRATION;
-
-        String location = formData.getFirst("user.attributes.location");
-        if (Validation.isBlank(location) || !location.equals("42")) {
-            errors.add(new FormMessage("Bot-like activity detected, try disabling auto form filling"));
-        }
-
-        if (Validation.isBlank(username)) {
-            errors.add(new FormMessage(Validation.FIELD_USERNAME, Messages.MISSING_USERNAME));
-        }
-
-        // Username validation based on Mattermost requirements.
-        mattermostUsernameValidation(errors, username);
-
+    private void validateRequiredFields(
+            final MultivaluedMap<String, String> formData,
+            final List<FormMessage> errors) {
+        // Check required fields
         if (Validation.isBlank(formData.getFirst(RegistrationPage.FIELD_FIRST_NAME))) {
             errors.add(new FormMessage(RegistrationPage.FIELD_FIRST_NAME, Messages.MISSING_FIRST_NAME));
         }
@@ -337,13 +413,25 @@ public class RegistrationValidation extends RegistrationUserCreation {
         if (Validation.isBlank(formData.getFirst("user.attributes.organization"))) {
             errors.add(new FormMessage("user.attributes.organization", "Please specify your organization."));
         }
+    }
 
-        if (X509Tools.getX509Username(context) != null && X509Tools.isX509Registered(context)) {
-            // X509 auth, invite code not required
-            errors.add(new FormMessage(null, "Sorry, this CAC seems to already be registered."));
-            context.error(Errors.INVALID_REGISTRATION);
-            context.validationError(formData, errors);
-        }
+    /**
+     * Validate email fields.
+     *
+     * @param context the validation context
+     * @param formData the form data
+     * @param errors the list of errors to add to
+     * @param email the email address
+     * @param emailConfirm the confirmation email address
+     * @return the event error if email is in use, or null
+     */
+    private String validateEmailFields(
+            final ValidationContext context,
+            final MultivaluedMap<String, String> formData,
+            final List<FormMessage> errors,
+            final String email,
+            final String emailConfirm) {
+        String eventError = null;
 
         if (Validation.isBlank(email) || !Validation.isEmailValid(email)) {
             context.getEvent().detail(Details.EMAIL, email);
@@ -363,13 +451,57 @@ public class RegistrationValidation extends RegistrationUserCreation {
             errors.add(new FormMessage(EMAIL, Messages.EMAIL_EXISTS));
         }
 
+        return eventError;
+    }
+
+    /**
+     * This implementation is not intended to be overridden.
+     */
+    @Override
+    public void validate(final ValidationContext context) {
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        List<FormMessage> errors = new ArrayList<>();
+        String username = formData.getFirst(Validation.FIELD_USERNAME);
+        String email = formData.getFirst(Validation.FIELD_EMAIL);
+        String emailConfirm = formData.getFirst("confirmEmail");
+        String eventError = Errors.INVALID_REGISTRATION;
+
+        // Check for bot-like activity
+        String location = formData.getFirst("user.attributes.location");
+        if (Validation.isBlank(location) || !location.equals("42")) {
+            errors.add(new FormMessage("Bot-like activity detected, try disabling auto form filling"));
+        }
+
+        // Validate username
+        if (Validation.isBlank(username)) {
+            errors.add(new FormMessage(Validation.FIELD_USERNAME, Messages.MISSING_USERNAME));
+        }
+        mattermostUsernameValidation(errors, username);
+
+        // Validate required fields
+        validateRequiredFields(formData, errors);
+
+        // Check if X509 is already registered
+        if (X509Tools.getX509Username(context) != null && X509Tools.isX509Registered(context)) {
+            errors.add(new FormMessage(null, "Sorry, this CAC seems to already be registered."));
+            context.error(Errors.INVALID_REGISTRATION);
+            context.validationError(formData, errors);
+            return;
+        }
+
+        // Validate email fields
+        String emailError = validateEmailFields(context, formData, errors, email, emailConfirm);
+        if (emailError != null) {
+            eventError = emailError;
+        }
+
+        // Process validation results
         if (!errors.isEmpty()) {
             context.error(eventError);
             context.validationError(formData, errors);
         } else {
             context.success();
         }
-
     }
 
     /**
@@ -400,22 +532,58 @@ public class RegistrationValidation extends RegistrationUserCreation {
      * @param certs - the CAC certificates which contain pertinent user information
      * @return a MultiValuedMap containing CAC data to display in form
      */
-    protected MultivaluedMap<String, String> buildFormFromX509(final FormContext context,
-                                                               final X509Certificate[] certs) {
-        String  x509Username = X509Tools.getX509Username(context);
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        String[] subjectNameArray = certs[0].getSubjectX500Principal().getName().split(",");
-        String firstName = subjectNameArray[0].split("\\.")[1];
-        String lastName = subjectNameArray[0].split("\\.")[0].replace("CN=", "");
-        String affiliation = subjectNameArray[1].replace("OU=", "");
-        String translatedAffiliation = X509Tools.translateAffiliationShortName(affiliation);
+     protected MultivaluedMap<String, String> buildFormFromX509(final FormContext context,
+                                                                final X509Certificate[] certs) {
+         String x509Username = X509Tools.getX509Username(context);
+         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+         MultivaluedMap<String, String> retFormData = new MultivaluedHashMap<>(formData);
 
-        MultivaluedMap<String, String> retFormData = new MultivaluedHashMap<>(formData);
-        retFormData.add("cacIdentity", x509Username);
-        retFormData.add(RegistrationPage.FIELD_FIRST_NAME, firstName);
-        retFormData.add(RegistrationPage.FIELD_LAST_NAME, lastName);
-        retFormData.add(USER_ATTRIBUTES_AFFILIATION, translatedAffiliation);
-        LOGGER.debug(retFormData);
-        return retFormData;
-    }
+         try {
+             if (certs == null || certs.length == 0) {
+                 LOGGER.error("No certificates found in the request.");
+                 return retFormData;
+             }
+
+             String subjectDN = certs[0].getSubjectX500Principal().getName();
+             LOGGER.debug("Subject DN: {}", subjectDN);
+
+             String[] subjectNameArray = subjectDN.split(",");
+
+             // Validate that subjectNameArray has at least 2 elements
+             if (subjectNameArray.length < 2) {
+                 LOGGER.error("Unexpected Subject DN format: {}", subjectDN);
+                 return retFormData;
+             }
+
+             // Extracting first name and last name
+             String[] cnParts = subjectNameArray[0].split("\\.");
+             if (cnParts.length < 2) {
+                 LOGGER.error("Unexpected CN format in Subject DN: {}", subjectNameArray[0]);
+                 return retFormData;
+             }
+
+             String firstName = cnParts[1].trim().toLowerCase();
+             String lastName = cnParts[0].replace("CN=", "").trim().toLowerCase();
+
+             // Extracting affiliation
+             String affiliationPart = subjectNameArray[1].trim();
+             if (!affiliationPart.startsWith("OU=")) {
+                 LOGGER.error("Unexpected OU format in Subject DN: {}", affiliationPart);
+                 return retFormData;
+             }
+             String affiliation = affiliationPart.replace("OU=", "").trim();
+             String translatedAffiliation = X509Tools.translateAffiliationShortName(affiliation);
+
+             // Populate form data
+             retFormData.add("cacIdentity", x509Username);
+             retFormData.add(RegistrationPage.FIELD_FIRST_NAME, StringUtils.capitalize(firstName));
+             retFormData.add(RegistrationPage.FIELD_LAST_NAME, StringUtils.capitalize(lastName));
+             retFormData.add(USER_ATTRIBUTES_AFFILIATION, translatedAffiliation);
+             LOGGER.debug("Form Data after X509 processing: {}", retFormData);
+         } catch (Exception e) {
+             LOGGER.error("Error processing X509 certificate: ", e);
+         }
+
+         return retFormData;
+     }
 }

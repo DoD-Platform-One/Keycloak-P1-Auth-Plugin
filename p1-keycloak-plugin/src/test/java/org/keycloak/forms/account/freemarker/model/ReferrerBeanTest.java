@@ -1,14 +1,15 @@
 package org.keycloak.forms.account.freemarker.model;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
 
-public class ReferrerBeanTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class ReferrerBeanTest {
 
     @Test
-    public void testReferrerBean() {
+    void testReferrerBean() {
         // Arrange
-        String[] referrerArray = {"Example Referrer", "http://example.com"};
+        String[] referrerArray = { "Example Referrer", "http://example.com" };
         ReferrerBean referrerBean = new ReferrerBean(referrerArray);
 
         // Act
@@ -16,9 +17,9 @@ public class ReferrerBeanTest {
         String url = referrerBean.getUrl();
 
         // Assert
-        assertEquals(referrerArray[0], name);
-        assertEquals(referrerArray[1], url);
+        assertEquals(referrerArray[0], name, "Expected referrer name to match the first element of the array");
+        assertEquals(referrerArray[1], url, "Expected referrer URL to match the second element of the array");
     }
 
-    // You can add more tests to cover edge cases or additional scenarios as needed.
+    // Additional tests for edge cases or other scenarios can be added here
 }

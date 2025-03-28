@@ -69,7 +69,7 @@ public class AccountFormServiceFactory implements AccountResourceProviderFactory
     log.info("create");
     RealmModel realm = session.getContext().getRealm();
     ClientModel client = getAccountManagementClient(realm);
-    EventBuilder event = new EventBuilder​(realm, session, session.getContext().getConnection());
+    EventBuilder event = new EventBuilder(realm, session, session.getContext().getConnection());
     return new AccountFormService(session, client, event);
   }
 

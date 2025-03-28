@@ -1,3 +1,4 @@
 dod.p1.keycloak.events.LastLoginEventListenerProviderFactory
 dod.p1.keycloak.events.MattermostEventListenerProviderFactory
 dod.p1.keycloak.events.JBossLoggingExtEventListenerProviderFactory
+dod.p1.keycloak.events.WelcomeEmailEventListenerProviderFactory

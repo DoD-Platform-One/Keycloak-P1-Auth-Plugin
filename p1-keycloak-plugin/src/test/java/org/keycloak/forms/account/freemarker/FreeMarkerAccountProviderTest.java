@@ -1,545 +1,552 @@
- package org.keycloak.forms.account.freemarker;
+package org.keycloak.forms.account.freemarker;
 
+import jakarta.ws.rs.core.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.keycloak.Config;
+import org.keycloak.events.Event;
+import org.keycloak.forms.account.AccountPages;
+import org.keycloak.forms.login.MessageType;
+import org.keycloak.models.*;
+import org.keycloak.models.credential.OTPCredentialModel;
+import org.keycloak.models.utils.FormMessage;
+import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
+import org.keycloak.theme.FreeMarkerException;
+import org.keycloak.theme.Theme;
+import org.keycloak.theme.freemarker.FreeMarkerProvider;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
- import jakarta.ws.rs.core.*;
- import org.junit.Before;
- import org.junit.Test;
- import org.junit.runner.RunWith;
- import org.keycloak.events.Event;
- import org.keycloak.forms.account.AccountPages;
- import org.keycloak.forms.login.MessageType;
- import org.keycloak.models.*;
- import org.keycloak.models.credential.OTPCredentialModel;
- import org.keycloak.models.utils.FormMessage;
- import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
- import org.keycloak.theme.FreeMarkerException;
- import org.keycloak.theme.Theme;
- import org.keycloak.theme.freemarker.FreeMarkerProvider;
- import org.mockito.Mock;
- import org.powermock.core.classloader.annotations.PrepareForTest;
- import org.powermock.modules.junit4.PowerMockRunner;
+import java.io.IOException;
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
 
- import java.io.IOException;
- import java.net.URI;
- import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
- import static org.junit.Assert.*;
- import static org.mockito.ArgumentMatchers.*;
- import static org.powermock.api.mockito.PowerMockito.*;
+/**
+ * Tests for the FreeMarkerAccountProvider class.
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class FreeMarkerAccountProviderTest {
 
- @RunWith(PowerMockRunner.class)
- @PrepareForTest({
-         Properties.class, UriBuilder.class,
- })
- public class FreeMarkerAccountProviderTest {
+    @Mock
+    private KeycloakSession keycloakSession;
 
-     @Mock private KeycloakSession keycloakSession;
-     @Mock private RealmModel realmModel;
-     @Mock private Locale locale;
-     @Mock private Properties properties;
-     @Mock private Theme theme;
-     @Mock private UriInfo uriInfo;
-     @Mock private UserModel userModel;
-     @Mock private FreeMarkerProvider freeMarkerProvider;
-     @Mock private UriBuilder uriBuilder;
+    @Mock
+    private RealmModel realmModel;
 
-     private FreeMarkerAccountProvider freeMarkerAccountProvider;
-     private final URI uri = URI.create("http://example.com");
+    @Mock
+    private Locale locale;
 
-     @Before
-     public void setUp() throws Exception {
-         // mocks
-         ThemeManager themeManager = mock(ThemeManager.class);
-         KeycloakContext keycloakContext = mock(KeycloakContext.class);
-         SubjectCredentialManager subjectCredentialManager = mock(SubjectCredentialManager.class);
-         OTPPolicy otpPolicy = mock(OTPPolicy.class);
-         UserSessionProvider userSessionProvider = mock(UserSessionProvider.class);
-         UserProvider userProvider = mock(UserProvider.class);
+    @Mock
+    private Properties properties;
 
-         // local variables
-         MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap<>();
-         // Add some sample values
-         multivaluedMap.add("stateChecker", "value1");
+    @Mock
+    private Theme theme;
 
-         // keycloakSession
-         when(keycloakSession.getProvider(eq(FreeMarkerProvider.class))).thenReturn(freeMarkerProvider);
-         when(keycloakSession.theme()).thenReturn(themeManager);
-         when(keycloakSession.theme().getTheme(Theme.Type.ACCOUNT)).thenReturn(theme);
-         when(keycloakSession.getContext()).thenReturn(keycloakContext);
-         when(keycloakSession.getContext().resolveLocale(any())).thenReturn(locale);
-         when(keycloakSession.sessions()).thenReturn(userSessionProvider);
-         when(keycloakSession.users()).thenReturn(userProvider);
+    @Mock
+    private UriInfo uriInfo;
 
-         // realmModel
-         when(realmModel.getDefaultLocale()).thenReturn("Default Locale");
-         when(realmModel.getOTPPolicy()).thenReturn(otpPolicy);
-         when(realmModel.getOTPPolicy().getKeyURI(any(), any(), any())).thenReturn("keyURI");
+    @Mock
+    private UserModel userModel;
 
-         // theme
-         when(theme.getMessages(locale)).thenReturn(properties);
+    @Mock
+    private FreeMarkerProvider freeMarkerProvider;
 
-         // uriInfo
-         when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
-         when(uriInfo.getQueryParameters()).thenReturn(multivaluedMap);
-         when(uriInfo.getPathParameters()).thenReturn(multivaluedMap);
+    @Mock
+    private UriBuilder uriBuilder;
 
-         // userModel
-         when(userModel.credentialManager()).thenReturn(subjectCredentialManager);
-         when(userModel.credentialManager().isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(false);
+    private FreeMarkerAccountProvider freeMarkerAccountProvider;
+    private final URI uri = URI.create("http://example.com");
 
-         // uriBuilder
-         when(uriBuilder.build()).thenReturn(uri);
-     }
+    @BeforeEach
+    public void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this);
 
-     @Test
-     public void freeMarkerAccountProviderConstructorTest(){
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-     }
+        // Create a fake ThemeManager to be returned from keycloakSession.theme()
+        ThemeManager themeManager = mock(ThemeManager.class);
+        KeycloakContext keycloakContext = mock(KeycloakContext.class);
+        SubjectCredentialManager subjectCredentialManager = mock(SubjectCredentialManager.class);
+        OTPPolicy otpPolicy = mock(OTPPolicy.class);
+        UserSessionProvider userSessionProvider = mock(UserSessionProvider.class);
+        UserProvider userProvider = mock(UserProvider.class);
 
-     @Test
-     public void setUriInfoTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setUriInfo
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setUriInfo(uriInfo).getClass());
-     }
+        MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap<>();
+        multivaluedMap.add("stateChecker", "value1");
 
-     @Test
-     public void setHttpHeadersTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setHttpHeaders
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setHttpHeaders(mock(HttpHeaders.class)).getClass());
-     }
+        when(keycloakSession.getProvider(eq(FreeMarkerProvider.class))).thenReturn(freeMarkerProvider);
+        when(keycloakSession.theme()).thenReturn(themeManager);
+        when(themeManager.getTheme(Theme.Type.ACCOUNT)).thenReturn(theme);
 
-     @Test
-     public void setRealmTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setRealm
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setRealm(realmModel).getClass());
-     }
+        when(keycloakSession.getContext()).thenReturn(keycloakContext);
+        when(keycloakContext.resolveLocale(any())).thenReturn(locale);
+        when(keycloakSession.sessions()).thenReturn(userSessionProvider);
+        when(keycloakSession.users()).thenReturn(userProvider);
 
-     @Test
-     public void setUserTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setUser
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setUser(userModel).getClass());
-     }
+        when(realmModel.getDefaultLocale()).thenReturn("Default Locale");
+        when(realmModel.getOTPPolicy()).thenReturn(otpPolicy);
 
-     @Test
-     public void createResponseTest() throws IOException {
-         // Condition 1 - Account page
-         // mocks
-         Event event1 = mock(Event.class);
-         Event event2 = mock(Event.class);
-         UserSessionModel userSessionModel1 = mock(UserSessionModel.class);
-         UserSessionModel userSessionModel2 = mock(UserSessionModel.class);
-         // vars
-         List<Event> eventList = new ArrayList<>();
-         eventList.add(event1);
-         eventList.add(event2);
-         List<UserSessionModel> userSessionModelList = new ArrayList<>();
-         userSessionModelList.add(userSessionModel1);
-         userSessionModelList.add(userSessionModel2);
-         String[] referrer = {"value1", "value2"};
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setRealm
-         freeMarkerAccountProvider.setRealm(realmModel);
-         // setUriInfo
-         freeMarkerAccountProvider.setUriInfo(uriInfo);
-         // setUser
-         freeMarkerAccountProvider.setUser(userModel);
-         // setEvents
-         freeMarkerAccountProvider.setEvents(eventList);
-         // setSessions
-         freeMarkerAccountProvider.setSessions(userSessionModelList);
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.ACCOUNT));
+        // By default, let's have theme.getMessages(locale) return 'properties'
+        when(theme.getMessages(locale)).thenReturn(properties);
 
-//         // Condition 2 - Totp page - PITA, does not want to play nice
-//         // createResponse
-//         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.TOTP));
+        when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
+        when(uriInfo.getBaseUri()).thenReturn(uri);
+        when(uriInfo.getQueryParameters()).thenReturn(multivaluedMap);
+        when(uriInfo.getPathParameters()).thenReturn(multivaluedMap);
 
-         // Condition 3 - Federated Identity page
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.FEDERATED_IDENTITY));
+        when(userModel.credentialManager()).thenReturn(subjectCredentialManager);
+        when(subjectCredentialManager.isConfiguredFor(OTPCredentialModel.TYPE)).thenReturn(false);
 
-         // Condition 4 - Log page
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.LOG));
+        when(uriBuilder.build()).thenReturn(uri);
+    }
 
-         // Condition 5 - Sessions page
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.SESSIONS));
+    @Test
+    public void freeMarkerAccountProviderConstructorTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider,
+            "FreeMarkerAccountProvider constructor should not return null");
+    }
 
-         // Condition 6 - Applications page
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.APPLICATIONS));
+    @Test
+    public void setUriInfoTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider, "Provider should be instantiated");
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setUriInfo(uriInfo).getClass(),
+            "setUriInfo should return an instance of FreeMarkerAccountProvider"
+        );
+    }
 
-         // Condition 7 - Password page
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.PASSWORD));
+    @Test
+    public void setHttpHeadersTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setHttpHeaders(mock(HttpHeaders.class)).getClass(),
+            "setHttpHeaders should return an instance of FreeMarkerAccountProvider"
+        );
+    }
 
-         // Condition 8 - Resources page - realm.isUserManagedAccessAllowed = false
-         // condition
-         when(realmModel.isUserManagedAccessAllowed()).thenReturn(false);
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.RESOURCES));
+    @Test
+    public void setRealmTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setRealm(realmModel).getClass(),
+            "setRealm should return an instance of FreeMarkerAccountProvider"
+        );
+    }
 
-         // Condition 9 - Resources page - realm.isUserManagedAccessAllowed = true
-         // condition
-         when(realmModel.isUserManagedAccessAllowed()).thenReturn(true);
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.RESOURCES));
+    @Test
+    public void setUserTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setUser(userModel).getClass(),
+            "setUser should return an instance of FreeMarkerAccountProvider"
+        );
+    }
 
-         // Condition 10 - Resource Detail page - realm.isUserManagedAccessAllowed = false
-         // condition
-         when(realmModel.isUserManagedAccessAllowed()).thenReturn(false);
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.RESOURCE_DETAIL));
+    @Test
+    public void createResponseTest() throws IOException {
+        Event event1 = mock(Event.class);
+        Event event2 = mock(Event.class);
+        UserSessionModel userSessionModel1 = mock(UserSessionModel.class);
+        UserSessionModel userSessionModel2 = mock(UserSessionModel.class);
 
-         // Condition 11 - Resource Detail page - realm.isUserManagedAccessAllowed = true & other conditions
-         // condition
-         when(realmModel.isUserManagedAccessAllowed()).thenReturn(true);
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.RESOURCE_DETAIL));
+        List<Event> eventList = new ArrayList<>();
+        eventList.add(event1);
+        eventList.add(event2);
 
-         // Condition 12 - flip all the if statements
-         // mocks
-         mockStatic(UriBuilder.class);
-         // setAttribute
-         freeMarkerAccountProvider.setAttribute("key", "value");
-         // setReferrer
-         freeMarkerAccountProvider.setReferrer(referrer);
-         // setStateChecker
-         freeMarkerAccountProvider.setStateChecker("state checker");
-         // condition
-         when(realmModel.isInternationalizationEnabled()).thenReturn(true);
-         when(UriBuilder.fromUri(any(URI.class))).thenReturn(uriBuilder);
-         when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
-         // createResponse
-//         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.ACCOUNT));
+        List<UserSessionModel> userSessionModelList = new ArrayList<>();
+        userSessionModelList.add(userSessionModel1);
+        userSessionModelList.add(userSessionModel2);
 
-         // Condition 13 - IOException
-         // condition
-         when(keycloakSession.theme().getTheme(Theme.Type.ACCOUNT)).thenThrow(IOException.class);
-         // createResponse
-         assertNotNull(freeMarkerAccountProvider.createResponse(AccountPages.ACCOUNT));
-     }
+        String[] referrer = {"value1", "value2"};
 
-     @Test
-     public void getThemeTest() throws IOException {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // getTheme
-         assertEquals(theme, freeMarkerAccountProvider.getTheme());
-     }
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
 
-     @Test
-     public void handleThemeResourcesTest() throws IOException {
-         // Condition 1
-         // mocks
-         Map<String, Object> customAttributes = mock(Map.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setRealm
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setRealm(realmModel).getClass());
-         // handleThemeResources
-         assertNotNull(freeMarkerAccountProvider.handleThemeResources(theme, locale, customAttributes));
+        freeMarkerAccountProvider.setRealm(realmModel);
+        freeMarkerAccountProvider.setUriInfo(uriInfo);
+        freeMarkerAccountProvider.setUser(userModel);
+        freeMarkerAccountProvider.setEvents(eventList);
+        freeMarkerAccountProvider.setSessions(userSessionModelList);
 
-         // Condition 2 - realm locale is empty
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // conditions
-         when(realmModel.getDefaultLocale()).thenReturn("");
-         // setRealm
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setRealm(realmModel).getClass());
-         // handleThemeResources
-         assertNotNull(freeMarkerAccountProvider.handleThemeResources(theme, locale, customAttributes));
+        // Simulate normal creation
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.ACCOUNT),
+            "createResponse for ACCOUNT should not return null"
+        );
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.FEDERATED_IDENTITY),
+            "createResponse for FEDERATED_IDENTITY should not return null"
+        );
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.LOG),
+            "createResponse for LOG should not return null"
+        );
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.SESSIONS),
+            "createResponse for SESSIONS should not return null"
+        );
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.APPLICATIONS),
+            "createResponse for APPLICATIONS should not return null"
+        );
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.PASSWORD),
+            "createResponse for PASSWORD should not return null"
+        );
 
-         // Condition 3 - force throw exception
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // conditions
-         when(theme.getMessages(any())).thenThrow(IOException.class);
-         when(theme.getProperties()).thenThrow(IOException.class);
-         // setRealm
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setRealm(realmModel).getClass());
-         // handleThemeResources
-         assertNotNull(freeMarkerAccountProvider.handleThemeResources(theme, locale, customAttributes));
+        // RE: resources
+        when(realmModel.isUserManagedAccessAllowed()).thenReturn(false);
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.RESOURCES),
+            "Should not return null even if user-managed access disallowed"
+        );
 
-     }
+        when(realmModel.isUserManagedAccessAllowed()).thenReturn(true);
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.RESOURCES),
+            "Should not return null if user-managed access allowed"
+        );
 
-     @Test
-     public void handleMessagesTest() {
-         // Condition 1
-         // mocks
-         Map<String, Object> customAttributes = mock(Map.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // handleMessages
-         freeMarkerAccountProvider.handleMessages(locale, properties, customAttributes);
+        when(realmModel.isUserManagedAccessAllowed()).thenReturn(false);
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.RESOURCE_DETAIL),
+            "Should not return null if user-managed access disallowed for RESOURCE_DETAIL"
+        );
 
-         // Condition 2 - message is not null
-         // vars
-         Object[] parameters = { "param1", "param2" };
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // setMessage
-         freeMarkerAccountProvider.setMessage(MessageType.SUCCESS, "message", parameters);
-         // handleMessages
-         freeMarkerAccountProvider.handleMessages(locale, properties, customAttributes);
-     }
+        when(realmModel.isUserManagedAccessAllowed()).thenReturn(true);
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.RESOURCE_DETAIL),
+            "Should not return null if user-managed access allowed for RESOURCE_DETAIL"
+        );
 
-     @Test
-     public void processTemplateTest() throws FreeMarkerException {
-         // Condition 1
-         // mocks
-         Map<String, Object> customAttributes = mock(Map.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // processTemplate
-         assertNotNull(freeMarkerAccountProvider.processTemplate(theme, AccountPages.ACCOUNT, customAttributes, locale));
+        freeMarkerAccountProvider.setAttribute("key", "value");
+        freeMarkerAccountProvider.setReferrer(referrer);
+        freeMarkerAccountProvider.setStateChecker("state checker");
+        when(realmModel.isInternationalizationEnabled()).thenReturn(true);
 
-         // Condition 2
-         // condition
-         when(freeMarkerProvider.processTemplate(any(), any(), any())).thenThrow(FreeMarkerException.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // processTemplate
-         assertNotNull(freeMarkerAccountProvider.processTemplate(theme, AccountPages.ACCOUNT, customAttributes, locale));
-     }
+        // Let uriBuilder.path(...) just return itself for simplicity
+        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
 
-     @Test
-     public void setPasswordSetTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setPasswordSet
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setPasswordSet(true).getClass());
-     }
+        // *** Test the IOException path for getTheme(). We expect a server-error response but not a crash.
+        when(keycloakSession.theme().getTheme(Theme.Type.ACCOUNT)).thenThrow(IOException.class);
+        assertNotNull(
+            freeMarkerAccountProvider.createResponse(AccountPages.ACCOUNT),
+            "createResponse should return a non-null response even if IOException occurs"
+        );
+    }
 
-     @Test
-     public void setMessageTest() {
-         // vars
-         Object[] parameters = { "param1", "param2" };
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setMessage
-         freeMarkerAccountProvider.setMessage(MessageType.SUCCESS, "message", parameters);
-     }
+    @Test
+    public void getThemeTest() throws IOException {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            theme,
+            freeMarkerAccountProvider.getTheme(),
+            "getTheme should return the mocked theme"
+        );
+    }
 
-     @Test
-     public void formatMessageTest() {
-         // Condition 1
-         // mocks
-         FormMessage formMessage = mock(FormMessage.class);
-         Properties messagesBundle = mock(Properties.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // formatMessage
-         assertNull(freeMarkerAccountProvider.formatMessage(formMessage, messagesBundle, locale));
+    @Test
+    public void handleThemeResourcesTest() throws IOException {
+        Map<String, Object> customAttributes = new HashMap<>();
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
 
-         // Condition 2
-         // conditions
-         when(formMessage.getMessage()).thenReturn("any string");
-         when(formMessage.getParameters()).thenReturn(new String[]{"some", "message"});
-         when(messagesBundle.containsKey(anyString())).thenReturn(true);
-         when(messagesBundle.getProperty(anyString())).thenReturn("message bundle");
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // formatMessage
-         assertNotNull(freeMarkerAccountProvider.formatMessage(formMessage, messagesBundle, locale));
+        freeMarkerAccountProvider.setRealm(realmModel);
+        assertNotNull(
+            freeMarkerAccountProvider.handleThemeResources(theme, locale, customAttributes),
+            "handleThemeResources should not return null under normal conditions"
+        );
 
-         // Condition 3 - message = null
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // formatMessage
-         assertNull(freeMarkerAccountProvider.formatMessage(null, messagesBundle, locale));
-     }
+        // Realm default locale is empty
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        when(realmModel.getDefaultLocale()).thenReturn("");
+        freeMarkerAccountProvider.setRealm(realmModel);
+        assertNotNull(
+            freeMarkerAccountProvider.handleThemeResources(theme, locale, customAttributes),
+            "handleThemeResources should not return null if realm's default locale is empty"
+        );
 
-     @Test
-     public void setErrorsTest() {
-         // mocks
-         FormMessage formMessage = mock(FormMessage.class);
-         // vars
-         List<FormMessage>  formMessageList = List.of(formMessage);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setErrors
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setErrors(Response.Status.BAD_REQUEST, formMessageList).getClass());
-     }
+        // Force exception for messages and properties loading
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        freeMarkerAccountProvider.setRealm(realmModel);
+        when(theme.getMessages(any())).thenThrow(IOException.class);
+        when(theme.getProperties()).thenThrow(IOException.class);
+        assertNotNull(
+            freeMarkerAccountProvider.handleThemeResources(theme, locale, customAttributes),
+            "handleThemeResources should not return null even if an IOException occurs"
+        );
+    }
 
-     @Test
-     public void setErrorTest() {
-         // vars
-         Object[] parameters = { "param1", "param2" };
-         String errorMessage = "This is an error";
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setError
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setError(Response.Status.NOT_FOUND, errorMessage, parameters).getClass());
-     }
+    @Test
+    public void handleMessagesTest() {
+        Map<String, Object> customAttributes = new HashMap<>();
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
 
-     @Test
-     public void setSuccessTest() {
-         // vars
-         Object[] parameters = { "param1", "param2" };
-         String successMessage = "This is successful.";
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setSuccess
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setSuccess(successMessage, parameters).getClass());
-     }
+        // no messages set => nothing special
+        freeMarkerAccountProvider.handleMessages(locale, properties, customAttributes);
 
-     @Test
-     public void setWarningTest() {
-         // vars
-         Object[] parameters = { "param1", "param2" };
-         String warningMessage = "This is a warning.";
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setWarning
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setWarning(warningMessage, parameters).getClass());
-     }
+        // Now add a message
+        Object[] parameters = { "param1", "param2" };
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        freeMarkerAccountProvider.setMessage(MessageType.SUCCESS, "message", parameters);
+        freeMarkerAccountProvider.handleMessages(locale, properties, customAttributes);
+    }
 
-     @Test
-     public void setProfileFormDataTest() {
-         // vars
-         MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setProfileFormData
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setProfileFormData(formData).getClass());
-     }
+    @Test
+    public void processTemplateTest() throws FreeMarkerException {
+        Map<String, Object> customAttributes = new HashMap<>();
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
 
-     @Test
-     public void setReferrerTest() {
-         // vars
-         String[] referrer = {"value1", "value2"};
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setReferrer
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setReferrer(referrer).getClass());
-     }
+        // Normal template rendering
+        when(freeMarkerProvider.processTemplate(any(), any(), any())).thenReturn("template content");
+        Response response = freeMarkerAccountProvider.processTemplate(theme, AccountPages.ACCOUNT, customAttributes, locale);
+        assertNotNull(response, "processTemplate(ACCOUNT) should not return null");
 
-     @Test
-     public void setEventsTest() {
-         // vars
-         List<Event> eventList = mock(List.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setEvents
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setEvents(eventList).getClass());
-     }
+        // If processing throws FreeMarkerException, we expect a server error
+        when(freeMarkerProvider.processTemplate(any(), any(), any())).thenThrow(FreeMarkerException.class);
+        response = freeMarkerAccountProvider.processTemplate(theme, AccountPages.ACCOUNT, customAttributes, locale);
+        assertEquals(
+            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+            response.getStatus(),
+            "Should return server error when FreeMarkerException occurs"
+        );
+    }
 
-     @Test
-     public void setSessionsTest() {
-         // mock
-         List<UserSessionModel>  userSessionModelList = mock(List.class);
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setSessions
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setSessions(userSessionModelList).getClass());
-     }
+    @Test
+    public void setPasswordSetTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setPasswordSet(true).getClass(),
+            "setPasswordSet should return FreeMarkerAccountProvider"
+        );
+    }
 
-     @Test
-     public void setStateCheckerTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setStateChecker
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setStateChecker("state checker").getClass());
-     }
+    @Test
+    public void setMessageTest() {
+        Object[] parameters = { "param1", "param2" };
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        freeMarkerAccountProvider.setMessage(MessageType.SUCCESS, "message", parameters);
+        // no assertion needed beyond no crash
+    }
 
-     @Test
-     public void setIdTokenHintTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setIdTokenHint
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setIdTokenHint("token hint").getClass());
-     }
+    @Test
+    public void formatMessageTest() {
+        FormMessage formMessage = mock(FormMessage.class);
+        Properties messagesBundle = mock(Properties.class);
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
 
-     @Test
-     public void setFeaturesTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setFeatures
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setFeatures(true, true, true, true).getClass());
-     }
+        // if message is null => returns null
+        assertNull(
+            freeMarkerAccountProvider.formatMessage(null, messagesBundle, locale),
+            "formatMessage should return null when FormMessage is null"
+        );
 
-     @Test
-     public void setAttributeTest() {
-         // Condition 1 - attribute is null
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // setAttribute
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setAttribute("key", "value").getClass());
+        // if message is empty => returns the raw message
+        assertNull(
+            freeMarkerAccountProvider.formatMessage(formMessage, messagesBundle, locale),
+            "formatMessage should return null if formMessage.getMessage() is empty"
+        );
 
-         // Condition 1 - attribute is not null
-         // setAttribute
-         assertEquals(FreeMarkerAccountProvider.class, freeMarkerAccountProvider.setAttribute("key2", "value2").getClass());
-     }
+        // Now give the message a key and parameters
+        when(formMessage.getMessage()).thenReturn("some.key");
+        when(formMessage.getParameters()).thenReturn(new String[]{"some", "message"});
+        when(messagesBundle.containsKey(anyString())).thenReturn(true);
+        when(messagesBundle.getProperty(anyString())).thenReturn("message bundle");
 
-     @Test
-     public void closeTest() {
-         // constructor
-         freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
-         // check the constructor
-         assertNotNull(freeMarkerAccountProvider);
-         // close
-         freeMarkerAccountProvider.close();
-     }
- }
+        assertNotNull(
+            freeMarkerAccountProvider.formatMessage(formMessage, messagesBundle, locale),
+            "formatMessage should not return null when message key is in bundle"
+        );
+    }
+
+    @Test
+    public void setErrorsTest() {
+        FormMessage formMessage = mock(FormMessage.class);
+        List<FormMessage> formMessageList = List.of(formMessage);
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setErrors(Response.Status.BAD_REQUEST, formMessageList).getClass(),
+            "setErrors should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setErrorTest() {
+        Object[] parameters = { "param1", "param2" };
+        String errorMessage = "This is an error";
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setError(Response.Status.NOT_FOUND, errorMessage, parameters).getClass(),
+            "setError should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setSuccessTest() {
+        Object[] parameters = { "param1", "param2" };
+        String successMessage = "This is successful.";
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setSuccess(successMessage, parameters).getClass(),
+            "setSuccess should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setWarningTest() {
+        Object[] parameters = { "param1", "param2" };
+        String warningMessage = "This is a warning.";
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setWarning(warningMessage, parameters).getClass(),
+            "setWarning should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setProfileFormDataTest() {
+        MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setProfileFormData(formData).getClass(),
+            "setProfileFormData should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setReferrerTest() {
+        String[] referrer = {"value1", "value2"};
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setReferrer(referrer).getClass(),
+            "setReferrer should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setEventsTest() {
+        List<Event> eventList = mock(List.class);
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setEvents(eventList).getClass(),
+            "setEvents should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setSessionsTest() {
+        List<UserSessionModel> userSessionModelList = mock(List.class);
+
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setSessions(userSessionModelList).getClass(),
+            "setSessions should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setStateCheckerTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setStateChecker("state checker").getClass(),
+            "setStateChecker should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setIdTokenHintTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setIdTokenHint("token hint").getClass(),
+            "setIdTokenHint should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setFeaturesTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setFeatures(true, true, true, true).getClass(),
+            "setFeatures should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void setAttributeTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setAttribute("key", "value").getClass(),
+            "setAttribute should return FreeMarkerAccountProvider"
+        );
+        // Another attribute
+        assertEquals(
+            FreeMarkerAccountProvider.class,
+            freeMarkerAccountProvider.setAttribute("key2", "value2").getClass(),
+            "setAttribute should return FreeMarkerAccountProvider"
+        );
+    }
+
+    @Test
+    public void closeTest() {
+        freeMarkerAccountProvider = new FreeMarkerAccountProvider(keycloakSession);
+        assertNotNull(freeMarkerAccountProvider);
+        freeMarkerAccountProvider.close();
+        // No specific assertions; just ensure no exceptions
+    }
+}

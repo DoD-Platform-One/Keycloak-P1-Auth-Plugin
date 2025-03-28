@@ -1,30 +1,25 @@
 package org.keycloak.forms.account.freemarker.model;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.keycloak.common.util.Time;
 import org.keycloak.forms.account.freemarker.model.SessionsBean.UserSessionBean;
-import org.keycloak.models.ClientModel;
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserSessionModel;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.keycloak.models.AuthenticatedClientSessionModel;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.keycloak.models.*;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.Assert.assertEquals;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import java.util.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({RealmModel.class, ClientModel.class, UserSessionModel.class})
-public class SessionsBeanTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class SessionsBeanTest {
+
+    @Mock
+    private RealmModel realmModel;
 
     @Mock
     private UserSessionModel userSessionModel;
@@ -33,48 +28,48 @@ public class SessionsBeanTest {
     private ClientModel clientModel;
 
     @Test
-    public void testSessionsBean() throws Exception {
-
-        // Variable
+    void testSessionsBean() {
         long currentTime = System.currentTimeMillis();
 
-        // Mock RealmModel
-        RealmModel realmModel = mock(RealmModel.class);
-
-        // Mock UserSessionModel
+        // Set up userSessionModel
         when(userSessionModel.getId()).thenReturn("session123");
         when(userSessionModel.getIpAddress()).thenReturn("192.168.0.1");
-        when(userSessionModel.getStarted()).thenReturn((int) (currentTime/1000));
-        when(userSessionModel.getLastSessionRefresh()).thenReturn((int) (currentTime/1000));
+        when(userSessionModel.getStarted()).thenReturn((int) (currentTime / 1000));
+        when(userSessionModel.getLastSessionRefresh()).thenReturn((int) (currentTime / 1000));
         when(userSessionModel.isRememberMe()).thenReturn(false);
 
-        // Mock ClientModel
+        // Set up clientModel
         when(clientModel.getClientId()).thenReturn("client1");
-
-        // Mock associated client sessions
         when(realmModel.getClientById("client1")).thenReturn(clientModel);
+
+        // Mock authenticated client sessions
         Map<String, AuthenticatedClientSessionModel> clientSessions = new HashMap<>();
-        clientSessions.put("client1", mock(AuthenticatedClientSessionModel.class));
+        AuthenticatedClientSessionModel authClientSession = mock(AuthenticatedClientSessionModel.class);
+        clientSessions.put("client1", authClientSession);
         when(userSessionModel.getAuthenticatedClientSessions()).thenReturn(clientSessions);
 
-        // Mock list of UserSessionModel
+        // Prepare a list of user sessions
         List<UserSessionModel> userSessionModels = new ArrayList<>();
         userSessionModels.add(userSessionModel);
 
-        // Create SessionsBean
+        // Instantiate SessionsBean
         SessionsBean sessionsBean = new SessionsBean(realmModel, userSessionModels);
 
-        // Test SessionsBean methods
+        // Verify SessionsBean logic
         List<UserSessionBean> sessions = sessionsBean.getSessions();
         assertEquals(1, sessions.size());
 
         UserSessionBean userSessionBean = sessions.get(0);
         assertEquals("session123", userSessionBean.getId());
         assertEquals("192.168.0.1", userSessionBean.getIpAddress());
-        assertEquals(Time.toDate(currentTime).toString(), userSessionBean.getStarted().toString());
-        assertEquals(Time.toDate(currentTime).toString(), userSessionBean.getLastAccess().toString());
-        assertEquals(Time.toDate(currentTime).toString(), userSessionBean.getExpires().toString());
 
+        // Compare expected Date objects using Time.toDate(currentTime)
+        String expectedDateString = Time.toDate(currentTime).toString();
+        assertEquals(expectedDateString, userSessionBean.getStarted().toString());
+        assertEquals(expectedDateString, userSessionBean.getLastAccess().toString());
+        assertEquals(expectedDateString, userSessionBean.getExpires().toString());
+
+        // Verify clients
         assertEquals(1, userSessionBean.getClients().size());
         assertEquals("client1", userSessionBean.getClients().iterator().next());
     }
