@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
-## [3.6.6] - 2025-3-10
+## [3.6.6] - 2025-3-28
 
 ### Updated
 
@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Cleaned up all Sonarqube issues. Rewrote a lot of code to address complexity and duplication errors.
 - Increased Test Coverage across all files by roughly 800 new tests.
 - Optimized gradle build to run faster.
-- Created a new WelcomeEmail Event Listener which sends a custom email to all new users. Currently template is hardcoded in plugin but next release will have a configuration file or variable to pull content from. 
+- Created a new WelcomeEmail Event Listener which sends a custom email to all new users. Currently template is hardcoded in plugin but next release will have a configuration file or variable to pull content from.
 
 ## [3.5.8] - 2024-10-08
 
