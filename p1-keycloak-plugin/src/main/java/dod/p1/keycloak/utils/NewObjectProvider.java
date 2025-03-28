@@ -8,11 +8,12 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 
 /**
  * The sole purpose of this class is to allow for unit test coverage.
- * The Jaccoco test coverage report is not fully compatible with the PowerMock testing framework.
- * This class is used in @PrepareForTest so that the Jaccoco report detects test coverage for CommonConfig class.
+ * The Jacoco test coverage report is not fully compatible with the PowerMock testing framework.
+ * This class is used in @PrepareForTest so that the Jacoco report detects test coverage for CommonConfig class.
  */
 public final class NewObjectProvider {
 
@@ -30,11 +31,12 @@ public final class NewObjectProvider {
     }
 
     /**
-     * Get new java.io.FileInputStream object.
+     * Get new java.io.InputStream object.
      * @param file a File object
-     * @return FileInputStream
+     * @return InputStream
+     * @throws FileNotFoundException if the file is not found
      */
-    public static FileInputStream getFileInputStream(final File file) throws FileNotFoundException {
+    public static InputStream getFileInputStream(final File file) throws FileNotFoundException {
         return new FileInputStream(file);
     }
 
@@ -45,5 +47,4 @@ public final class NewObjectProvider {
     public static Yaml getYaml() {
         return new Yaml(new Constructor(YAMLConfig.class, new LoaderOptions()));
     }
-
 }

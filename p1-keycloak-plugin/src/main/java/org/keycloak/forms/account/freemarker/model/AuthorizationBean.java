@@ -292,7 +292,7 @@ public class AuthorizationBean {
      */
     public boolean isGranted() {
       return (granted && scopes.isEmpty())
-          || scopes.stream().filter(permissionScopeBean -> permissionScopeBean.isGranted()).count()
+          || scopes.stream().filter(PermissionScopeBean::isGranted).count()
               > 0;
     }
 
@@ -314,7 +314,7 @@ public class AuthorizationBean {
       if (grantedTimestamp == null) {
         PermissionScopeBean permission =
             scopes.stream()
-                .filter(permissionScopeBean -> permissionScopeBean.isGranted())
+                .filter(PermissionScopeBean::isGranted)
                 .findFirst()
                 .orElse(null);
 
@@ -533,6 +533,33 @@ public class AuthorizationBean {
     }
 
     /**
+     * Converts a list of {@link PermissionTicket} instances into a collection of {@link RequesterBean}s,
+     * representing requesters and their associated permissions.
+     *
+     * @param permissionRequests The list of permission tickets to convert.
+     * @return A collection of {@link RequesterBean}s representing requesters and their permissions.
+     */
+    private Collection<RequesterBean> toPermissionRepresentation(
+        final List<PermissionTicket> permissionRequests) {
+      Map<String, RequesterBean> requests = new HashMap<>();
+
+      for (PermissionTicket ticket : permissionRequests) {
+        Resource resourceModel = ticket.getResource();
+
+        if (!resourceModel.isOwnerManagedAccess()) {
+          continue;
+        }
+
+        requests
+            .computeIfAbsent(
+                ticket.getRequester(), resourceId -> new RequesterBean(ticket, authorization))
+            .addScope(ticket);
+      }
+
+      return requests.values();
+    }
+
+    /**
      * Gets the policies associated with the resource.
      *
      * @return Collection of managed permissions associated with the resource.
@@ -605,33 +632,6 @@ public class AuthorizationBean {
           .computeIfAbsent(ticket.getRequester(), key -> new RequesterBean(ticket, authorization))
           .addScope(ticket);
     }
-  }
-
-  /**
-   * Converts a list of {@link PermissionTicket} instances into a collection of {@link RequesterBean}s,
-   * representing requesters and their associated permissions.
-   *
-   * @param permissionRequests The list of permission tickets to convert.
-   * @return A collection of {@link RequesterBean}s representing requesters and their permissions.
-   */
-  private Collection<RequesterBean> toPermissionRepresentation(
-      final List<PermissionTicket> permissionRequests) {
-    Map<String, RequesterBean> requests = new HashMap<>();
-
-    for (PermissionTicket ticket : permissionRequests) {
-      Resource resourceModel = ticket.getResource();
-
-      if (!resourceModel.isOwnerManagedAccess()) {
-        continue;
-      }
-
-      requests
-          .computeIfAbsent(
-              ticket.getRequester(), resourceId -> new RequesterBean(ticket, authorization))
-          .addScope(ticket);
-    }
-
-    return requests.values();
   }
 
   /**

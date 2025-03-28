@@ -14,15 +14,21 @@ import com.slack.api.Slack;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
 
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Set;
 
 import java.io.IOException;
 
 import org.json.JSONObject;
 
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserModel;
+import static dod.p1.keycloak.events.EventListenerUtils.appendAdminUserInfo;
+import static dod.p1.keycloak.events.EventListenerUtils.appendErrorInfo;
+import static dod.p1.keycloak.events.EventListenerUtils.appendGroupMembershipInfo;
+import static dod.p1.keycloak.events.EventListenerUtils.appendRepresentationInfo;
+import static dod.p1.keycloak.events.EventListenerUtils.buildBasicAdminEventInfo;
+import static dod.p1.keycloak.events.EventListenerUtils.getRepresentation;
+import static dod.p1.keycloak.events.EventListenerUtils.initializeAllAttrResourceTypes;
+import static dod.p1.keycloak.events.EventListenerUtils.initializeNameOnlyResourceTypes;
 
 /**
  * Event listener provider for Mattermost integration.
@@ -37,7 +43,7 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
     private static final Logger LOGGER = Logger.getLogger(MattermostEventListenerProvider.class);
 
     /** Set of included admin Keycloak events in MattermostEventListenerProvider. */
-    private HashSet<ResourceType> includedAdminEvents;
+    private Set<ResourceType> includedAdminEvents;
 
     /** The Mattermost server URI used by MattermostEventListenerProvider. */
     private String serverUri;
@@ -46,14 +52,10 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
     private String[] groups;
 
     /** Set of all attribute resource types used by MattermostEventListenerProvider. */
-    private final HashSet<ResourceType> allAttrResourceTypes;
+    private final Set<ResourceType> allAttrResourceTypes;
 
     /** Set of name-only resource types used by MattermostEventListenerProvider. */
-    private final HashSet<ResourceType> nameOnlyResourceTypes;
-
-    // Sonarqube consider this a critical issue
-    /** COMMA_NAME constant. */
-    private static final String COMMA_NAME = ", name=";
+    private final Set<ResourceType> nameOnlyResourceTypes;
 
     /**
      * Constructs a new MattermostEventListenerProvider.
@@ -65,8 +67,8 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
      * @param keycloakSession       The Keycloak session.
      */
     public MattermostEventListenerProvider(
-            final HashSet<EventType> excludedEventSet,
-            final HashSet<ResourceType> includedAdminEventSet,
+            final Set<EventType> excludedEventSet,
+            final Set<ResourceType> includedAdminEventSet,
             final String[] groupArray,
             final String serverURI,
             final KeycloakSession keycloakSession) {
@@ -75,20 +77,8 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
         this.serverUri = serverURI;
         this.groups = groupArray;
 
-        this.allAttrResourceTypes = new HashSet<>();
-        this.allAttrResourceTypes.add(ResourceType.AUTH_EXECUTION);
-        this.allAttrResourceTypes.add(ResourceType.AUTH_FLOW);
-        this.allAttrResourceTypes.add(ResourceType.AUTHENTICATOR_CONFIG);
-        this.allAttrResourceTypes.add(ResourceType.REQUIRED_ACTION);
-        this.allAttrResourceTypes.add(ResourceType.REALM_ROLE_MAPPING);
-
-        this.nameOnlyResourceTypes = new HashSet<>();
-        this.nameOnlyResourceTypes.add(ResourceType.CLIENT_ROLE);
-        this.nameOnlyResourceTypes.add(ResourceType.CLIENT_SCOPE_MAPPING);
-        this.nameOnlyResourceTypes.add(ResourceType.CLIENT_ROLE_MAPPING);
-        this.nameOnlyResourceTypes.add(ResourceType.CLIENT_SCOPE);
-        this.nameOnlyResourceTypes.add(ResourceType.REALM_ROLE);
-        this.nameOnlyResourceTypes.add(ResourceType.AUTHORIZATION_RESOURCE_SERVER);
+        this.allAttrResourceTypes = initializeAllAttrResourceTypes();
+        this.nameOnlyResourceTypes = initializeNameOnlyResourceTypes();
     }
 
     /**
@@ -148,105 +138,59 @@ public class MattermostEventListenerProvider implements EventListenerProvider {
      * @return The string representation of the admin event.
      */
     private String toString(final AdminEvent adminEvent) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = buildBasicAdminEventInfo(adminEvent);
         String repPath = "";
-        final int limit = 4;
-
-        sb.append("operationType=");
-        sb.append(adminEvent.getOperationType());
-        sb.append(", resourceType=");
-        sb.append(adminEvent.getResourceType());
-        sb.append(", realmId=");
-        sb.append(adminEvent.getAuthDetails().getRealmId());
-        sb.append(", clientId=");
-        sb.append(adminEvent.getAuthDetails().getClientId());
-        sb.append(", userId=");
-        sb.append(adminEvent.getAuthDetails().getUserId());
-        sb.append(", ipAddress=");
-        sb.append(adminEvent.getAuthDetails().getIpAddress());
-        sb.append(", resourcePath=");
-        sb.append(adminEvent.getResourcePath());
 
         if (adminEvent.getRepresentation() != null) {
-          JSONObject representation = new JSONObject(adminEvent.getRepresentation());
-          if (adminEvent.getResourceType().equals(ResourceType.GROUP)) {
-            sb.append(COMMA_NAME);
-            sb.append(representation.getString("name"));
-            if (!representation.isNull("path")) {
-              sb.append(", path=");
-              sb.append(representation.getString("path"));
+            JSONObject representation = getRepresentation(adminEvent);
+
+            if (adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)) {
+                // Use custom group membership info method with additional logging
+                repPath = appendCustomGroupMembershipInfo(sb, representation, adminEvent);
+            } else {
+                // Use standard representation info for other types
+                repPath = appendRepresentationInfo(
+                        sb, adminEvent, session, allAttrResourceTypes, nameOnlyResourceTypes);
             }
-
-          }
-          if (adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)) {
-            LOGGER.info("groups: " + groups);
-            LOGGER.info("path: " + representation.getString("path"));
-            sb.append(COMMA_NAME);
-            sb.append(representation.getString("name"));
-            sb.append(", path=");
-            sb.append(representation.getString("path"));
-            repPath = representation.getString("path");
-
-            String[] resourcePath = adminEvent.getResourcePath().split("/", limit);
-
-            sb.append(", username=");
-            sb.append(session.users().getUserById(session.getContext().getRealm(), resourcePath[1]).getUsername());
-          } else if (adminEvent.getResourceType().equals(ResourceType.USER)) {
-            sb.append(", username=");
-            sb.append(representation.getString("username"));
-            sb.append(", email=");
-            sb.append(representation.getString("email"));
-          } else if (adminEvent.getResourceType().equals(ResourceType.CLIENT)) {
-            sb.append(", clientId=");
-            sb.append(representation.getString("clientId"));
-
-          if (!representation.isNull("name")) {
-              sb.append(COMMA_NAME);
-              sb.append(representation.getString("name"));
-            }
-          } else if (adminEvent.getResourceType().equals(ResourceType.PROTOCOL_MAPPER)) {
-            sb.append(COMMA_NAME);
-            sb.append(representation.getString("name"));
-            sb.append(", protocol=");
-            sb.append(representation.getString("protocol"));
-            sb.append(", protocolMapper=");
-            sb.append(representation.getString("protocolMapper"));
-          } else if (nameOnlyResourceTypes.contains(adminEvent.getResourceType())) {
-            sb.append(COMMA_NAME);
-            sb.append(representation.getString("name"));
-          } else if (allAttrResourceTypes.contains(adminEvent.getResourceType())) {
-            sb.append(", representation=");
-            sb.append(adminEvent.getRepresentation());
-          }
         }
 
-        if (adminEvent.getError() != null) {
-            sb.append(", error=");
-            sb.append(adminEvent.getError());
-        }
+        appendErrorInfo(sb, adminEvent);
+        appendAdminUserInfo(sb, adminEvent, session);
 
-        if (adminEvent.getAuthDetails().getUserId() != null) {
-          RealmModel realm = session.getContext().getRealm();
-          UserModel user = session.users().getUserById(realm, adminEvent.getAuthDetails().getUserId());
-          String username = user.getUsername();
-          String email = user.getEmail();
-
-          if (username != null) {
-            sb.append(", Admin_username=");
-            sb.append(username);
-          }
-          if (email != null) {
-            sb.append(", Admin_email=");
-            sb.append(email);
-          }
-
-        }
-        if (adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)
-                && !Arrays.asList(groups).contains(repPath)) {
+        if (shouldFilterEvent(adminEvent, repPath)) {
             return null;
-        } else {
-            return sb.toString();
         }
+
+        return sb.toString();
+    }
+
+    /**
+     * Appends group membership information to the log message with additional logging.
+     * This is a custom implementation that extends the utility method to add logging.
+     *
+     * @param sb The StringBuilder to append to.
+     * @param representation The JSON representation.
+     * @param adminEvent The admin event.
+     * @return The representation path.
+     */
+    private String appendCustomGroupMembershipInfo(final StringBuilder sb, final JSONObject representation,
+                                           final AdminEvent adminEvent) {
+        LOGGER.info("groups: " + groups);
+        LOGGER.info("path: " + representation.getString("path"));
+
+        return appendGroupMembershipInfo(sb, representation, adminEvent, session);
+    }
+
+    /**
+     * Checks if the event should be filtered out.
+     *
+     * @param adminEvent The admin event.
+     * @param repPath The representation path.
+     * @return True if the event should be filtered out, false otherwise.
+     */
+    private boolean shouldFilterEvent(final AdminEvent adminEvent, final String repPath) {
+        return adminEvent.getResourceType().equals(ResourceType.GROUP_MEMBERSHIP)
+                && !Arrays.asList(groups).contains(repPath);
     }
 
     /**

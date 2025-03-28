@@ -1,21 +1,16 @@
 package dod.p1.keycloak.events;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.*;
-import static org.powermock.api.mockito.PowerMockito.*;
-
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({})
 public class MattermostEventListenerProviderFactoryTest {
 
     @Test
@@ -23,7 +18,7 @@ public class MattermostEventListenerProviderFactoryTest {
         // variables
         String[] events = {"LOGIN"};
         String[] resource = {"REALM"};
-        String[] values = {"value1", "value2" };
+        String[] values = {"value1", "value2"};
 
         // Mocks
         KeycloakSession session = mock(KeycloakSession.class);

@@ -6,16 +6,22 @@ import java.security.cert.*;
 import java.util.Date;
 import java.util.Set;
 
+/**
+ * Minimal no-op X509Certificate implementation for test stubbing.
+ *
+ * Note: This is NOT a valid certificate implementation for production usage.
+ * It should only be used as a placeholder or mock in tests.
+ */
 public class X509CertificateImpl extends X509Certificate {
 
     @Override
     public void checkValidity() throws CertificateExpiredException, CertificateNotYetValidException {
-
+        // No-op for tests
     }
 
     @Override
     public void checkValidity(Date date) throws CertificateExpiredException, CertificateNotYetValidException {
-
+        // No-op for tests
     }
 
     @Override
@@ -99,13 +105,15 @@ public class X509CertificateImpl extends X509Certificate {
     }
 
     @Override
-    public void verify(PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException {
-
+    public void verify(PublicKey key) throws CertificateException, NoSuchAlgorithmException,
+            InvalidKeyException, NoSuchProviderException, SignatureException {
+        // No-op for tests
     }
 
     @Override
-    public void verify(PublicKey key, String sigProvider) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException {
-
+    public void verify(PublicKey key, String sigProvider) throws CertificateException,
+            NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException {
+        // No-op for tests
     }
 
     @Override
@@ -133,11 +141,14 @@ public class X509CertificateImpl extends X509Certificate {
         return null;
     }
 
+    /**
+     * Example of returning a mock extension value (e.g., to simulate a policy OID).
+     * In a real certificate, this would parse the actual extension bytes.
+     */
     @Override
     public byte[] getExtensionValue(String oid) {
-        // policy id from exported login.dso.mil certificate
+        // Example: returning a hardcoded byte array for a test policy extension
         String inputString = "#30433037060a6086480186fa6c0a01053029302706082b06010505070201161b68747470733a2f2f7777772e656e74727573742e6e65742f7270613008060667810c010202";
-        byte[] extPolicyBytes = inputString.getBytes();
-        return extPolicyBytes;
+        return inputString.getBytes();
     }
 }

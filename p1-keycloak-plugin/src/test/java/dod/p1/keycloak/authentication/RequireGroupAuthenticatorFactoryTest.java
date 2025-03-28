@@ -1,85 +1,87 @@
 package dod.p1.keycloak.authentication;
 
-import dod.p1.keycloak.common.CommonConfig;
-import dod.p1.keycloak.utils.NewObjectProvider;
-import org.apache.commons.io.FilenameUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import dod.p1.keycloak.utils.Utils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.provider.ProviderConfigProperty;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dod.p1.keycloak.utils.Utils.setupFileMocks;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ Yaml.class, FileInputStream.class, File.class, CommonConfig.class, FilenameUtils.class, NewObjectProvider.class })
-@PowerMockIgnore("javax.management.*")
-public class RequireGroupAuthenticatorFactoryTest {
+/**
+ * Refactored unit test for {@link RequireGroupAuthenticatorFactory}, removing PowerMock
+ * and using JUnit 5 + Mockito.
+ */
+class RequireGroupAuthenticatorFactoryTest {
 
     public static final String EXPECTED_ID = "p1-group-restriction";
     public static final String EXPECTED_NAME = "Platform One Group Authentication Validation";
 
     private RequireGroupAuthenticatorFactory subjectUnderTest;
 
-    @Before
-    public void setup() throws Exception {
-        setupFileMocks();
+    @BeforeEach
+    void setup() throws Exception {
+        // If your setupFileMocks() references static methods, you may need to replicate
+        // that with mockStatic(...) blocks, or adapt as needed.
+        Utils.setupFileMocks(); // If this doesn't rely on PowerMock
 
         subjectUnderTest = new RequireGroupAuthenticatorFactory();
     }
 
     @Test
-    public void testShouldCreateExpectedEndpoint() {
+    void testShouldCreateExpectedEndpoint() {
         String actualEndpoint = subjectUnderTest.getId();
         assertEquals(EXPECTED_ID, actualEndpoint);
     }
 
     @Test
-    public void testShouldCreateAuthenticatorProvider() {
+    void testShouldCreateAuthenticatorProvider() {
         KeycloakSession mockSession = mock(KeycloakSession.class);
         Authenticator actualProvider = subjectUnderTest.create(mockSession);
         assertEquals(RequireGroupAuthenticator.class, actualProvider.getClass());
     }
 
     @Test
-    public void testShouldNameTheModuleProperly() {
+    void testShouldNameTheModuleProperly() {
         String actualName = subjectUnderTest.getDisplayType();
         assertEquals(EXPECTED_NAME, actualName);
     }
 
     @Test
-    public void testShouldForceAuthenticatorAsRequired() {
-        AuthenticationExecutionModel.Requirement[] actualRequirementChoices = subjectUnderTest.getRequirementChoices();
-        AuthenticationExecutionModel.Requirement actionChoices = Arrays.stream(actualRequirementChoices).findFirst()
-                .orElse(null);
-        assertEquals(actualRequirementChoices.length, 1);
-        assertEquals(actionChoices, AuthenticationExecutionModel.Requirement.REQUIRED);
+    void testShouldForceAuthenticatorAsRequired() {
+        AuthenticationExecutionModel.Requirement[] actualRequirementChoices =
+                subjectUnderTest.getRequirementChoices();
+        AuthenticationExecutionModel.Requirement firstChoice =
+                Arrays.stream(actualRequirementChoices).findFirst().orElse(null);
+
+        // We expect exactly one choice: REQUIRED
+        assertEquals(1, actualRequirementChoices.length);
+        assertEquals(AuthenticationExecutionModel.Requirement.REQUIRED, firstChoice);
     }
 
     @Test
-    public void testShouldSetupOverrides() {
-        // Void overrides
+    void testShouldSetupOverrides() {
+        // Void overrides, just ensure they do not throw exceptions
         subjectUnderTest.init(null);
         subjectUnderTest.postInit(null);
         subjectUnderTest.close();
 
-        assertNull(subjectUnderTest.getReferenceCategory());
-        assertFalse(subjectUnderTest.isConfigurable());
-        assertFalse(subjectUnderTest.isUserSetupAllowed());
-        assertNull(subjectUnderTest.getHelpText());
-        assertEquals( new <ProviderConfigProperty>ArrayList(),subjectUnderTest.getConfigProperties());
+        assertNull(subjectUnderTest.getReferenceCategory(),
+                "Reference category should be null");
+        assertFalse(subjectUnderTest.isConfigurable(),
+                "Factory should not be configurable");
+        assertFalse(subjectUnderTest.isUserSetupAllowed(),
+                "User setup should not be allowed");
+        assertNull(subjectUnderTest.getHelpText(),
+                "Help text should be null if not defined");
+        assertEquals(new ArrayList<ProviderConfigProperty>(),
+                subjectUnderTest.getConfigProperties(),
+                "No config properties should be defined");
     }
 }

@@ -1,95 +1,111 @@
- package org.keycloak.services;
+package org.keycloak.services;
 
- import org.junit.Test;
- import org.junit.runner.RunWith;
- import org.powermock.core.classloader.annotations.PrepareForTest;
- import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
- import java.net.URI;
+import java.net.URI;
 
- import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
- @RunWith(PowerMockRunner.class)
- @PrepareForTest({URI.class})
- public class AccountUrlsTest {
-     @Test
-     public void testAccountUrlsDefault() {
+@ExtendWith(MockitoExtension.class)
+public class AccountUrlsTest {
 
-         String redirectUrl = "http://redirect.com";
-         String baseUrl = "http://example.com";
-         String realmUrl = baseUrl + "/realms";
-         String testRealmUrl = realmUrl + "/testRealm";
-         String accountUrl = testRealmUrl + "/account";
+    @Test
+    public void testAccountUrlsDefault() {
 
-         String passwordUrl = accountUrl + "/password";
-         String applicationsUrl = accountUrl + "/applications";
-         String identityUrl = accountUrl + "/identity";
-         String totpUrl = accountUrl + "/totp";
-         String logUrl = accountUrl + "/log";
-         String sessionsUrl = accountUrl + "/sessions";
-         String resourceUrl = accountUrl + "/resource";
+        String redirectUrl = "http://redirect.com";
+        String baseUrl = "http://example.com";
+        String realmUrl = baseUrl + "/realms";
+        String testRealmUrl = realmUrl + "/testRealm";
+        String accountUrl = testRealmUrl + "/account";
 
-         String testTokenUrl = testRealmUrl + "/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Fredirect.com&id_token_hint=testToken";
+        String passwordUrl = accountUrl + "/password";
+        String applicationsUrl = accountUrl + "/applications";
+        String identityUrl = accountUrl + "/identity";
+        String totpUrl = accountUrl + "/totp";
+        String logUrl = accountUrl + "/log";
+        String sessionsUrl = accountUrl + "/sessions";
+        String resourceUrl = accountUrl + "/resource";
 
-         String testResourceUrl = resourceUrl + "/testResource";
-         String grantUrl = testResourceUrl + "/grant";
-         String shareUrl = testResourceUrl + "/share";
+        String testTokenUrl = testRealmUrl + "/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Fredirect.com&id_token_hint=testToken";
 
-         URI baseUri = URI.create(baseUrl);
-         URI redirectUri = URI.create(redirectUrl);
-         String realmName = "testRealm";
-         String idToken = "testToken";
-         String resourceId = "testResource";
+        String testResourceUrl = resourceUrl + "/testResource";
+        String grantUrl = testResourceUrl + "/grant";
+        String shareUrl = testResourceUrl + "/share";
 
-         // accountApplicationsPage test
-         assertEquals(applicationsUrl, AccountUrls.accountApplicationsPage(baseUri, realmName).toString());
+        URI baseUri = URI.create(baseUrl);
+        URI redirectUri = URI.create(redirectUrl);
+        String realmName = "testRealm";
+        String idToken = "testToken";
+        String resourceId = "testResource";
 
-         // accountPage test
-         assertEquals(accountUrl + "/", AccountUrls.accountPage(baseUri, realmName).toString());
+        // Since AccountUrls methods are static, no need to instantiate AccountUrls
+        // AccountUrls accountUrls = new AccountUrls();
 
-         // accountPasswordPage test
-         assertEquals(passwordUrl, AccountUrls.accountPasswordPage(baseUri, realmName).toString());
+        // accountApplicationsPage test
+        assertEquals(applicationsUrl, AccountUrls.accountApplicationsPage(baseUri, realmName).toString(),
+                "accountApplicationsPage should return the correct URL");
 
-         // localeCookiePath test
-         assertEquals("/realms/testRealm", AccountUrls.localeCookiePath(baseUri, realmName));
+        // accountPage test
+        assertEquals(accountUrl + "/", AccountUrls.accountPage(baseUri, realmName).toString(),
+                "accountPage should return the correct URL");
 
-         // accountFederatedIdentityPage test
-         assertEquals(identityUrl, AccountUrls.accountFederatedIdentityPage(baseUri, realmName).toString());
+        // accountPasswordPage test
+        assertEquals(passwordUrl, AccountUrls.accountPasswordPage(baseUri, realmName).toString(),
+                "accountPasswordPage should return the correct URL");
 
-         // accountFederatedIdentityUpdate test
-         assertEquals(identityUrl, AccountUrls.accountFederatedIdentityUpdate(baseUri, realmName).toString());
+        // localeCookiePath test
+        assertEquals("/realms/testRealm", AccountUrls.localeCookiePath(baseUri, realmName),
+                "localeCookiePath should return the correct path");
 
-         // accountTotpPage test
-         assertEquals(totpUrl, AccountUrls.accountTotpPage(baseUri, realmName).toString());
+        // accountFederatedIdentityPage test
+        assertEquals(identityUrl, AccountUrls.accountFederatedIdentityPage(baseUri, realmName).toString(),
+                "accountFederatedIdentityPage should return the correct URL");
 
-         // accountLogPage test
-         assertEquals(logUrl, AccountUrls.accountLogPage(baseUri, realmName).toString());
+        // accountFederatedIdentityUpdate test
+        assertEquals(identityUrl, AccountUrls.accountFederatedIdentityUpdate(baseUri, realmName).toString(),
+                "accountFederatedIdentityUpdate should return the correct URL");
 
-         // accountSessionsPage test
-         assertEquals(sessionsUrl, AccountUrls.accountSessionsPage(baseUri, realmName).toString());
+        // accountTotpPage test
+        assertEquals(totpUrl, AccountUrls.accountTotpPage(baseUri, realmName).toString(),
+                "accountTotpPage should return the correct URL");
 
-         // accountLogout test
-         assertEquals(testTokenUrl, AccountUrls.accountLogout(baseUri, redirectUri, realmName, idToken).toString());
+        // accountLogPage test
+        assertEquals(logUrl, AccountUrls.accountLogPage(baseUri, realmName).toString(),
+                "accountLogPage should return the correct URL");
 
-         // accountResourcesPage test
-         assertEquals(resourceUrl, AccountUrls.accountResourcesPage(baseUri, realmName).toString());
+        // accountSessionsPage test
+        assertEquals(sessionsUrl, AccountUrls.accountSessionsPage(baseUri, realmName).toString(),
+                "accountSessionsPage should return the correct URL");
 
-         // accountResourceDetailPage test
-         assertEquals(testResourceUrl, AccountUrls.accountResourceDetailPage(resourceId, baseUri, realmName).toString());
+        // accountLogout test
+        assertEquals(testTokenUrl, AccountUrls.accountLogout(baseUri, redirectUri, realmName, idToken).toString(),
+                "accountLogout should return the correct URL");
 
-         // accountResourceGrant test
-         assertEquals(grantUrl, AccountUrls.accountResourceGrant(resourceId, baseUri, realmName).toString());
+        // accountResourcesPage test
+        assertEquals(resourceUrl, AccountUrls.accountResourcesPage(baseUri, realmName).toString(),
+                "accountResourcesPage should return the correct URL");
 
-         // accountResourceShare test
-         assertEquals(shareUrl, AccountUrls.accountResourceShare(resourceId, baseUri, realmName).toString());
+        // accountResourceDetailPage test
+        assertEquals(testResourceUrl, AccountUrls.accountResourceDetailPage(resourceId, baseUri, realmName).toString(),
+                "accountResourceDetailPage should return the correct URL");
 
-         // loginActionUpdatePassword test
-//         assertEquals(resourceUrl, AccountUrls.loginActionUpdatePassword(baseUri, realmName).toString());
+        // accountResourceGrant test
+        assertEquals(grantUrl, AccountUrls.accountResourceGrant(resourceId, baseUri, realmName).toString(),
+                "accountResourceGrant should return the correct URL");
 
-         // loginActionUpdateTotp test
-//         assertEquals(resourceUrl, AccountUrls.loginActionUpdateTotp(baseUri, realmName).toString());
+        // accountResourceShare test
+        assertEquals(shareUrl, AccountUrls.accountResourceShare(resourceId, baseUri, realmName).toString(),
+                "accountResourceShare should return the correct URL");
 
-         // loginActionEmailVerification test
-//         assertEquals(resourceUrl, AccountUrls.loginActionEmailVerification(baseUri, realmName).toString());
-     }
- }
+        // loginActionUpdatePassword test
+        // assertEquals(resourceUrl, AccountUrls.loginActionUpdatePassword(baseUri, realmName).toString());
+
+        // loginActionUpdateTotp test
+        // assertEquals(resourceUrl, AccountUrls.loginActionUpdateTotp(baseUri, realmName).toString());
+
+        // loginActionEmailVerification test
+        // assertEquals(resourceUrl, AccountUrls.loginActionEmailVerification(baseUri, realmName).toString());
+    }
+}

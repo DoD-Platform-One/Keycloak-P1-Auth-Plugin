@@ -1,36 +1,50 @@
 package dod.p1.keycloak.events;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
-import org.keycloak.models.*;
-import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmProvider;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.UserProvider;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class LastLoginEventListenerProviderTest {
 
-    @Mock private KeycloakSession session;
-    @Mock private Event event;
+    @Mock
+    private KeycloakSession session;
+
+    @Mock
+    private Event event;
+
+    @BeforeEach
+    public void setUp() {
+        // Stub session.realms() to avoid NPE in provider constructor
+        RealmProvider realmProvider = mock(RealmProvider.class);
+        when(session.realms()).thenReturn(realmProvider);
+    }
 
     @Test
-    public void LastLoginEventListenerProviderDefault(){
-        // Mocks
-        AdminEvent adminEvent = mock(AdminEvent.class);
+    public void LastLoginEventListenerProviderDefault() {
+        // Mocks for admin event
+        AdminEvent adminEvent = Mockito.mock(AdminEvent.class);
 
         // Constructor
         LastLoginEventListenerProvider lastLoginEventListenerProvider = new LastLoginEventListenerProvider(session);
@@ -38,10 +52,10 @@ public class LastLoginEventListenerProviderTest {
         // check that constructor is not null
         assertNotNull(lastLoginEventListenerProvider);
 
-        // onEvent (1)
+        // onEvent with a simple event
         lastLoginEventListenerProvider.onEvent(event);
 
-        // onEvent (2)
+        // onEvent with an admin event
         lastLoginEventListenerProvider.onEvent(adminEvent, true);
 
         // close
@@ -49,44 +63,42 @@ public class LastLoginEventListenerProviderTest {
     }
 
     @Test
-    public void onEventConditions(){
-        // Mocks
+    public void onEventConditions() {
+        // Mocks for session dependencies
         RealmProvider realmProvider = mock(RealmProvider.class);
         UserProvider userProvider = mock(UserProvider.class);
         UserModel userModel = mock(UserModel.class);
         Map<String, List<String>> userAttrs = mock(Map.class);
 
-        // mock conditions
+        // Stub required methods
         when(session.realms()).thenReturn(realmProvider);
         when(session.users()).thenReturn(userProvider);
         when(event.getType()).thenReturn(EventType.LOGIN);
 
         // Constructor
         LastLoginEventListenerProvider lastLoginEventListenerProvider = new LastLoginEventListenerProvider(session);
-
-        // check that constructor is not null
         assertNotNull(lastLoginEventListenerProvider);
 
         // onEvent first condition
         lastLoginEventListenerProvider.onEvent(event);
 
-        // onEvent second condition
-        when(session.users().getUserById(any(), any())).thenReturn(userModel);
+        // onEvent second condition: provide a user for lookup
+        when(userProvider.getUserById(any(), any())).thenReturn(userModel);
         lastLoginEventListenerProvider.onEvent(event);
 
-        // onEvent third condition
+        // onEvent third condition: stub user attributes
         when(userModel.getAttributes()).thenReturn(userAttrs);
         lastLoginEventListenerProvider.onEvent(event);
 
-        // onEvent fourth condition
+        // onEvent fourth condition: simulate attributes containing key
         when(userAttrs.containsKey(anyString())).thenReturn(true);
         lastLoginEventListenerProvider.onEvent(event);
 
-        // onEvent fifth condition
+        // onEvent fifth condition: simulate attribute value with something present
         when(userAttrs.get(anyString())).thenReturn(List.of("something"));
         lastLoginEventListenerProvider.onEvent(event);
 
-        // onEvent six condition
+        // onEvent sixth condition: simulate empty attribute list
         when(userAttrs.get(anyString())).thenReturn(List.of());
         lastLoginEventListenerProvider.onEvent(event);
     }

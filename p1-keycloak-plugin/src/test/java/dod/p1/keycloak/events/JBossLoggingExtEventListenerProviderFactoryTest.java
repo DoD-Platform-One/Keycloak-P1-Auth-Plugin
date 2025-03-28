@@ -1,36 +1,31 @@
 package dod.p1.keycloak.events;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({})
 public class JBossLoggingExtEventListenerProviderFactoryTest {
 
     @Test
-    public void JBossLoggingExtEventListenerProviderFactoryDefaultTest(){
-
+    public void JBossLoggingExtEventListenerProviderFactoryDefaultTest() {
         // Mocks
         KeycloakSession session = mock(KeycloakSession.class);
         KeycloakSessionFactory keycloakSessionFactory = mock(KeycloakSessionFactory.class);
         Config.Scope config = mock(Config.Scope.class);
 
-        // Scope
+        // Mock config returns
         when(config.get("success-level", "debug")).thenReturn("debug");
         when(config.get("error-level", "warn")).thenReturn("warn");
 
-        // Constructor
-        JBossLoggingExtEventListenerProviderFactory factory = new JBossLoggingExtEventListenerProviderFactory();
+        // Instantiate
+        JBossLoggingExtEventListenerProviderFactory factory =
+                new JBossLoggingExtEventListenerProviderFactory();
 
         // create
         assertNotNull(factory.create(session));
@@ -51,5 +46,4 @@ public class JBossLoggingExtEventListenerProviderFactoryTest {
         // close
         factory.close();
     }
-
 }

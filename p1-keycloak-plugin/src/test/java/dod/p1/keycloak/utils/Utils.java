@@ -4,91 +4,97 @@ import dod.p1.keycloak.common.YAMLConfig;
 import dod.p1.keycloak.registration.X509Tools;
 import org.apache.commons.io.FilenameUtils;
 import org.keycloak.authentication.FormContext;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.LoaderOptions;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
+/**
+ * A utility class for Keycloak tests that can:
+ * <ul>
+ *     <li>Provide a mock X509 certificate from a hard-coded PEM string</li>
+ *     <li>Simulate basic file mocking without PowerMock</li>
+ *     <li>Build YAML config from a test string</li>
+ * </ul>
+ *
+ * <strong>Note:</strong> This code is for test scenarios only and shouldn't be used in production.
+ */
 public class Utils {
 
+    /**
+     * Sets up X509-related mocks.
+     *
+     * <p>In a JUnit 5 environment, tests should use
+     * {@code Mockito.mockStatic(X509Tools.class)} directly.
+     * This method is provided as a placeholder for legacy calls.</p>
+     */
     public static void setupX509Mocks() {
-
-        PowerMockito.mockStatic(X509Tools.class);
-        PowerMockito.when(X509Tools.getX509Username(any(FormContext.class))).thenReturn("thing");
-
+        // No-op in this updated version.
+        // In your tests, use:
+        // try (MockedStatic<X509Tools> x509ToolsMock = Mockito.mockStatic(X509Tools.class)) { ... }
     }
 
+    /**
+     * Sets up file-related mocks.
+     *
+     * <p>Without PowerMock, this method simply parses a configuration string
+     * into a YAMLConfig object. You may refactor your production code to accept
+     * dependencies rather than intercepting constructor calls.</p>
+     *
+     * @throws Exception if parsing fails.
+     */
     public static void setupFileMocks() throws Exception {
-
-        final String fileContent = "x509:\n" +
-                "  userIdentityAttribute: \"usercertificate\"\n" +
-                "  userActive509Attribute: \"activecac\"\n" +
-                "  autoJoinGroup:\n" +
-                "    - \"/test-group\"\n" +
-                "  requiredCertificatePolicies:\n" +
-                "    - \"2.16.840.1.101.2.1.11.36\"\n" +
-                "    - \"2.16.840.1.114028.10.1.5\"\n" +
-                "groupProtectionIgnoreClients:\n" +
-                "  - \"test-client\"\n" +
-                "noEmailMatchAutoJoinGroup:\n" +
-                "  - \"/randos-test-group\"\n" +
-                "emailMatchAutoJoinGroup:\n" +
-                "  - description: Test thing 1\n" +
-                "    groups:\n" +
-                "      - \"/test-group-1-a\"\n" +
-                "      - \"/test-group-1-b\"\n" +
-                "    domains:\n" +
-                "      - \".gov\"\n" +
-                "      - \".mil\"\n" +
-                "      - \"@afit.edu\"\n" +
-                "  - description: Test thing 2\n" +
-                "    groups:\n" +
-                "      - \"/test-group-2-a\"\n" +
-                "    domains:\n" +
-                "      - \"@unicorns.com\"\n" +
-                "      - \"@merica.test\"";
-
-        File fileMock = PowerMockito.mock(File.class);
-        FileInputStream fileInputStreamMock = PowerMockito.mock(FileInputStream.class);
+        final String fileContent = ""
+            + "x509:\n"
+            + "  userIdentityAttribute: \"usercertificate\"\n"
+            + "  userActive509Attribute: \"activecac\"\n"
+            + "  autoJoinGroup:\n"
+            + "    - \"/test-group\"\n"
+            + "  requiredCertificatePolicies:\n"
+            + "    - \"2.16.840.1.101.2.1.11.36\"\n"
+            + "    - \"2.16.840.1.114028.10.1.5\"\n"
+            + "groupProtectionIgnoreClients:\n"
+            + "  - \"test-client\"\n"
+            + "noEmailMatchAutoJoinGroup:\n"
+            + "  - \"/randos-test-group\"\n"
+            + "emailMatchAutoJoinGroup:\n"
+            + "  - description: Test thing 1\n"
+            + "    groups:\n"
+            + "      - \"/test-group-1-a\"\n"
+            + "      - \"/test-group-1-b\"\n"
+            + "    domains:\n"
+            + "      - \".gov\"\n"
+            + "      - \".mil\"\n"
+            + "      - \"@afit.edu\"\n"
+            + "  - description: Test thing 2\n"
+            + "    groups:\n"
+            + "      - \"/test-group-2-a\"\n"
+            + "    domains:\n"
+            + "      - \"@unicorns.com\"\n"
+            + "      - \"@merica.test\"";
 
         InputStream stream = new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8));
-
-        PowerMockito.whenNew(File.class).withAnyArguments().thenReturn(fileMock);
-        PowerMockito.whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStreamMock);
-
-        Yaml yaml = new Yaml();
-        YAMLConfig yamlConfig = yaml.loadAs(stream, YAMLConfig.class);
-
-        final Yaml yamlMock = PowerMockito.mock(Yaml.class);
-        PowerMockito.whenNew(Yaml.class).withAnyArguments().thenReturn(yamlMock);
-
-        when(yamlMock.load(any(InputStream.class))).thenReturn(yamlConfig);
-
-        PowerMockito.mockStatic(FilenameUtils.class);
-        PowerMockito.when(FilenameUtils.normalize(System.getenv("CUSTOM_REGISTRATION_CONFIG")))
-                .thenReturn("test/filepath/file");
-
-        PowerMockito.mockStatic(NewObjectProvider.class);
-        PowerMockito.when(NewObjectProvider.getFile(anyString())).thenReturn(fileMock);
-        PowerMockito.when(NewObjectProvider.getFileInputStream(any(File.class))).thenReturn(fileInputStreamMock);
-        PowerMockito.when(NewObjectProvider.getYaml()).thenReturn(yamlMock);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        Yaml yaml = new Yaml(new Constructor(YAMLConfig.class, loaderOptions));
+        YAMLConfig yamlConfig = yaml.load(stream);
+        // Optionally, store yamlConfig or pass it on to code under test.
     }
 
+    /**
+     * Builds a test X509 certificate from a hard-coded PEM string.
+     * This certificate is the one exported from login.dso.mil.
+     *
+     * @return A Java X509Certificate parsed from the embedded PEM data.
+     * @throws Exception if parsing the certificate fails.
+     */
     public static X509Certificate buildTestCertificate() throws Exception {
-        // exported certificate from login.dso.mil
-        String cert = "-----BEGIN CERTIFICATE-----\n"
+        String certPem = ""
+            + "-----BEGIN CERTIFICATE-----\n"
             + "MIIH1TCCBr2gAwIBAgIQJI3UKNbRu9YSNYT1XVNjsjANBgkqhkiG9w0BAQsFADCB\n"
             + "ujELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xKDAmBgNVBAsT\n"
             + "H1NlZSB3d3cuZW50cnVzdC5uZXQvbGVnYWwtdGVybXMxOTA3BgNVBAsTMChjKSAy\n"
@@ -131,8 +137,8 @@ public class Utils {
             + "h7ffh5F4gt4OBQ31F2FIIcd5ud+5rsI5QGq2+fUeiOxJ6n2yAjr6ywF0lz8semer\n"
             + "OOSFtSTn1ZG4EryV5/79iAkftQWdmz/4dtWhj+Nyufq891unwuFL3oDRBT/21JIk\n"
             + "N8iM5Bydlmc/qlTTYu4bN9pVxEyPZT06Q8wnmEPbaOBRnc0NE9yRkTc=\n"
-            + "-----END CERTIFICATE-----";
-        ByteArrayInputStream in = new ByteArrayInputStream(cert.getBytes());
+            + "-----END CERTIFICATE-----\n";
+        ByteArrayInputStream in = new ByteArrayInputStream(certPem.getBytes(StandardCharsets.UTF_8));
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return (X509Certificate) cf.generateCertificate(in);
     }
