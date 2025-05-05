@@ -143,7 +143,7 @@ public class UrlBeanTest {
     @Test
     public void testGetResourcesPath() {
         String path = urlBean.getResourcesPath();
-        // The actual path includes a version number (26.1.4)
+        // The actual path includes a version number (26.2.0)
         assertTrue(path.contains("/auth/resources"));
         assertTrue(path.contains("/account/test-theme"));
     }
@@ -154,7 +154,7 @@ public class UrlBeanTest {
         themeProperties.setProperty("import", "custom/path");
         
         String path = urlBean.getResourcesCommonPath();
-        // The actual path includes a version number (26.1.4)
+        // The actual path includes a version number (26.2.0)
         assertTrue(path.contains("/auth/resources"));
         assertTrue(path.contains("/custom/path"));
     }
@@ -163,7 +163,7 @@ public class UrlBeanTest {
     public void testGetResourcesCommonPath_WithoutImportProperty() {
         // No import property set
         String path = urlBean.getResourcesCommonPath();
-        // The actual path includes a version number (26.1.4)
+        // The actual path includes a version number (26.2.0)
         assertTrue(path.contains("/auth/resources"));
         assertTrue(path.contains("/common/keycloak"));
     }

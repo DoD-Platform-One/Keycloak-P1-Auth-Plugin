@@ -62,23 +62,11 @@ public class ZacsOCSPProviderTest1 {
         issuerCertificate = cert; // self-signed for simplicity
         URI uri = new URI("https://responder.example.com:8080");
         respondersURIs = List.of(uri);
-
-        // Reset the ignored responders list to empty before tests that expect an error.
-        resetIgnoredResponders();
     }
 
     @AfterAll
     static void tearDownAll() {
         STATIC_CONFIG_MOCK.close();
-    }
-
-    private void resetIgnoredResponders() throws Exception {
-        Field field = ZacsOCSPProvider.class.getDeclaredField("OCSP_IGNORED_RESPONDERS");
-        field.setAccessible(true);
-        Unsafe unsafe = getUnsafe();
-        long offset = unsafe.staticFieldOffset(field);
-        // Set to an empty list.
-        unsafe.putObject(ZacsOCSPProvider.class, offset, List.of());
     }
 
     @Test
@@ -87,7 +75,7 @@ public class ZacsOCSPProviderTest1 {
         X509Certificate subjectCert = TestCertificateGenerator.generateSelfSignedCertificate();
         X509Certificate issuerCert = TestCertificateGenerator.generateSelfSignedCertificate();
 
-        ZacsOCSPProvider provider = new ZacsOCSPProvider() {
+        ZacsOCSPProvider provider = new ZacsOCSPProvider(List.of()) {
             @Override
             protected OCSPResp getResponse(KeycloakSession session, OCSPReq req, URI responderUri) {
                 OCSPResp resp = mock(OCSPResp.class);
@@ -122,7 +110,7 @@ public class ZacsOCSPProviderTest1 {
         X509Certificate subjectCert = TestCertificateGenerator.generateSelfSignedCertificate();
         X509Certificate issuerCert = TestCertificateGenerator.generateSelfSignedCertificate();
 
-        ZacsOCSPProvider provider = new ZacsOCSPProvider() {
+        ZacsOCSPProvider provider = new ZacsOCSPProvider(List.of()) {
             @Override
             protected OCSPResp getResponse(KeycloakSession session, OCSPReq req, URI responderUri) {
                 OCSPResp resp = mock(OCSPResp.class);
@@ -161,13 +149,6 @@ public class ZacsOCSPProviderTest1 {
 
     @Test
     void testCheckResponderIgnored() throws Exception {
-        // Set the ignored responders list to contain "responder.example.com"
-        Field field = ZacsOCSPProvider.class.getDeclaredField("OCSP_IGNORED_RESPONDERS");
-        field.setAccessible(true);
-        Unsafe unsafe = getUnsafe();
-        long offset = unsafe.staticFieldOffset(field);
-        unsafe.putObject(ZacsOCSPProvider.class, offset, List.of("responder.example.com"));
-
         // Stub session.getProvider(HttpClientProvider.class) and its getHttpClient() to avoid NPE.
         HttpClientProvider dummyHttpClientProvider = mock(HttpClientProvider.class);
         when(session.getProvider(HttpClientProvider.class)).thenReturn(dummyHttpClientProvider);
@@ -175,7 +156,7 @@ public class ZacsOCSPProviderTest1 {
         when(dummyHttpClientProvider.getHttpClient()).thenReturn(dummyHttpClient);
 
         try {
-            ZacsOCSPProvider provider = new ZacsOCSPProvider();
+            ZacsOCSPProvider provider = new ZacsOCSPProvider(List.of("responder.example.com"));
             // With the responder in the ignored list, check() should bypass the real OCSP call and return GOOD.
             BCOCSPProvider.OCSPRevocationStatus status =
                     provider.check(session, cert, issuerCertificate, respondersURIs, null, new Date());

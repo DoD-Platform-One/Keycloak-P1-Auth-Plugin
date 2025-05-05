@@ -32,15 +32,15 @@ configurations.all {
 dependencies {
     // Keycloak dependencies
     // Removed org.keycloak:keycloak-junit5 dependency to avoid custom test engine interference.
-    testImplementation 'org.keycloak:keycloak-junit5:26.1.4'
-    testImplementation 'org.keycloak:keycloak-services:26.1.4'
-    testImplementation 'org.keycloak:keycloak-server-spi:26.1.4'
-    testImplementation 'org.keycloak:keycloak-server-spi-private:26.1.4'
-    testImplementation 'org.keycloak:keycloak-crypto-default:26.1.4'
-    compileOnly 'org.keycloak:keycloak-services:26.1.4'
-    compileOnly 'org.keycloak:keycloak-server-spi:26.1.4'
-    compileOnly 'org.keycloak:keycloak-server-spi-private:26.1.4'
-    compileOnly 'org.keycloak:keycloak-crypto-default:26.1.4'
+    testImplementation 'org.keycloak:keycloak-junit5:26.2.0'
+    testImplementation 'org.keycloak:keycloak-services:26.2.0'
+    testImplementation 'org.keycloak:keycloak-server-spi:26.2.0'
+    testImplementation 'org.keycloak:keycloak-server-spi-private:26.2.0'
+    testImplementation 'org.keycloak:keycloak-crypto-default:26.2.0'
+    compileOnly 'org.keycloak:keycloak-services:26.2.0'
+    compileOnly 'org.keycloak:keycloak-server-spi:26.2.0'
+    compileOnly 'org.keycloak:keycloak-server-spi-private:26.2.0'
+    compileOnly 'org.keycloak:keycloak-crypto-default:26.2.0'
 
     // JUnit 5 and Mockito
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.0'

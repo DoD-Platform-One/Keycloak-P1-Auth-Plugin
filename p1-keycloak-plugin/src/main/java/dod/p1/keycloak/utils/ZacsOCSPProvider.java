@@ -115,7 +115,20 @@ public class ZacsOCSPProvider extends BCOCSPProvider {
     }
 
     /**
-     * Loads the list of OCSP responders that should be mocked from Keycloak configuration.
+     * Constructs an instance of {@code ZacsOCSPProvider} with a custom OCSP ignore
+     * list.
+     *
+     * @param ocspIgnoreList List of OCSP responders to be ignored.
+     */
+    public ZacsOCSPProvider(final List<String> ocspIgnoreList) {
+        LOGGER.info("ZacsOCSPProvider: ZacsOCSPProvider instantiated with OCSP ignore list: {}", ocspIgnoreList);
+        OCSP_IGNORED_RESPONDERS.clear();
+        OCSP_IGNORED_RESPONDERS.addAll(ocspIgnoreList);
+    }
+
+    /**
+     * Loads the list of OCSP responders that should be mocked from Keycloak
+     * configuration.
      *
      * @return List of responder hostnames as strings.
      */
