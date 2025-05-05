@@ -371,6 +371,11 @@ class RegistrationValidationTest {
                     public UriInfo getUri() {
                         return null;
                     }
+
+                    @Override
+                    public boolean isProxyTrusted() {
+                        return true;
+                    }
                 };
             }
 

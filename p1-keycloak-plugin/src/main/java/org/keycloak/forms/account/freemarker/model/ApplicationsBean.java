@@ -37,6 +37,7 @@ import org.keycloak.models.UserConsentModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.services.managers.UserSessionManager;
+import org.keycloak.services.resources.admin.AdminAuth;
 import org.keycloak.services.resources.admin.permissions.AdminPermissions;
 import org.keycloak.services.util.ResolveRelative;
 import org.keycloak.storage.StorageId;
@@ -59,18 +60,30 @@ public class ApplicationsBean {
    * @param user    The user for whom application information is retrieved.
    */
   public ApplicationsBean(final KeycloakSession session, final RealmModel realm, final UserModel user) {
-    Set<ClientModel> offlineClients =
-        new UserSessionManager(session).findClientsWithOfflineToken(realm, user);
+    Set<ClientModel> offlineClients = new UserSessionManager(session).findClientsWithOfflineToken(realm, user);
 
-    this.applications =
-        this.getApplications(session, realm, user)
-            .filter(
-                client ->
-                    !isAdminClient(client)
-                        || AdminPermissions.realms(session, realm, user).isAdmin())
-            .map(client -> toApplicationEntry(session, realm, user, client, offlineClients))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+    this.applications = this.getApplications(session, realm, user)
+        .filter(Objects::nonNull)
+        .filter(client -> !isAdminClient(client) || userIsAdminForClient(session, realm, user, client))
+        .map(client -> toApplicationEntry(session, realm, user, client, offlineClients))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Checks if the user is an admin for the specified client.
+   *
+   * @param session The Keycloak session.
+   * @param realm   The realm of the user.
+   * @param user    The user to check.
+   * @param client  The client to check.
+   * @return {@code true} if the user is an admin for the client, otherwise
+   *         {@code false}.
+   */
+  public static boolean userIsAdminForClient(final KeycloakSession session, final RealmModel realm,
+      final UserModel user, final ClientModel client) {
+    AdminAuth adminAuth = new AdminAuth(realm, null, user, client);
+    return AdminPermissions.evaluator(session, realm, adminAuth).clients().canView(client);
   }
 
   /**

@@ -16,7 +16,9 @@ import org.keycloak.models.UserConsentModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.services.managers.UserSessionManager;
+import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
 import org.keycloak.services.resources.admin.permissions.AdminPermissions;
+import org.keycloak.services.resources.admin.permissions.ClientPermissionEvaluator;
 import org.keycloak.services.resources.admin.permissions.RealmsPermissionEvaluator;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -177,11 +179,13 @@ class ApplicationsBeanTest {
         try (var mockedAdminPermissions = mockStatic(AdminPermissions.class);
              var mockedTokenManager = mockStatic(TokenManager.class)) {
 
-            RealmsPermissionEvaluator mockRealmPermEval = mock(RealmsPermissionEvaluator.class);
-            mockedAdminPermissions.when(() -> AdminPermissions.realms(any(), any(), any()))
-                                  .thenReturn(mockRealmPermEval);
-            when(mockRealmPermEval.isAdmin()).thenReturn(true);
+            ClientPermissionEvaluator mockClientPermEval = mock(ClientPermissionEvaluator.class);
+            AdminPermissionEvaluator mockAdminPermEval = mock(AdminPermissionEvaluator.class);
 
+            mockedAdminPermissions.when(() -> AdminPermissions.evaluator(any(), any(), any()))
+                    .thenReturn(mockAdminPermEval);
+            when(mockAdminPermEval.clients()).thenReturn(mockClientPermEval);
+            when(mockClientPermEval.canView(any())).thenReturn(true);
             mockedTokenManager.when(() -> TokenManager.getAccess(any(), any(), any()))
                               .thenReturn(roleModelSet);
 
@@ -216,10 +220,13 @@ class ApplicationsBeanTest {
         Stream<ClientModel> clientsStream = Stream.of(client1, client2);
 
         try (var mockedAdminPermissions = mockStatic(AdminPermissions.class)) {
-            RealmsPermissionEvaluator mockRealmPermEval = mock(RealmsPermissionEvaluator.class);
-            mockedAdminPermissions.when(() -> AdminPermissions.realms(any(), any(), any()))
-                                  .thenReturn(mockRealmPermEval);
-            when(mockRealmPermEval.isAdmin()).thenReturn(false);
+            ClientPermissionEvaluator mockClientPermEval = mock(ClientPermissionEvaluator.class);
+            AdminPermissionEvaluator mockAdminPermEval = mock(AdminPermissionEvaluator.class);
+
+            mockedAdminPermissions.when(() -> AdminPermissions.evaluator(any(), any(), any()))
+                    .thenReturn(mockAdminPermEval);
+            when(mockAdminPermEval.clients()).thenReturn(mockClientPermEval);
+            when(mockClientPermEval.canView(any())).thenReturn(false);
 
             when(realm.getClientsStream()).thenReturn(clientsStream);
             when(realm.getName()).thenReturn("realm");

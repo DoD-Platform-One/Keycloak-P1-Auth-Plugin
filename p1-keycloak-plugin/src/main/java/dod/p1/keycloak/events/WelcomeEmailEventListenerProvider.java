@@ -1,8 +1,9 @@
 package dod.p1.keycloak.events;
 
 import org.jboss.logging.Logger;
-import org.keycloak.email.DefaultEmailSenderProvider;
+import org.keycloak.email.DefaultEmailSenderProviderFactory;
 import org.keycloak.email.EmailException;
+import org.keycloak.email.EmailSenderProvider;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
@@ -123,7 +124,7 @@ public class WelcomeEmailEventListenerProvider implements EventListenerProvider 
 
         try {
             // Use DefaultEmailSenderProvider to send the email directly
-            DefaultEmailSenderProvider senderProvider = createEmailSenderProvider(session);
+            EmailSenderProvider senderProvider = createEmailSenderProvider(session);
             senderProvider.send(realm.getSmtpConfig(), user, subject, plainTextContent, htmlContent);
             // Mark the user as having received the welcome email
             user.setSingleAttribute(WELCOME_EMAIL_SENT, "true");
@@ -150,8 +151,8 @@ public class WelcomeEmailEventListenerProvider implements EventListenerProvider 
      * @param keycloakSession the Keycloak session
      * @return a DefaultEmailSenderProvider instance
      */
-    public DefaultEmailSenderProvider createEmailSenderProvider(
-                        final KeycloakSession keycloakSession) {
-        return new DefaultEmailSenderProvider(keycloakSession);
+    public EmailSenderProvider createEmailSenderProvider(
+            final KeycloakSession keycloakSession) {
+        return new DefaultEmailSenderProviderFactory().create(keycloakSession);
     }
 }
