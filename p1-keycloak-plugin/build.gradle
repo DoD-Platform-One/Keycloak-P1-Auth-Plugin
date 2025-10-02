@@ -2,14 +2,12 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'jacoco'
-    id 'io.freefair.lombok' version '8.4' // Lombok plugin
-    id 'com.github.johnrengelman.shadow' version '7.1.2' // UberJar
-    id 'java'
+    id 'io.freefair.lombok' version '8.4'       // Lombok
+    id 'com.github.johnrengelman.shadow' version '7.1.2'  // Uber-jar
 }
 
 group = "${rootProjectgroupId}"
 version = "${rootProjectVersion}"
-sourceCompatibility = '21'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -20,45 +18,83 @@ repositories {
     mavenCentral()
 }
 
-// Force aligned JUnit Platform versions to avoid mismatches.
 configurations.all {
     resolutionStrategy {
         force 'org.junit.platform:junit-platform-engine:1.12.0'
         force 'org.junit.platform:junit-platform-launcher:1.12.0'
         force 'org.junit.platform:junit-platform-commons:1.12.0'
+
+        // Security fixes for vulnerable dependencies
+        // Fix HIGH severity CVEs
+        force 'commons-beanutils:commons-beanutils:1.11.0'
+        force 'org.apache.commons:commons-lang3:3.18.0'
+
+        // Fix gRPC vulnerabilities
+        force 'io.grpc:grpc-netty:1.68.0'
+        force 'io.grpc:grpc-protobuf:1.68.0'
+        force 'io.grpc:grpc-stub:1.68.0'
+        force 'io.grpc:grpc-core:1.68.0'
+
+        // Fix Protocol Buffers vulnerability
+        force 'com.google.protobuf:protobuf-java:3.25.5'
+
+        // Fix ALL Netty vulnerabilities with latest version (Sept 3, 2025)
+        // Fixes: CVE-2025-55163, CVE-2025-24970, CVE-2025-58057, CVE-2025-58056
+        force 'io.netty:netty-buffer:4.1.125.Final'
+        force 'io.netty:netty-codec:4.1.125.Final'
+        force 'io.netty:netty-codec-http:4.1.125.Final'
+        force 'io.netty:netty-codec-http2:4.1.125.Final'
+        force 'io.netty:netty-codec-socks:4.1.125.Final'
+        force 'io.netty:netty-codec-dns:4.1.125.Final'
+        force 'io.netty:netty-codec-haproxy:4.1.125.Final'
+        force 'io.netty:netty-common:4.1.125.Final'
+        force 'io.netty:netty-handler:4.1.125.Final'
+        force 'io.netty:netty-handler-proxy:4.1.125.Final'
+        force 'io.netty:netty-resolver:4.1.125.Final'
+        force 'io.netty:netty-resolver-dns:4.1.125.Final'
+        force 'io.netty:netty-transport:4.1.125.Final'
+        force 'io.netty:netty-transport-native-unix-common:4.1.125.Final'
+        force 'io.netty:netty-transport-native-epoll:4.1.125.Final'
+        force 'io.netty:netty-transport-native-kqueue:4.1.125.Final'
     }
 }
 
-dependencies {
-    // Keycloak dependencies
-    // Removed org.keycloak:keycloak-junit5 dependency to avoid custom test engine interference.
-    testImplementation 'org.keycloak:keycloak-junit5:26.2.0'
-    testImplementation 'org.keycloak:keycloak-services:26.2.0'
-    testImplementation 'org.keycloak:keycloak-server-spi:26.2.0'
-    testImplementation 'org.keycloak:keycloak-server-spi-private:26.2.0'
-    testImplementation 'org.keycloak:keycloak-crypto-default:26.2.0'
-    compileOnly 'org.keycloak:keycloak-services:26.2.0'
-    compileOnly 'org.keycloak:keycloak-server-spi:26.2.0'
-    compileOnly 'org.keycloak:keycloak-server-spi-private:26.2.0'
-    compileOnly 'org.keycloak:keycloak-crypto-default:26.2.0'
+ext {
+    keycloakVersion = '26.3.4'
+}
 
-    // JUnit 5 and Mockito
+dependencies {
+    //–– Keycloak SPIs (compile only, provided by the server) ––
+    compileOnly "org.keycloak:keycloak-server-spi:${keycloakVersion}"
+    compileOnly "org.keycloak:keycloak-server-spi-private:${keycloakVersion}"
+    compileOnly "org.keycloak:keycloak-services:${keycloakVersion}"
+    compileOnly "org.keycloak:keycloak-crypto-default:${keycloakVersion}"
+
+    //–– Keycloak test support ––
+    testImplementation "org.keycloak:keycloak-junit5:${keycloakVersion}"
+    testImplementation "org.keycloak:keycloak-server-spi:${keycloakVersion}"
+    testImplementation "org.keycloak:keycloak-server-spi-private:${keycloakVersion}"
+    testImplementation "org.keycloak:keycloak-services:${keycloakVersion}"
+    testImplementation "org.keycloak:keycloak-crypto-default:${keycloakVersion}"
+
+    //–– Other test frameworks ––
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.0'
-    // Explicitly add the JUnit Platform launcher and commons to ensure alignment.
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.0'
     testImplementation 'org.junit.platform:junit-platform-commons:1.12.0'
-
     testImplementation 'org.mockito:mockito-core:5.14.2'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
-
-    // RestEasy
     testImplementation 'org.jboss.resteasy:resteasy-core:6.2.4.Final'
+    testRuntimeOnly 'net.bytebuddy:byte-buddy-agent:1.15.4'
 
-    // General dependencies
+    //–– Runtime dependencies ––
     implementation 'org.yaml:snakeyaml:2.2'
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.70' // Non-FIPS provider
-    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+    // Updated Bouncy Castle to fix CVE-2023-33202
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.78'
+    // Explicit dependencies to fix CVEs
+    implementation 'commons-beanutils:commons-beanutils:1.11.0'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
     implementation 'com.google.auto.service:auto-service:1.1.1'
     implementation 'org.jboss.logmanager:log4j2-jboss-logmanager:1.1.1.Final'
     implementation 'org.json:json:20231013'
@@ -66,60 +102,43 @@ dependencies {
     implementation 'org.freemarker:freemarker:2.3.32'
     implementation 'commons-io:commons-io:2.16.1'
 
-    // Byte Buddy for Mockito
-    testRuntimeOnly 'net.bytebuddy:byte-buddy-agent:1.15.4'
-
-    // Bouncy Castle FIPS for testing (aligned versions)
-    testImplementation 'org.bouncycastle:bc-fips:1.0.2.5'
-    testImplementation 'org.bouncycastle:bcpkix-fips:1.0.7'
-    testRuntimeOnly 'org.bouncycastle:bcprov-jdk18on:1.78' // Updated to a compatible version
+    //–– Quarkus routing extension ––
+    //implementation project(':runtime')
+    //implementation project(':deployment')
 }
 
 jar {
     enabled = false
-    dependsOn(shadowJar)
+    dependsOn shadowJar
 }
 
-// ShadowJar Configuration
 shadowJar {
     archiveClassifier = null
 }
 
 test {
+    useJUnitPlatform()
+    maxParallelForks = project.hasProperty("test.maxParallelForks")
+        ? project.property("test.maxParallelForks").toInteger()
+        : 2
 
-      useJUnitPlatform()
-      //forkEvery 1 // Run each test in a separate JVM, but real slow to build
-      maxParallelForks = project.hasProperty("test.maxParallelForks") ? project.property("test.maxParallelForks").toInteger() : 2
-    // Uncomment this if you wish to debug the classpath
-    /*
-    doFirst {
-        println "Test classpath: " + classpath.asPath
-    }
-    */
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
 
-    // JVM Arguments for Reflection and Mocking
+    // JVM Args to open modules for reflection/testing
     jvmArgs += [
         '--add-opens', 'java.base/java.io=ALL-UNNAMED',
         '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
         '--add-opens', 'java.base/java.util=ALL-UNNAMED',
-        '--add-opens', 'java.base/java.util.regex=ALL-UNNAMED',
-        '--add-opens', 'java.base/java.base=ALL-UNNAMED',
-        '--add-opens', 'java.base/java.util.stream=ALL-UNNAMED',
         '--add-opens', 'java.base/java.net=ALL-UNNAMED',
-        '--add-opens', 'java.base/sun.security.jca=ALL-UNNAMED',
-        '--add-opens', 'java.base/sun.security.x509=ALL-UNNAMED',
-        '--add-opens', 'java.base/java.security.cert=ALL-UNNAMED',
-        '--add-opens', 'java.base/javax.security.auth.x500=ALL-UNNAMED'
+        '--add-opens', 'java.base/sun.security.x509=ALL-UNNAMED'
     ]
 
-    // Add Byte Buddy Agent for Mockito
+    // Byte Buddy agent
     jvmArgs += [
         "-javaagent:${configurations.testRuntimeClasspath.find { it.name.startsWith('byte-buddy-agent') }}"
     ]
 }
 
-// JaCoCo Code Coverage
 jacoco {
     toolVersion = "0.8.11"
     reportsDirectory = file("${buildDir}/jacoco")
@@ -129,22 +148,19 @@ jacocoTestReport {
     reports {
         html.required = true
         html.destination file("${buildDir}/jacoco/html/")
-        xml.required = true
+        xml.required  = true
         xml.destination file("${buildDir}/jacoco/test.xml")
-        csv.required = false
     }
 }
 
-// Maven Publishing Configuration
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
-            from(components.java)
+            from components.java
         }
     }
-}
-
-// Ensure UTF-8 Encoding for Java Compilation
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
 }

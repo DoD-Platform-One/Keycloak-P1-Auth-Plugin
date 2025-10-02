@@ -37,4 +37,11 @@ public class YAMLConfig {
     @Setter
     private List<YAMLConfigEmailAutoJoin> emailMatchAutoJoinGroup;
 
+    /**
+     * List of YAMLConfigClientLogin objects for client-specific login tracking.
+     */
+    @Getter
+    @Setter
+    private List<YAMLConfigClientLogin> clientLoginAttributes;
+
 }

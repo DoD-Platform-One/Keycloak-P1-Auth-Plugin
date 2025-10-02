@@ -331,6 +331,13 @@ public class UpdateX509 implements RequiredActionProvider, RequiredActionFactory
                 user.setSingleAttribute("x509_upn", upn);
                 LOGGER.debug("UpdateX509:evaluateTriggers: Set x509_upn for user {}: {}",
                              user.getUsername(), upn);
+                 // Also store just the 16-digit portion as x509_piv (before @mil)
+                 if (upn.contains("@")) {
+                     String pivId = upn.split("@")[0];
+                     user.setSingleAttribute("x509_piv", pivId);
+                     LOGGER.debug("UpdateX509:evaluateTriggers: Set x509_piv for user {}: {}",
+                             user.getUsername(), pivId);
+                 }
             } else {
                 LOGGER.warn("UpdateX509:evaluateTriggers: UPN extraction failed for user {}",
                             user.getUsername());

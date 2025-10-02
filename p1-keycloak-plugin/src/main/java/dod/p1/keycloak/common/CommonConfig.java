@@ -212,6 +212,15 @@ public final class CommonConfig {
     }
 
     /**
+     * Get client login attributes configuration.
+     *
+     * @return List of YAMLConfigClientLogin
+     */
+    public List<YAMLConfigClientLogin> getClientLoginAttributes() {
+        return config.getClientLoginAttributes();
+    }
+
+    /**
      * Get ignored group protection clients.
      *
      * @return List of String client names

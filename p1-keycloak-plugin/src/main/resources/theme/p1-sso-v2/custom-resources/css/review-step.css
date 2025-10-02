@@ -1,0 +1,58 @@
+/* Review step styling */
+.review-table {
+    width: 100%;
+    margin: 20px 0;
+}
+
+.review-row {
+    display: flex;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.review-label {
+    background-color: #4ce0a3;
+    color: #000;
+    padding: 10px;
+    width: 30%;
+    font-weight: bold;
+}
+
+.review-value {
+    background-color: #1e1e1e;
+    color: #fff;
+    padding: 10px;
+    width: 70%;
+}
+
+/* Style the submit button on step 4 */
+.step-content[data-step="4"] ~ .form-navigation #submit-form {
+    background-color: #4ce0a3 !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    padding: 10px 20px !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    margin-left: auto !important;
+}
+
+/* Create a flex container for the navigation */
+.form-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Style the back button */
+.step-content[data-step="4"] ~ .form-navigation #prev-step {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+}
+
+/* Hide any duplicate buttons in step 4 */
+.step-content[data-step="4"] .form-group {
+    display: none;
+}

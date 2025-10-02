@@ -15,18 +15,45 @@ repositories {
     mavenCentral()
 }
 
+configurations.all {
+    resolutionStrategy {
+        // Force secure versions to fix CVEs
+        force 'commons-beanutils:commons-beanutils:1.11.0'
+        force 'org.apache.commons:commons-lang3:3.18.0'
+        
+        // Force Netty 4.1.125.Final to fix all CVEs
+        force 'io.netty:netty-buffer:4.1.125.Final'
+        force 'io.netty:netty-codec:4.1.125.Final'
+        force 'io.netty:netty-codec-http:4.1.125.Final'
+        force 'io.netty:netty-codec-http2:4.1.125.Final'
+        force 'io.netty:netty-codec-socks:4.1.125.Final'
+        force 'io.netty:netty-codec-dns:4.1.125.Final'
+        force 'io.netty:netty-codec-haproxy:4.1.125.Final'
+        force 'io.netty:netty-common:4.1.125.Final'
+        force 'io.netty:netty-handler:4.1.125.Final'
+        force 'io.netty:netty-handler-proxy:4.1.125.Final'
+        force 'io.netty:netty-resolver:4.1.125.Final'
+        force 'io.netty:netty-resolver-dns:4.1.125.Final'
+        force 'io.netty:netty-transport:4.1.125.Final'
+        force 'io.netty:netty-transport-native-unix-common:4.1.125.Final'
+        force 'io.netty:netty-transport-native-epoll:4.1.125.Final'
+        force 'io.netty:netty-transport-native-kqueue:4.1.125.Final'
+    }
+}
+
 dependencies {
     implementation platform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation project(':runtime')
 
-    implementation 'io.quarkus:quarkus-arc-deployment:3.5.2'
-    implementation 'io.quarkus:quarkus-vertx-http-deployment:3.5.2'
+    implementation 'io.quarkus:quarkus-arc-deployment:3.20.2.1'
+    implementation 'io.quarkus:quarkus-vertx-http-deployment:3.20.2.1'
     //implementation 'javax.enterprise:cdi-api:1.2'
     compileOnly 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.0'
     implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
 
-    testImplementation 'org.springframework:spring-context:3.0.1.RELEASE'
-    testImplementation 'io.quarkus:quarkus-reactive-routes:3.5.2'
+    // Spring 5.3.39 is the last open source version (5.3.40+ are commercial only)
+    testImplementation 'org.springframework:spring-context:5.3.39'
+    testImplementation 'io.quarkus:quarkus-reactive-routes:3.20.2.1'
     testImplementation 'io.quarkus:quarkus-junit5-internal'
     testImplementation 'io.rest-assured:rest-assured'
     //testImplementation 'javax.enterprise:cdi-api:1.2'

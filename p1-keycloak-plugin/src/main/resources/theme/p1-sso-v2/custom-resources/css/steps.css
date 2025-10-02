@@ -1,0 +1,275 @@
+/* **********************
+ * STEP Counter in header
+ * **********************
+ */
+
+.step-counter {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  height: 0;
+  border-top: 5px solid var(--u-depth-surface0);
+  align-items: center;
+  padding-left: 0;
+  margin-bottom: var(--size-8);
+}
+
+li.step {
+  list-style: none;
+  width: var(--size-6);
+  height: var(--size-6);
+  background-color: var(--u-depth-subtext1);
+  border-radius: var(--size-4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--u-text-inverted);
+  position: relative;
+}
+
+li.step.active {
+  background-color: var(--c-pacific-green);
+}
+
+/*
+ * Airplanes
+ */
+li.step.current::after {
+  content: '';
+  display: block;
+  position: absolute;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  z-index: 0;
+}
+
+li.step-0.current::after {
+  background-image: url("../img/steps/step-0.svg");
+  height: 30px;
+  width: 80px;
+  right: -80px;
+  bottom: 7px;
+}
+
+li.step-1.current::after {
+  background-image: url("../img/steps/step-1.svg");
+  height: 30px;
+  width: 80px;
+  right: -80px;
+  bottom: 7px;
+}
+
+li.step-2.current::after {
+  background-image: url("../img/steps/step-2.svg");
+  height: 60px;
+  width: 110px;
+  right: -110px;
+  bottom: 7px;
+}
+
+li.step-3.current::after {
+  background-image: url("../img/steps/step-3.svg");
+  height: 60px;
+  width: 110px;
+  right: -110px;
+  bottom: 7px;
+}
+
+/* TODO: Have a designer create an SVG for this image */
+li.step-4.current::after {
+  background-image: url("../img/steps/step-4.webp");
+  height: 60px;
+  width: 110px;
+  right: -110px;
+  bottom: 7px;
+}
+
+li.step-5.current::after {
+  background-image: url("../img/steps/step-5.svg");
+  height: 60px;
+  width: 110px;
+  right: -110px;
+  bottom: 7px;
+}
+
+
+
+/* **********************
+ * STEP 1 - PREREQUISITES
+ * **********************
+ */
+.welcome-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.welcome-text {
+  flex: 1;
+  min-width: 300px;
+}
+
+.welcome-image {
+  flex: 0 0 auto;
+  max-width: 300px;
+  margin-left: 20px;
+}
+
+.welcome-image img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .welcome-container {
+    flex-direction: column;
+  }
+
+  .welcome-image {
+    margin-left: 0;
+    margin-top: 20px;
+    max-width: 100%;
+  }
+}
+
+
+/* ********************
+ * STEP 2 - MFA 
+ * ********************
+ */
+
+
+.mfa-instructions {
+  margin-bottom: 30px;
+}
+
+.mfa-instructions ol {
+  padding-left: 20px;
+}
+
+.mfa-instructions ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.mfa-qr-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  gap: 5%;
+}
+
+.mfa-qr-code {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  flex: 0;
+}
+
+.scan-button {
+  color: var(--c-pure-white);
+  border: 1px solid var(--c-pure-white);
+  padding: var(--size-1);
+  text-align: center;
+  width: 100%;
+  max-width: 246px;
+  /* max width is size of qr code image */
+}
+
+.mfa-code-input {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.mfa-code-input .digit {
+  font-family: var(--font-monospace-code);
+  width: 40px;
+  height: 80px;
+  background-color: var(--c-pure-black);
+  color: var(--c-pure-white);
+  font-size: var(--font-size-5);
+  text-align: center;
+  margin: 0 5px;
+  border: none;
+  padding: 0;
+}
+
+.mfa-code-input .separator {
+  font-size: 24px;
+  margin: 0 5px;
+  display: flex;
+  align-items: center;
+}
+
+.mfa-device-name {
+  margin-bottom: 30px;
+}
+
+.mfa-device-name input {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--u-depth-crust);
+  border: none;
+  color: var(--c-pure-white);
+}
+
+/* RESPONSIVE DESIGN */
+@media only screen and (max-width: 800px) {
+  .step-counter {
+    flex-direction: column;
+    gap: var(--size-3);
+    border-top: 0;
+    height: auto;
+    align-items: flex-start;
+    margin-bottom: 0;
+  }
+
+  li.step {
+    display: none;
+    width: unset;
+    padding: var(--size-1) var(--size-3);
+    font-weight: 500;
+  }
+
+  /* Undo screen-reader only */
+  li.step .sr-only {
+    position: static;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  li.step.current {
+    display: flex;
+  }
+
+  li.step.current::after {
+    bottom: 0;
+    left: 115%;
+    right: unset;
+  }
+
+  li.step-0.current::after {
+    width: 110px;
+  }
+
+  li.step-1.current::after {
+    width: 125px;
+  }
+
+  .mfa-qr-container {
+    flex-direction: column;
+  }
+}
