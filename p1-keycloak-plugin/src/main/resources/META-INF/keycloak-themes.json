@@ -7,6 +7,15 @@
         "account",
         "login"
       ]
+    },
+    {
+      "name": "p1-sso-v2",
+      "types": [
+        "admin",
+        "account",
+        "login",
+        "email"
+      ]
     }
   ]
 }

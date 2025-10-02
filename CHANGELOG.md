@@ -2,7 +2,37 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
----
+## [3.6.10] - 2025-8-12
+
+### Updated
+
+- Support for Keycloak  26.3.2 - 26.3.4
+- Patched CVEs in dependencies
+- **Mattermost JavaScript Attribute Mapper (mm_username.js)** - Dynamically generates Mattermost-compatible usernames
+  - Uses custom `mm_username` attribute if present, otherwise falls back to email local-part or Keycloak username
+  - Supports `mm_use_email` flag to automatically use email prefix as Mattermost username
+- **P1 Theme V2** - Created new theme version to match latest Platform One branding and UI standards
+- **Welcome Email Event Listener** - Automatically sends a welcome email to new users upon email verification/registration
+- **Client-Specific Login Event Listener** - Tracks last login timestamps per individual client/site via user attributes
+  - Configured via environment variable: `CUSTOM_REGISTRATION_CONFIG: /opt/keycloak/conf/customreg.yaml`
+  - Stores client-specific login times in user attributes based on YAML configuration
+  - Listens to LOGIN events and updates attributes per client as configured
+- **Enhanced Password Reset Security** - Two-component system that invalidates all prior password reset links when a new one is sent
+  - **Reset Password Provider** (Event Listener) - Tracks and invalidates old tokens when new reset emails are sent
+  - **Reset Password Token Validator** (Authenticator) - Validates tokens during the reset flow, ensuring only the latest link works
+  - Both components must be configured together: the event listener tracks tokens, the authenticator validates them
+- **x509_piv User Attribute** - New attribute that stores the UPN (User Principal Name) from PIV/CAC certificates
+- **Static Page Resource SPI** - Allows hosting static pages via `/realms/{realm}/onboarding/{page}` URL path
+  - Serves pre-approved static content pages from theme templates
+  - Supports FAQ, supervisor info, MFA troubleshooting, and other documentation pages
+
+
+## [3.6.8] - 2025-4-21
+
+### Updated
+
+- Bumped support for Keycloak libraries to 26.2.0
+
 ## [3.6.8] - 2025-4-21
 
 ### Updated

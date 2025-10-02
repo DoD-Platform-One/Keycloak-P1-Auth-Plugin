@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.keycloak.services.managers.AppAuthManager;
+import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
@@ -38,7 +40,7 @@ import org.keycloak.models.UserModel;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.services.managers.UserSessionManager;
 import org.keycloak.services.resources.admin.AdminAuth;
-import org.keycloak.services.resources.admin.permissions.AdminPermissions;
+import org.keycloak.services.resources.admin.fgap.AdminPermissions;
 import org.keycloak.services.util.ResolveRelative;
 import org.keycloak.storage.StorageId;
 
@@ -82,8 +84,16 @@ public class ApplicationsBean {
    */
   public static boolean userIsAdminForClient(final KeycloakSession session, final RealmModel realm,
       final UserModel user, final ClientModel client) {
-    AdminAuth adminAuth = new AdminAuth(realm, null, user, client);
-    return AdminPermissions.evaluator(session, realm, adminAuth).clients().canView(client);
+    try {
+      AuthResult authResult = new AppAuthManager().authenticateIdentityCookie(session, realm);
+      if (authResult == null || authResult.getToken() == null) {
+        return false; // No admin auth available in user account context
+      }
+      AdminAuth adminAuth = new AdminAuth(realm, authResult.getToken(), user, client);
+      return AdminPermissions.evaluator(session, realm, adminAuth).clients().canView(client);
+    } catch (Exception e) {
+      return false; // Fallback to false if any authentication issues occur
+    }
   }
 
   /**
@@ -385,3 +395,4 @@ public class ApplicationsBean {
         additionalGrants);
   }
 }
+

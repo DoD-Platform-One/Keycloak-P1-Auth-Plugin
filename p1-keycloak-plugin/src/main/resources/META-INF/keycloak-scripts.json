@@ -1,0 +1,9 @@
+{
+  "saml-mappers": [
+    {
+      "name": "MM Username (attr→email→username)",
+      "fileName": "mm_username.js",
+      "description": "Use mm_username attr; else email local-part if mm_use_email=true; else username"
+    }
+  ]
+}

@@ -214,7 +214,7 @@ public class UpdateX509Test1 {
         try (MockedStatic<X509Tools> x509ToolsMock = mockStatic(X509Tools.class)) {
             // Setup X509Tools mock
             x509ToolsMock.when(() -> X509Tools.convertCertToPEM(cert)).thenReturn("PEM-CERT");
-            x509ToolsMock.when(() -> X509Tools.extractUPN(cert)).thenReturn("test-upn");
+            x509ToolsMock.when(() -> X509Tools.extractUPN(cert)).thenReturn("1234567890123456@mil");
             x509ToolsMock.when(() -> X509Tools.getCertificatePolicyId(cert, 0, 0)).thenReturn("test-policy-id");
             x509ToolsMock.when(() -> X509Tools.extractURN(cert)).thenReturn("test-urn");
 
@@ -226,7 +226,8 @@ public class UpdateX509Test1 {
 
             // Verify specific attributes
             verify(user).setSingleAttribute("x509_certificate", "PEM-CERT");
-            verify(user).setSingleAttribute("x509_upn", "test-upn");
+            verify(user).setSingleAttribute("x509_upn", "1234567890123456@mil");
+            verify(user).setSingleAttribute("x509_piv", "1234567890123456");
             verify(user).setSingleAttribute("x509_policy_id", "test-policy-id");
             verify(user).setSingleAttribute("x509_urn", "test-urn");
         }
@@ -253,6 +254,7 @@ public class UpdateX509Test1 {
             // Verify specific attributes
             verify(user).setSingleAttribute("x509_certificate", "PEM-CERT");
             verify(user, never()).setSingleAttribute(eq("x509_upn"), any());
+            verify(user, never()).setSingleAttribute(eq("x509_piv"), any());
             verify(user, never()).setSingleAttribute(eq("x509_policy_id"), any());
             verify(user, never()).setSingleAttribute(eq("x509_urn"), any());
         }

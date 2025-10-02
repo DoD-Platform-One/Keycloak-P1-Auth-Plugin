@@ -1,0 +1,52 @@
+# Sample YAML configuration for the Keycloak plugin
+
+# X509 configuration
+x509:
+  userIdentityAttribute: "x509_certificate_identity"
+  userActive509Attribute: "x509_certificate_active"
+  autoJoinGroup:
+    - "/X509Users"
+  requiredCertificatePolicies:
+    - "2.16.840.1.101.2.1.11.5"
+    - "2.16.840.1.101.2.1.11.9"
+
+# Group protection ignore clients
+groupProtectionIgnoreClients:
+  - "admin-cli"
+  - "security-admin-console"
+
+# No email match auto join group
+noEmailMatchAutoJoinGroup:
+  - "/NoEmailMatchUsers"
+
+# Email match auto join group
+emailMatchAutoJoinGroup:
+  - description: "Example Domain Users"
+    groups:
+      - "/ExampleDomainUsers"
+    domains:
+      - "@example.com"
+      - ".example.com"
+
+# Client-specific login attributes
+# This is the new configuration section for the ClientSpecificLoginEventListenerProvider
+clientLoginAttributes:
+  - attributeName: "ABCGroupLastLogin"
+    description: "Last login timestamp for ABC group applications"
+    clientIds:
+      - "abc-client"
+      - "abc-admin"
+      - "abc-mobile"
+  
+  - attributeName: "DEFGroupLastLogin"
+    description: "Last login timestamp for DEF group applications"
+    clientIds:
+      - "def-client"
+      - "def-admin"
+      - "def-portal"
+  
+  - attributeName: "EFGGroupLastLogin"
+    description: "Last login timestamp for EFG group applications"
+    clientIds:
+      - "efg-client"
+      - "efg-dashboard"

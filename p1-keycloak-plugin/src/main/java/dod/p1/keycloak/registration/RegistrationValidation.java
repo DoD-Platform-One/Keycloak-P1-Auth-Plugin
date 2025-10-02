@@ -579,7 +579,6 @@ public class RegistrationValidation extends RegistrationUserCreation {
              retFormData.add(RegistrationPage.FIELD_FIRST_NAME, StringUtils.capitalize(firstName));
              retFormData.add(RegistrationPage.FIELD_LAST_NAME, StringUtils.capitalize(lastName));
              retFormData.add(USER_ATTRIBUTES_AFFILIATION, translatedAffiliation);
-             LOGGER.debug("Form Data after X509 processing: {}", retFormData);
          } catch (Exception e) {
              LOGGER.error("Error processing X509 certificate: ", e);
          }

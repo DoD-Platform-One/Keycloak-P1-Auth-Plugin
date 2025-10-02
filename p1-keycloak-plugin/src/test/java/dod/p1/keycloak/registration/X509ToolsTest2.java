@@ -72,7 +72,7 @@ public class X509ToolsTest2 {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
-        
+
         // Set system properties to disable FIPS mode
         System.setProperty("keycloak.crypto.fips-mode", "false");
         System.setProperty("keycloak.fips", "false");
@@ -85,11 +85,11 @@ public class X509ToolsTest2 {
         when(formContext.getSession()).thenReturn(keycloakSession);
         when(formContext.getHttpRequest()).thenReturn(httpRequest);
         when(formContext.getRealm()).thenReturn(realmModel);
-        
+
         when(requiredActionContext.getSession()).thenReturn(keycloakSession);
         when(requiredActionContext.getHttpRequest()).thenReturn(httpRequest);
         when(requiredActionContext.getRealm()).thenReturn(realmModel);
-        
+
         when(keycloakSession.getContext()).thenReturn(keycloakContext);
         when(keycloakContext.getAuthenticationSession()).thenReturn(authenticationSessionModel);
         when(authenticationSessionModel.getParentSession()).thenReturn(rootAuthenticationSessionModel);
@@ -107,27 +107,27 @@ public class X509ToolsTest2 {
     void testExtractUPNWithValidUPN() throws CertificateParsingException {
         // Create a mock certificate with a UPN SAN
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Create a collection of SANs
         Collection<List<?>> sans = new ArrayList<>();
-        
+
         // Add an otherName SAN (type 0) for UPN
         List<Object> otherNameSan = new ArrayList<>();
         otherNameSan.add(0); // otherName type
         otherNameSan.add(new byte[] {48, 34, 6, 10, 43, 6, 1, 4, 1, -126, 55, 20, 2, 3, -96, 20, 12, 18, 117, 115, 101, 114, 64, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109}); // UPN ASN.1 structure
         sans.add(otherNameSan);
-        
+
         when(cert.getSubjectAlternativeNames()).thenReturn(sans);
-        
+
         try (MockedStatic<X509Tools> x509ToolsMock = mockStatic(X509Tools.class)) {
             // Allow the real method to be called
             x509ToolsMock.when(() -> X509Tools.extractUPN(any(X509Certificate.class)))
                 .thenCallRealMethod();
-            
+
             // Mock the extractUPNFromOtherNameDirect method to return a test UPN
             x509ToolsMock.when(() -> X509Tools.extractUPNFromOtherNameDirect(any(byte[].class)))
                 .thenReturn("user@example.com");
-            
+
             // Should return the UPN
             assertEquals("user@example.com", X509Tools.extractUPN(cert));
         }
@@ -137,18 +137,18 @@ public class X509ToolsTest2 {
     void testExtractUPNWithNoUPN() throws CertificateParsingException {
         // Create a mock certificate with SANs but no UPN
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Create a collection of SANs
         Collection<List<?>> sans = new ArrayList<>();
-        
+
         // Add a DNS SAN (type 2)
         List<Object> dnsSan = new ArrayList<>();
         dnsSan.add(2); // DNS type
         dnsSan.add("example.com");
         sans.add(dnsSan);
-        
+
         when(cert.getSubjectAlternativeNames()).thenReturn(sans);
-        
+
         // Should return null
         assertNull(X509Tools.extractUPN(cert));
     }
@@ -157,14 +157,14 @@ public class X509ToolsTest2 {
     void testGetCertificatePolicyId() throws Exception {
         // Create a mock certificate
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Mock the certificate to return null for the extension value
         // Use a specific OID instead of anyString()
         when(cert.getExtensionValue("2.5.29.32")).thenReturn(null);
-        
+
         // Test with null extension value
         assertNull(X509Tools.getCertificatePolicyId(cert, 0, 0));
-        
+
         // Test with invalid indices - these should return null without throwing exceptions
         assertNull(X509Tools.getCertificatePolicyId(cert, -1, 0));
         assertNull(X509Tools.getCertificatePolicyId(cert, 0, -1));
@@ -174,7 +174,7 @@ public class X509ToolsTest2 {
     void testConvertCertToPEM() throws Exception {
         // Create a mock certificate
         X509Certificate cert = Utils.buildTestCertificate();
-        
+
         // Test conversion to PEM
         String pem = X509Tools.convertCertToPEM(cert);
         assertNotNull(pem);
@@ -191,13 +191,13 @@ public class X509ToolsTest2 {
         ASN1TaggedObject taggedObject = new DERTaggedObject(true, 0, upnValue);
         ASN1Encodable[] elements = new ASN1Encodable[]{oid, taggedObject};
         ASN1Primitive sequence = new DERSequence(elements);
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ASN1OutputStream asn1Out = ASN1OutputStream.create(baos);
         asn1Out.writeObject(sequence);
         asn1Out.close();
         byte[] sanValue = baos.toByteArray();
-        
+
         // Should extract the UPN
         assertEquals(upn, X509Tools.extractUPNFromOtherNameDirect(sanValue));
     }
@@ -211,13 +211,13 @@ public class X509ToolsTest2 {
         ASN1TaggedObject taggedObject = new DERTaggedObject(true, 0, upnValue);
         ASN1Encodable[] elements = new ASN1Encodable[]{oid, taggedObject};
         ASN1Primitive sequence = new DERSequence(elements);
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ASN1OutputStream asn1Out = ASN1OutputStream.create(baos);
         asn1Out.writeObject(sequence);
         asn1Out.close();
         byte[] sanValue = baos.toByteArray();
-        
+
         // Should return null due to wrong OID
         assertNull(X509Tools.extractUPNFromOtherNameDirect(sanValue));
     }
@@ -237,14 +237,14 @@ public class X509ToolsTest2 {
     void testParseSanValue() {
         // Test with null value
         assertEquals("null", X509Tools.parseSanValue(0, null));
-        
+
         // Test with string value
         assertEquals("test", X509Tools.parseSanValue(1, "test"));
         assertEquals("test", X509Tools.parseSanValue(2, "test"));
         assertEquals("test", X509Tools.parseSanValue(6, "test"));
         assertEquals("test", X509Tools.parseSanValue(7, "test"));
         assertEquals("test", X509Tools.parseSanValue(100, "test"));
-        
+
         // For otherName type, just verify it doesn't throw an exception
         // and returns a non-null value
         try {
@@ -252,13 +252,13 @@ public class X509ToolsTest2 {
             ASN1ObjectIdentifier oid = new ASN1ObjectIdentifier("1.2.3.4");
             ASN1Encodable[] elements = new ASN1Encodable[]{oid};
             ASN1Primitive sequence = new DERSequence(elements);
-            
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ASN1OutputStream asn1Out = ASN1OutputStream.create(baos);
             asn1Out.writeObject(sequence);
             asn1Out.close();
             byte[] sanBytes = baos.toByteArray();
-            
+
             String result = X509Tools.parseSanValue(0, sanBytes);
             assertNotNull(result);
         } catch (IOException e) {
@@ -270,18 +270,18 @@ public class X509ToolsTest2 {
     void testExtractURNWithValidURN() throws CertificateParsingException {
         // Create a mock certificate with a URN SAN
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Create a collection of SANs
         Collection<List<?>> sans = new ArrayList<>();
-        
+
         // Add a URI SAN (type 6)
         List<Object> uriSan = new ArrayList<>();
         uriSan.add(6); // URI type
         uriSan.add("urn:example:12345");
         sans.add(uriSan);
-        
+
         when(cert.getSubjectAlternativeNames()).thenReturn(sans);
-        
+
         // Should return the URN
         assertEquals("urn:example:12345", X509Tools.extractURN(cert));
     }
@@ -290,18 +290,18 @@ public class X509ToolsTest2 {
     void testExtractURNWithNoURN() throws CertificateParsingException {
         // Create a mock certificate with SANs but no URN
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Create a collection of SANs
         Collection<List<?>> sans = new ArrayList<>();
-        
+
         // Add a DNS SAN (type 2)
         List<Object> dnsSan = new ArrayList<>();
         dnsSan.add(2); // DNS type
         dnsSan.add("example.com");
         sans.add(dnsSan);
-        
+
         when(cert.getSubjectAlternativeNames()).thenReturn(sans);
-        
+
         // Should return null
         assertNull(X509Tools.extractURN(cert));
     }
@@ -311,10 +311,10 @@ public class X509ToolsTest2 {
         // Create a mock certificate with null SANs
         X509Certificate cert = mock(X509Certificate.class);
         when(cert.getSubjectAlternativeNames()).thenReturn(null);
-        
+
         // This should not throw an exception
         X509Tools.logAndExtractSANs(cert, userModel);
-        
+
         // Verify no attributes were set
         verify(userModel, never()).setSingleAttribute(anyString(), anyString());
     }
@@ -323,27 +323,27 @@ public class X509ToolsTest2 {
     void testLogAndExtractSANsWithValidSANs() throws CertificateParsingException {
         // Create a mock certificate with some SANs
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Create a collection of SANs
         Collection<List<?>> sans = new ArrayList<>();
-        
+
         // Add a DNS SAN (type 2)
         List<Object> dnsSan = new ArrayList<>();
         dnsSan.add(2); // DNS type
         dnsSan.add("example.com");
         sans.add(dnsSan);
-        
+
         // Add an email SAN (type 1)
         List<Object> emailSan = new ArrayList<>();
         emailSan.add(1); // Email type
         emailSan.add("user@example.com");
         sans.add(emailSan);
-        
+
         when(cert.getSubjectAlternativeNames()).thenReturn(sans);
-        
+
         // Call the method
         X509Tools.logAndExtractSANs(cert, userModel);
-        
+
         // Verify attributes were set
         verify(userModel).setSingleAttribute("x509_altname_1", "example.com");
         verify(userModel).setSingleAttribute("x509_altname_2", "user@example.com");
@@ -353,37 +353,39 @@ public class X509ToolsTest2 {
     void testLogAndExtractSANsWithExtractUPN() throws CertificateParsingException {
         // Create a mock certificate with some SANs
         X509Certificate cert = mock(X509Certificate.class);
-        
+
         // Create a collection of SANs
         Collection<List<?>> sans = new ArrayList<>();
-        
+
         // Add an otherName SAN (type 0) for UPN
         List<Object> otherNameSan = new ArrayList<>();
         otherNameSan.add(0); // otherName type
         otherNameSan.add(new byte[] {48, 34, 6, 10, 43, 6, 1, 4, 1, -126, 55, 20, 2, 3, -96, 20, 12, 18, 117, 115, 101, 114, 64, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109}); // UPN ASN.1 structure
         sans.add(otherNameSan);
-        
+
         when(cert.getSubjectAlternativeNames()).thenReturn(sans);
-        
+
         try (MockedStatic<X509Tools> x509ToolsMock = mockStatic(X509Tools.class)) {
             // Allow the real method to be called
             x509ToolsMock.when(() -> X509Tools.logAndExtractSANs(any(X509Certificate.class), any(UserModel.class), anyBoolean()))
                 .thenCallRealMethod();
-            
+
             // Mock the extractUPNFromOtherNameDirect method to return a test UPN
             x509ToolsMock.when(() -> X509Tools.extractUPNFromOtherNameDirect(any(byte[].class)))
                 .thenReturn("user@example.com");
-            
+
             // Mock the parseSanValue method to return a test value
             x509ToolsMock.when(() -> X509Tools.parseSanValue(anyInt(), any()))
                 .thenReturn("test-san-value");
-            
+
             // Call the method with extractUpn=true
             X509Tools.logAndExtractSANs(cert, userModel, true);
-            
+
             // Verify attributes were set
             verify(userModel).setSingleAttribute("x509_altname_1", "test-san-value");
             verify(userModel).setSingleAttribute("x509_upn", "user@example.com");
+            //verify(userModel).setSingleAttribute("x509_piv", "user");
+            verify(userModel, never()).setSingleAttribute(eq("x509_piv"), any());
         }
     }
 
@@ -391,9 +393,9 @@ public class X509ToolsTest2 {
     void testTranslateAffiliationShortName() {
         try (MockedStatic<CacAffiliations> cacAffiliationsMock = mockStatic(CacAffiliations.class)) {
             cacAffiliationsMock.when(() -> CacAffiliations.getLongName("USAF")).thenReturn("US Air Force");
-            
+
             assertEquals("US Air Force", X509Tools.translateAffiliationShortName("USAF"));
-            
+
             // Verify the method was called
             cacAffiliationsMock.verify(() -> CacAffiliations.getLongName("USAF"));
         }
@@ -404,16 +406,16 @@ public class X509ToolsTest2 {
         // Create a mock certificate
         X509Certificate cert = Utils.buildTestCertificate();
         String pem = X509Tools.convertCertToPEM(cert);
-        
+
         try (MockedStatic<X509Tools> x509ToolsMock = mockStatic(X509Tools.class)) {
             // Allow the real method to be called
             x509ToolsMock.when(() -> X509Tools.parsePemToX509Certificate(anyString()))
                 .thenCallRealMethod();
-            
+
             // Mock the convertCertToPEM method to return the test PEM
             x509ToolsMock.when(() -> X509Tools.convertCertToPEM(any(X509Certificate.class)))
                 .thenReturn(pem);
-            
+
             // Call the method with invalid PEM
             assertThrows(CertificateParsingException.class, () -> X509Tools.parsePemToX509Certificate("invalid-pem"));
         }

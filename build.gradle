@@ -2,15 +2,21 @@ plugins {
     id 'groovy-gradle-plugin'
     id 'jacoco'
     id "org.sonarqube" version "5.1.0.4882"
+
+    // Put the OWASP plugin on the build classpath here (no buildscript{} needed)
+    id "org.owasp.dependencycheck" version "12.1.3" apply false
 }
+
+// apply to root so we get root tasks like dependencyCheckAggregate
+apply plugin: "org.owasp.dependencycheck"
 
 group = "${rootProjectgroupId}"
 version = "${rootProjectVersion}"
 
+description = 'Keycloak Plugin Parent'
+
 repositories {
     mavenCentral()
-    maven { url = "https://plugins.gradle.org/m2/" }
-    gradlePluginPortal()
 }
 
 // Evaluate subprojects early
@@ -19,131 +25,139 @@ subprojects.each { subproject ->
 }
 
 // Disable the default jar task (a multi-project jar is built with allJar)
-jar {
-    enabled = false
-}
+jar { enabled = false }
 
 // Aggregate jar task for multi-project build
-task allJar(type: Jar, dependsOn: subprojects.jar) {
-    duplicatesStrategy = 'include'
+tasks.register('allJar', Jar) {
+    dependsOn subprojects.jar
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     archiveBaseName = "${rootProjectName}"
     subprojects.each { subproject ->
         from subproject.configurations.archives.allArtifacts.files.collect { zipTree(it) }
     }
 }
 
-artifacts {
-    archives allJar
-}
+artifacts { archives tasks.named('allJar') }
 
-description = 'Keycloak Plugin Parent'
-
-// ----- Checkstyle configuration -----
-// Create a lifecycle task that depends on all Checkstyle tasks
-def checkstyleAllTask = task("checkstyleAll")
+def checkstyleAllTask = tasks.register("checkstyleAll")
 
 tasks.register('lintGradle') {
     dependsOn checkstyleAllTask
 }
-lintGradle.dependsOn(checkstyleAllTask)
+
+allprojects {
+    // so dependency-check can resolve without surprises
+    repositories { mavenCentral() }
+}
 
 subprojects {
-    // Apply the Checkstyle plugin
+    // Ensure Java/checkstyle exist so OWASP has something to scan
+    apply plugin: "java"
     apply plugin: "checkstyle"
+    apply plugin: "org.owasp.dependencycheck"
 
-    // Exclude all files for test Checkstyle if desired
-    checkstyleTest.exclude('**/**')
-
+    // ----- Checkstyle -----
     checkstyle {
         toolVersion = '10.20.0'
         showViolations = true
         ignoreFailures = false
     }
+    tasks.withType(Checkstyle).configureEach {
+        // optional test excludes
+        if (name.toLowerCase().contains('test')) {
+            exclude('**/**')
+        }
+    }
+    // wire all checkstyle tasks into the lifecycle aggregator
+    rootProject.tasks.named("checkstyleAll").configure {
+        dependsOn tasks.withType(Checkstyle)
+    }
 
-    // Make all Checkstyle tasks part of the lifecycle task
-    checkstyleAllTask.dependsOn(tasks.withType(Checkstyle))
-
-    tasks.withType(Test) {
-        // Ensure tests run after Checkstyle tasks
-        shouldRunAfter(checkstyleAllTask)
+    tasks.withType(Test).configureEach {
+        shouldRunAfter(rootProject.tasks.named("checkstyleAll"))
         shouldRunAfter(tasks.withType(Checkstyle))
-        // Example: Uncomment if you need additional JVM arguments
+        // Example: add JVM args if needed
         // jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
     }
 
-    tasks.withType(AbstractCompile) {
-        // Example: Uncomment to add compiler arguments
+    tasks.withType(AbstractCompile).configureEach {
         // options.compilerArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
     }
 
-    // Task for generating dependency reports
-    task allDeps(type: DependencyReportTask) {}
-}
+    // quick dependency tree per-module if you need it
+    tasks.register('allDeps', DependencyReportTask)
 
-// ----- Dependency-Check Configuration -----
-allprojects {
-    // Apply the dependency-check plugin only once
-    apply plugin: "org.owasp.dependencycheck"
+    // ----- OWASP Dependency-Check (per-module) -----
     dependencyCheck {
-        autoUpdate = false
+        autoUpdate = false               // keep CI deterministic; update explicitly
         format = "ALL"
+        skipConfigurations = ['testCompileClasspath', 'testRuntimeClasspath']
+        analyzers {
+            assemblyEnabled = false
+            nuspecEnabled = false
+            nugetconfEnabled = false
+            nodeEnabled = false
+            retirejs { enabled = false }
+            ossIndex { enabled = false }
+            centralEnabled = false
+        }
         nvd {
-            // Use the environment variable if set
             apiKey = System.getenv('NVD_API_KEY')
-            //delay = 500
-            //autoUpdate = false
+            delay = System.getenv('NVD_API_KEY') ? 0 : 6000
         }
     }
 }
 
-// ----- Jacoco Reporting Configuration -----
-task jacocoReport(type: JacocoReport) {
+// ----- Root-level Jacoco aggregate -----
+tasks.register('jacocoReport', JacocoReport) {
     dependsOn(subprojects.test, subprojects.jacocoTestReport)
-    subprojects.each { subproject ->
-        // Exclude 'runtime' subproject if there are no integration tests
-        if (subproject.name != 'runtime') {
-            executionData subproject.tasks.withType(Test)
+    subprojects.each { sub ->
+        if (sub.name != 'runtime') {
+            executionData sub.tasks.withType(Test)
         }
     }
 }
 
-task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
+tasks.register('jacocoRootReport', JacocoReport) {
+    group = 'Coverage reports'
     description = 'Generates an aggregate report from all subprojects'
-    dependsOn jacocoReport
+    dependsOn 'jacocoReport'
 
     additionalSourceDirs.from = files(subprojects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
-    classDirectories.from = files(subprojects.sourceSets.main.output)
-    executionData.from = files("${buildDir}/jacoco/jacocoMergeAll.exec")
-    // Ensure dependency-check aggregate runs as part of this report
-    dependencyCheckAggregate
+    sourceDirectories.from     = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.from      = files(subprojects.sourceSets.main.output)
+    executionData.from         = files("${buildDir}/jacoco/jacocoMergeAll.exec")
+
     reports {
-        html {
-            required = true
-            destination = file("${buildDir}/jacoco/html/")
-        }
-        xml {
-            required = true
-            destination = file("${buildDir}/jacoco/test.xml")
-        }
-        csv {
-            required = false
-        }
-    }
-
-    // Optionally, create a task to package the report as a jar
-    task owaspCheck(type: Jar) {
-        dependsOn tasks.findByName("dependencyCheckAnalyze")
+        html.required = true
+        html.destination = file("${buildDir}/jacoco/html/")
+        xml.required = true
+        xml.destination = file("${buildDir}/jacoco/test.xml")
+        csv.required = false
     }
 }
 
-// Ensure jacocoRootReport runs after jacocoTestReport
-jacocoTestReport.finalizedBy jacocoRootReport
-
-// Aggregate dependency-check reports
-dependencyCheckAnalyze.finalizedBy dependencyCheckAggregate
-
-test {
-    // Set system property for JBoss Log Manager to avoid test errors
-    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+// keep your existing lifecycle wiring
+tasks.named('jacocoTestReport').configure {
+    finalizedBy 'jacocoRootReport'
 }
+
+// OWASP aggregate should run after per-project analyze; wire cleanly
+tasks.named('dependencyCheckAnalyze').configure {
+    finalizedBy 'dependencyCheckAggregate'
+}
+
+// standalone convenience tasks (instead of nesting)
+tasks.register('owaspCheck') { dependsOn 'dependencyCheckAnalyze' }
+tasks.register('deps')       { dependsOn 'dependencyCheckAggregate' }
+
+// The build task should trigger allJar which copies the JAR to root
+build.dependsOn allJar
+
+// Prefer env vars; fall back to system props; then to a sane default
+def DC_DATA_DIR = System.getenv('DEPENDENCY_CHECK_DATA')
+        ?: System.getProperty('org.owasp.dependencycheck.data.directory')
+        ?: "${System.properties['user.home']}/.gradle/dependency-check-data"
+
+def NVD_KEY = System.getenv('NVD_API_KEY')
+        ?: System.getProperty('nvd.api.key')   // optional fallback

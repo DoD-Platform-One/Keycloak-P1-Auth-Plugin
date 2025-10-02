@@ -12,3 +12,10 @@ target
 # Scan and dependency-check cache folders
 .scannerwork
 oswap
+
+# NFS temporary files
+.nfs*
+
+# AI context outputs
+CLAUDE.md
+.claude/
