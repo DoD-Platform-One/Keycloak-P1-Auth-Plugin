@@ -32,8 +32,78 @@ The plugin includes an OCSP (Online Certificate Status Protocol) authenticator t
 
 These settings can be configured in your Kubernetes deployment, Docker environment, or any other environment where Keycloak is running.
 
+# Mattermost User Provisioning
+
+The plugin includes an event listener that automatically provisions users in Mattermost upon email verification. This feature supports multiple environments (TEST, IL2, IL4, IL5) and can be configured via YAML.
+
+## Configuration
+
+1. Set the path to your YAML configuration file:
+   ```
+   CUSTOM_REGISTRATION_CONFIG: /opt/keycloak/conf/customreg.yaml
+   ```
+
+2. Set environment-specific provisioning tokens:
+   ```
+   MATTERMOST_TEST_PROVISION_TOKEN: pvt_xxxxx_test
+   MATTERMOST_IL2_PROVISION_TOKEN: pvt_xxxxx_il2
+   MATTERMOST_IL4_PROVISION_TOKEN: pvt_xxxxx_il4
+   MATTERMOST_IL5_PROVISION_TOKEN: pvt_xxxxx_il5
+   ```
+
+3. Configure in your customreg.yaml:
+   ```yaml
+   mattermostProvisioning:
+     enabled: true
+     requestTimeoutSeconds: 30
+
+     environments:
+       TEST:
+         enabled: true
+         provisionUrl: "https://chat.test.dso.mil/plugins/auto-provision/provision"
+         provisionToken: "${MATTERMOST_TEST_PROVISION_TOKEN}"
+       IL2:
+         enabled: true
+         provisionUrl: "https://chat.il2.dso.mil/plugins/auto-provision/provision"
+         provisionToken: "${MATTERMOST_IL2_PROVISION_TOKEN}"
+       IL4:
+         enabled: true
+         provisionUrl: "https://chat.il4.dso.mil/plugins/auto-provision/provision"
+         provisionToken: "${MATTERMOST_IL4_PROVISION_TOKEN}"
+       IL5:
+         enabled: false
+         provisionUrl: "https://chat.il5.dso.mil/plugins/auto-provision/provision"
+         provisionToken: "${MATTERMOST_IL5_PROVISION_TOKEN}"
+   ```
+
+4. Configure the persona attribute in User Profile:
+   - Log in to Keycloak Admin Console
+   - Select your realm
+   - Navigate to Realm Settings → User Profile → Attributes
+   - Create attribute with name `persona`, display name `Mattermost Access Code`
+   - Set as optional, single-valued, user-metadata group
+   - Grant edit/view permissions to User and Admin
+
+5. Enable the event listener in your realm:
+   - Log in to Keycloak Admin Console
+   - Select your realm
+   - Navigate to Events → Config
+   - Add `mattermost-provisioning` to the Event Listeners field
+   - Save the configuration
+
+## Features
+
+- **Multi-environment support**: Provisions users across TEST, IL2, IL4, and IL5 environments
+- **Email verification required**: Only provisions after email is verified
+- **Idempotency**: Prevents duplicate provisioning attempts
+- **Partial failure handling**: Can succeed in some environments while failing in others
+- **User attribute tracking**: Records provisioning status and environments
+
+For detailed configuration and troubleshooting, see [docs/mattermost_provisioner/](docs/mattermost_provisioner/).
+
 # Credits
 Commit history could not be preserved. Credit goes to Jeff McCoy who developed the original plugin. The plugin is now maintained by Platform One.
 
 # Additional Information
 See more [docs](docs/). Be sure to review the [docs/compatibility-matrix.md](docs/compatibility-matrix.md) to choose the most appropriate version.
+

@@ -107,9 +107,16 @@ public final class CommonConfig {
         try (InputStream fileInputStream = NewObjectProvider.getFileInputStream(file)) {
             // Read the entire file into a byte array
             byte[] bytes = fileInputStream.readAllBytes();
+            String yamlContent = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+
+            // Substitute environment variables
+            yamlContent = YAMLConfigLoader.substituteEnvironmentVariables(yamlContent);
+
             Yaml yaml = NewObjectProvider.getYaml();
-            // Pass a fresh ByteArrayInputStream to the YAML loader
-            yamlConfig = yaml.loadAs(new ByteArrayInputStream(bytes), YAMLConfig.class);
+            // Pass a fresh ByteArrayInputStream to the YAML loader with substituted content
+            yamlConfig = yaml.loadAs(
+                    new ByteArrayInputStream(yamlContent.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+                    YAMLConfig.class);
         } catch (IOException e) {
             LOGGER_COMMON.fatal("Invalid or missing YAML Config, aborting.", e);
             System.exit(1);
@@ -227,6 +234,15 @@ public final class CommonConfig {
      */
     public List<String> getIgnoredGroupProtectionClients() {
         return config.getGroupProtectionIgnoreClients();
+    }
+
+    /**
+     * Get Mattermost provisioning configuration.
+     *
+     * @return YAMLConfigMattermostProvisioning configuration
+     */
+    public YAMLConfigMattermostProvisioning getMattermostProvisioningConfig() {
+        return config.getMattermostProvisioning();
     }
 
     static void clearInstances() {

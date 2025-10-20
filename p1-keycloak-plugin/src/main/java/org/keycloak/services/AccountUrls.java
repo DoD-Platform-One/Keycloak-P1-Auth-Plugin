@@ -6,9 +6,7 @@ import lombok.extern.jbosslog.JBossLog;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
-import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.services.resources.RealmsResource;
-import org.keycloak.services.resources.account.AccountFormService;
 
 /**
  * Utility class for constructing URLs related to the account pages and actions.
@@ -54,7 +52,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the account applications page.
    */
   public static URI accountApplicationsPage(final URI baseUri, final String realmName) {
-    return accountBase(baseUri).path(AccountFormService.class, "applicationsPage").build(realmName);
+    return accountBase(baseUri).path("applications").build(realmName);
   }
 
   /**
@@ -75,7 +73,7 @@ public class AccountUrls extends Urls {
    * @return The URI builder for the account page.
    */
   public static UriBuilder accountPageBuilder(final URI baseUri) {
-    return accountBase(baseUri).path(AccountFormService.class, "accountPage");
+    return accountBase(baseUri).path("/");
   }
 
   /**
@@ -86,7 +84,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the account password page.
    */
   public static URI accountPasswordPage(final URI baseUri, final String realmName) {
-    return accountBase(baseUri).path(AccountFormService.class, "passwordPage").build(realmName);
+    return accountBase(baseUri).path("password").build(realmName);
   }
 
   /**
@@ -98,7 +96,7 @@ public class AccountUrls extends Urls {
    */
   public static URI accountFederatedIdentityPage(final URI baseUri, final String realmName) {
     return accountBase(baseUri)
-        .path(AccountFormService.class, "federatedIdentityPage")
+        .path("identity")
         .build(realmName);
   }
 
@@ -111,7 +109,7 @@ public class AccountUrls extends Urls {
    */
   public static URI accountFederatedIdentityUpdate(final URI baseUri, final String realmName) {
     return accountBase(baseUri)
-        .path(AccountFormService.class, "processFederatedIdentityUpdate")
+        .path("identity")
         .build(realmName);
   }
 
@@ -123,7 +121,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the account TOTP page.
    */
   public static URI accountTotpPage(final URI baseUri, final String realmName) {
-    return accountBase(baseUri).path(AccountFormService.class, "totpPage").build(realmName);
+    return accountBase(baseUri).path("totp").build(realmName);
   }
 
   /**
@@ -134,7 +132,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the account log page.
    */
   public static URI accountLogPage(final URI baseUri, final String realmName) {
-    return accountBase(baseUri).path(AccountFormService.class, "logPage").build(realmName);
+    return accountBase(baseUri).path("log").build(realmName);
   }
 
   /**
@@ -145,7 +143,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the account sessions page.
    */
   public static URI accountSessionsPage(final URI baseUri, final String realmName) {
-    return accountBase(baseUri).path(AccountFormService.class, "sessionsPage").build(realmName);
+    return accountBase(baseUri).path("sessions").build(realmName);
   }
 
   /**
@@ -173,7 +171,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the account resources page.
    */
   public static URI accountResourcesPage(final URI baseUri, final String realmName) {
-    return accountBase(baseUri).path(AccountFormService.class, "resourcesPage").build(realmName);
+    return accountBase(baseUri).path("resource").build(realmName);
   }
 
   /**
@@ -186,7 +184,7 @@ public class AccountUrls extends Urls {
    */
   public static URI accountResourceDetailPage(final String resourceId, final URI baseUri, final String realmName) {
     return accountBase(baseUri)
-        .path(AccountFormService.class, "resourceDetailPage")
+        .path("resource/{resource_id}")
         .build(realmName, resourceId);
   }
 
@@ -201,7 +199,7 @@ public class AccountUrls extends Urls {
 
   public static URI accountResourceGrant(final String resourceId, final URI baseUri, final String realmName) {
     return accountBase(baseUri)
-        .path(AccountFormService.class, "grantPermission")
+        .path("resource/{resource_id}/grant")
         .build(realmName, resourceId);
   }
 
@@ -215,7 +213,7 @@ public class AccountUrls extends Urls {
    */
   public static URI accountResourceShare(final String resourceId, final URI baseUri, final String realmName) {
     return accountBase(baseUri)
-        .path(AccountFormService.class, "shareResource")
+        .path("resource/{resource_id}/share")
         .build(realmName, resourceId);
   }
 
@@ -228,7 +226,7 @@ public class AccountUrls extends Urls {
    */
   public static URI loginActionUpdatePassword(final URI baseUri, final String realmName) {
     return loginActionsBase(baseUri)
-        .path(LoginActionsService.class, "updatePassword")
+        .path("update-password")
         .build(realmName);
   }
 
@@ -240,7 +238,7 @@ public class AccountUrls extends Urls {
    * @return The constructed URI for the login action to update the TOTP.
    */
   public static URI loginActionUpdateTotp(final URI baseUri, final String realmName) {
-    return loginActionsBase(baseUri).path(LoginActionsService.class, "updateTotp").build(realmName);
+    return loginActionsBase(baseUri).path("update-totp").build(realmName);
   }
 
   /**

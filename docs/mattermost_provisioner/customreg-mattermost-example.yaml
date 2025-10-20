@@ -1,0 +1,65 @@
+# Example customreg.yaml configuration with Mattermost provisioning
+# This file should be mounted at /opt/keycloak/conf/customreg.yaml
+
+x509:
+  userIdentityAttribute: "usercertificate"
+  userActive509Attribute: "activecac"
+  autoJoinGroup:
+    - "/Impact Level 2 Authorized"
+  requiredCertificatePolicies:
+    - "2.16.840.1.101.2.1.11.36"
+    - "2.16.840.1.101.3.2.1.12.2"
+    - "2.16.840.1.101.3.2.1.12.3"
+
+groupProtectionIgnoreClients:
+  - "broker"
+  - "realm-management"
+  
+noEmailMatchAutoJoinGroup:
+  - "/NoEmailMatch"
+
+emailMatchAutoJoinGroup:
+  - domains:
+      - ".mil"
+      - "@mil"
+    groups:
+      - "/Impact Level 2 Authorized"
+  - domains:
+      - "@test.com"
+      - ".test.com"
+    groups:
+      - "/Test Users"
+
+clientLoginAttributes:
+  - clientName: "mattermost"
+    attributeName: "mattermost_last_login"
+    attributeValue: "timestamp"
+
+# Mattermost Provisioning Configuration
+mattermostProvisioning:
+  enabled: true  # Master enable/disable switch
+  requestTimeoutSeconds: 30  # Timeout for HTTP requests to Mattermost
+  
+  # Environment-specific configurations
+  # Each environment has its own Mattermost instance
+  # Mattermost handles all Jira lookups internally
+  environments:
+    TEST:
+      enabled: true  # Enable TEST environment
+      provisionUrl: "https://chat.test.dso.mil/plugins/auto-provision/provision"
+      provisionToken: "${MATTERMOST_TEST_PROVISION_TOKEN}"  # Set via environment variable
+    
+    IL2:
+      enabled: true  # Enable IL2 provisioning
+      provisionUrl: "https://chat.il2.dso.mil/plugins/auto-provision/provision"
+      provisionToken: "${MATTERMOST_IL2_PROVISION_TOKEN}"  # Set via environment variable
+    
+    IL4:
+      enabled: true  # Enable IL4 provisioning
+      provisionUrl: "https://chat.il4.dso.mil/plugins/auto-provision/provision"
+      provisionToken: "${MATTERMOST_IL4_PROVISION_TOKEN}"  # Set via environment variable
+    
+    IL5:
+      enabled: false  # Disabled for this example
+      provisionUrl: "https://chat.il5.dso.mil/plugins/auto-provision/provision"
+      provisionToken: "${MATTERMOST_IL5_PROVISION_TOKEN}"  # Set via environment variable
