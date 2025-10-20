@@ -55,12 +55,19 @@ public class KcRoutingProcessor {
             final NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
             final KcRoutingConfig kcRoutingConfig) {
 
-        HashMap<String, String> pathRedirectsMap = new HashMap<>(kcRoutingConfig.pathRedirect);
-        HashMap<String, String> pathPrefixesMap = new HashMap<>(kcRoutingConfig.pathPrefix);
-        HashMap<String, String> pathFiltersMap = new HashMap<>(kcRoutingConfig.pathFilter);
-        HashMap<String, String> pathBlocksMap = new HashMap<>(kcRoutingConfig.pathBlock);
-        HashMap<String, String> pathRecursiveBlocksMap = new HashMap<>(kcRoutingConfig.pathRecursiveBlock);
-        HashMap<String, String> pathAllowsMap = new HashMap<>(kcRoutingConfig.pathAllow);
+        HashMap<String, String> pathRedirectsMap =
+            new HashMap<>(kcRoutingConfig.pathRedirect() != null ? kcRoutingConfig.pathRedirect() : Map.of());
+        HashMap<String, String> pathPrefixesMap =
+            new HashMap<>(kcRoutingConfig.pathPrefix() != null ? kcRoutingConfig.pathPrefix() : Map.of());
+        HashMap<String, String> pathFiltersMap =
+            new HashMap<>(kcRoutingConfig.pathFilter() != null ? kcRoutingConfig.pathFilter() : Map.of());
+        HashMap<String, String> pathBlocksMap =
+            new HashMap<>(kcRoutingConfig.pathBlock() != null ? kcRoutingConfig.pathBlock() : Map.of());
+        HashMap<String, String> pathRecursiveBlocksMap =
+            new HashMap<>(kcRoutingConfig.pathRecursiveBlock() != null
+                    ? kcRoutingConfig.pathRecursiveBlock() : Map.of());
+        HashMap<String, String> pathAllowsMap =
+            new HashMap<>(kcRoutingConfig.pathAllow() != null ? kcRoutingConfig.pathAllow() : Map.of());
 
         pathRedirectsMap.forEach((k, v) -> {
           LOGGER.infof("Creating Redirect Routes: %s %s", k, v);

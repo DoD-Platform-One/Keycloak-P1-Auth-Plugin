@@ -131,7 +131,7 @@ public class RequireGroupAuthenticator implements Authenticator {
                 .map(GroupModel::getId)
                 .collect(Collectors.joining(","));
 
-        LOGGER.info("{} user groups {}", logPrefix, groupList);
+        LOGGER.debug("{} user groups {}", logPrefix, groupList);
 
         return user.isMemberOf(group);
     }

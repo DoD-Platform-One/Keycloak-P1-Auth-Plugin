@@ -58,5 +58,8 @@ try {
   exports = String(out);
 } catch (e) {
   // defensive fallback on any failure
+  // Log the error so admins can diagnose issues
+  var logger = org.jboss.logging.Logger.getLogger("dod.p1.keycloak.mm_username");
+  logger.warnf("Error generating Mattermost username for user %s: %s", user.getUsername(), e.message || e);
   exports = String(user.getUsername());
 }

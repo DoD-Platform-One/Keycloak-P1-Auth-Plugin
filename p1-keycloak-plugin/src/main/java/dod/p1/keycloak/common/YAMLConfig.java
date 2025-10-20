@@ -44,4 +44,11 @@ public class YAMLConfig {
     @Setter
     private List<YAMLConfigClientLogin> clientLoginAttributes;
 
+    /**
+     * Mattermost provisioning configuration.
+     */
+    @Getter
+    @Setter
+    private YAMLConfigMattermostProvisioning mattermostProvisioning;
+
 }

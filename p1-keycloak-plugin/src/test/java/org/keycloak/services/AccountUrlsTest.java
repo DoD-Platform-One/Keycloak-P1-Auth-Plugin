@@ -7,6 +7,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 public class AccountUrlsTest {
@@ -100,12 +102,36 @@ public class AccountUrlsTest {
                 "accountResourceShare should return the correct URL");
 
         // loginActionUpdatePassword test
-        // assertEquals(resourceUrl, AccountUrls.loginActionUpdatePassword(baseUri, realmName).toString());
+        String updatePasswordUrl = baseUrl + "/realms/testRealm/login-actions/update-password";
+        assertEquals(updatePasswordUrl, AccountUrls.loginActionUpdatePassword(baseUri, realmName).toString(),
+                "loginActionUpdatePassword should return the correct URL");
 
         // loginActionUpdateTotp test
-        // assertEquals(resourceUrl, AccountUrls.loginActionUpdateTotp(baseUri, realmName).toString());
+        String updateTotpUrl = baseUrl + "/realms/testRealm/login-actions/update-totp";
+        assertEquals(updateTotpUrl, AccountUrls.loginActionUpdateTotp(baseUri, realmName).toString(),
+                "loginActionUpdateTotp should return the correct URL");
 
-        // loginActionEmailVerification test
-        // assertEquals(resourceUrl, AccountUrls.loginActionEmailVerification(baseUri, realmName).toString());
+        // themeRoot test
+        String actualThemeRootUrl = AccountUrls.themeRoot(baseUri).toString();
+        assertTrue(actualThemeRootUrl.startsWith(baseUrl + "/resources"),
+                "themeRoot should start with the correct base URL, got: " + actualThemeRootUrl);
+
+        // identityProviderLinkRequest test
+        String providerId = "google";
+        String identityProviderUrl = baseUrl + "/realms/testRealm/broker/google/link";
+        assertEquals(identityProviderUrl, 
+                AccountUrls.identityProviderLinkRequest(baseUri, providerId, realmName).toString(),
+                "identityProviderLinkRequest should return the correct URL");
+    }
+
+    @Test
+    public void testClassInheritance() throws Exception {
+        // Test that AccountUrls extends Urls as expected
+        assertTrue(Urls.class.isAssignableFrom(AccountUrls.class),
+                "AccountUrls should extend Urls");
+        
+        // Test that we can create an instance (since it extends Urls, it has a public constructor)
+        AccountUrls instance = new AccountUrls();
+        assertNotNull(instance, "Should be able to create AccountUrls instance");
     }
 }

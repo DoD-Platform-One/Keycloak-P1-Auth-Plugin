@@ -1,0 +1,125 @@
+# Example Helm values for Keycloak with Mattermost provisioning
+# This shows how to configure the plugin in a Kubernetes deployment
+
+keycloak:
+  image:
+    repository: registry.dso.mil/platform-one/big-bang/apps/security-tools/keycloak/keycloak
+    tag: 26.3.4
+  
+  # Environment variables for the Keycloak container
+  env:
+    # Path to the custom registration config file
+    - name: CUSTOM_REGISTRATION_CONFIG
+      value: "/opt/keycloak/conf/customreg.yaml"
+    
+    # Mattermost provisioning tokens (one per environment)
+    - name: MATTERMOST_TEST_PROVISION_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: mattermost-provisioning-secrets
+          key: test-token
+    
+    - name: MATTERMOST_IL2_PROVISION_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: mattermost-provisioning-secrets
+          key: il2-token
+    
+    - name: MATTERMOST_IL4_PROVISION_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: mattermost-provisioning-secrets
+          key: il4-token
+    
+    - name: MATTERMOST_IL5_PROVISION_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: mattermost-provisioning-secrets
+          key: il5-token
+
+  # Volume mounts for configuration files
+  volumeMounts:
+    - name: customreg-config
+      mountPath: /opt/keycloak/conf/customreg.yaml
+      subPath: customreg.yaml
+      readOnly: true
+  
+  volumes:
+    - name: customreg-config
+      configMap:
+        name: keycloak-customreg-config
+        items:
+          - key: customreg.yaml
+            path: customreg.yaml
+
+---
+# ConfigMap with the customreg.yaml configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-customreg-config
+data:
+  customreg.yaml: |
+    x509:
+      userIdentityAttribute: "usercertificate"
+      userActive509Attribute: "activecac"
+      autoJoinGroup:
+        - "/Impact Level 2 Authorized"
+      requiredCertificatePolicies:
+        - "2.16.840.1.101.2.1.11.36"
+        - "2.16.840.1.101.3.2.1.12.2"
+        - "2.16.840.1.101.3.2.1.12.3"
+    
+    groupProtectionIgnoreClients:
+      - "broker"
+      - "realm-management"
+    
+    noEmailMatchAutoJoinGroup:
+      - "/NoEmailMatch"
+    
+    emailMatchAutoJoinGroup:
+      - domains:
+          - ".mil"
+          - "@mil"
+        groups:
+          - "/Impact Level 2 Authorized"
+    
+    mattermostProvisioning:
+      enabled: true  # Master enable/disable switch
+      requestTimeoutSeconds: 30  # Timeout for HTTP requests to Mattermost
+      
+      # Environment-specific configurations
+      # Mattermost handles all Jira lookups internally
+      environments:
+        TEST:
+          enabled: true  # Enable TEST environment
+          provisionUrl: "https://chat.test.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_TEST_PROVISION_TOKEN}"
+        
+        IL2:
+          enabled: true  # Enable IL2 provisioning
+          provisionUrl: "https://chat.il2.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_IL2_PROVISION_TOKEN}"
+        
+        IL4:
+          enabled: true  # Enable IL4 provisioning
+          provisionUrl: "https://chat.il4.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_IL4_PROVISION_TOKEN}"
+        
+        IL5:
+          enabled: false  # Disabled for this example
+          provisionUrl: "https://chat.il5.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_IL5_PROVISION_TOKEN}"
+
+---
+# Secret for Mattermost provisioning tokens
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mattermost-provisioning-secrets
+type: Opaque
+stringData:
+  test-token: "pvt_XXXXXXXXXXXXX_TEST"  # Replace with actual token
+  il2-token: "pvt_XXXXXXXXXXXXX_IL2"    # Replace with actual token
+  il4-token: "pvt_XXXXXXXXXXXXX_IL4"    # Replace with actual token
+  il5-token: "pvt_XXXXXXXXXXXXX_IL5"    # Replace with actual token

@@ -2,21 +2,23 @@ package dod.p1.kc.routing.deployment;
 
 import java.util.Map;
 
-import io.quarkus.runtime.annotations.ConfigItem;
+import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
+import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 
 //https://quarkus.io/guides/config-mappings
-@ConfigRoot
-public class KcRoutingConfig {
+@ConfigRoot(phase = ConfigPhase.BUILD_TIME)
+@ConfigMapping(prefix = "quarkus.kc-routing")
+public interface KcRoutingConfig {
     /**
      * The path where KC Redirects is available.
      * <p>
      * The value `/` is not allowed as it blocks the application from serving anything else.
      * By default, this value will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
-    @ConfigItem
     //CHECKSTYLE:OFF
-    Map<String, String> pathRedirect;
+    Map<String, String> pathRedirect();
     //CHECKSTYLE:ON
 
     /**
@@ -25,9 +27,8 @@ public class KcRoutingConfig {
      * The value `/` is not allowed as it blocks the application from serving anything else.
      * By default, this value will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
-    @ConfigItem()
     //CHECKSTYLE:OFF
-    Map<String, String> pathPrefix;
+    Map<String, String> pathPrefix();
     //CHECKSTYLE:ON
 
     /**
@@ -36,9 +37,8 @@ public class KcRoutingConfig {
      * The value `/` is not allowed as it blocks the application from serving anything else.
      * By default, this value will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
-    @ConfigItem()
     //CHECKSTYLE:OFF
-    Map<String, String> pathFilter;
+    Map<String, String> pathFilter();
     //CHECKSTYLE:ON
 
     /**
@@ -47,9 +47,8 @@ public class KcRoutingConfig {
      * Example: Block /metrics on port 8443 - quarkus.kc-routing.path-block.8443=/metrics
      * By default, this value will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
-    @ConfigItem()
     //CHECKSTYLE:OFF
-    Map<String, String> pathBlock;
+    Map<String, String> pathBlock();
     //CHECKSTYLE:ON
 
     /**
@@ -58,9 +57,8 @@ public class KcRoutingConfig {
      * Example: Block /metrics on port 8443 - quarkus.kc-routing.path-recursive-block.8443=/metrics
      * By default, this value will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
-    @ConfigItem()
     //CHECKSTYLE:OFF
-    Map<String, String> pathRecursiveBlock;
+    Map<String, String> pathRecursiveBlock();
     //CHECKSTYLE:ON
 
     /**
@@ -69,17 +67,18 @@ public class KcRoutingConfig {
      * Example: Allow /metrics on for source CIDR 10.42.0.0 - quarkus.kc-routing.path-block.8443=/metrics
      * By default, this value will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
-    @ConfigItem()
     //CHECKSTYLE:OFF
-    Map<String, String> pathAllow;
+    Map<String, String> pathAllow();
     //CHECKSTYLE:ON
 
     /**
      * If this should be included every time. By default, this is only included when the application is running
      * in dev mode.
+     *
+     * @return true if should always be included, false otherwise
      */
-    @ConfigItem(defaultValue = "false")
+    @WithDefault("false")
     //CHECKSTYLE:OFF
-    boolean alwaysInclude;
+    boolean alwaysInclude();
     //CHECKSTYLE:ON
 }

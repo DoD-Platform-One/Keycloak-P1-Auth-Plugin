@@ -4,3 +4,4 @@ dod.p1.keycloak.events.MattermostEventListenerProviderFactory
 dod.p1.keycloak.events.WelcomeEmailEventListenerProviderFactory
 dod.p1.keycloak.events.ClientSpecificLoginEventListenerProviderFactory
 dod.p1.keycloak.events.ResetPasswordProviderFactory
+dod.p1.keycloak.events.MattermostProvisioningEventListenerProviderFactory

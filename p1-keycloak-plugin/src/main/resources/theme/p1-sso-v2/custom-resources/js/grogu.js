@@ -1,23 +1,22 @@
 
 
-window.addEventListener("DOMContentLoaded", () => {
+globalThis.addEventListener("DOMContentLoaded", () => {
   const nav = document.getElementById("navbar");
   const icon = document.getElementById("hamburger");
 
   if (nav && icon) {
     // Toggle mobile class on resize
     function updateNavMode() {
-      if (window.innerWidth < 1100) {
+      if (globalThis.innerWidth < 1100) {
         nav.classList.add('mobile');
         icon.classList.add('mobile');
       } else {
-        nav.classList.remove('mobile');
-        nav.classList.remove('open');
+        nav.classList.remove('mobile', 'open');
         icon.classList.remove('mobile');
       }
     }
 
-    window.addEventListener("resize", updateNavMode);
+    globalThis.addEventListener("resize", updateNavMode);
     updateNavMode()
 
     // Hamburger click toggles open class
@@ -40,8 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Note: The actual error detection is now handled in register.ftl
     // where FreeMarker variables are available. This is just a fallback.
     // Check if currentStep was already set by register.ftl
-    if (typeof window.currentStep !== 'undefined' && window.currentStep !== null) {
-      currentStep = window.currentStep;
+    if (globalThis.currentStep !== undefined && globalThis.currentStep !== null) {
+      currentStep = globalThis.currentStep;
       console.log("Using currentStep from register.ftl:", currentStep);
     }
     // --- End server error check ---
@@ -54,9 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submit-form');
 
     function showStep(step) {
-      steps.forEach(s => {
-        s.classList.toggle('hidden', parseInt(s.dataset.step) !== step);
-      });
+      for (const s of steps) {
+        s.classList.toggle('hidden', Number.parseInt(s.dataset.step) !== step);
+      }
 
       if (stepInput) {
         stepInput.value = step;
@@ -123,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (parts.length === 0) return;
       
-      const lastPart = parts[parts.length - 1];
+      const lastPart = parts.at(-1);
       if (/^\d+$/.test(lastPart)) {
         dodIdElement.textContent = lastPart;
       }
@@ -142,9 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
       
       // Populate simple fields
-      fieldMappings.forEach(mapping => {
+      for (const mapping of fieldMappings) {
         populateReviewField(mapping.source, mapping.target);
-      });
+      }
       
       // Populate composite fields
       populateNameField();
@@ -156,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentStep > 0) {
           currentStep--;
           showStep(currentStep);
-          window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          globalThis.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
         }
       });
     }
@@ -219,10 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function validateEmailField(fieldId) {
       const field = document.getElementById(fieldId);
       const value = field?.value.trim();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Simplified regex that avoids backtracking issues
+      // Limits each part to reasonable lengths to prevent ReDoS
+      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
       
       if (!value) {
         return toggleFieldError(fieldId, true);
+      }
+      // Additional length check to prevent excessive input
+      if (value.length > 254) {
+        return toggleFieldError(fieldId, true, 'Email address is too long.');
       }
       if (!emailRegex.test(value)) {
         return toggleFieldError(fieldId, true, 'Please enter a valid email address.');
@@ -272,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         special: (password?.match(/[~!@#$%^&*()_+=\-'[\]/?><]/g) || []).length >= 2,
         repeating: password && !/(.)\1+/.test(password),
       };
-      return Object.values(requirements).every(req => req);
+      return Object.values(requirements).every(Boolean);
     }
     
     // Validate password field
@@ -331,6 +336,23 @@ document.addEventListener('DOMContentLoaded', () => {
         hasErrors |= validateTextField('username');
       }
       
+      // Validate persona field if it has a value (optional field)
+      const personaField = document.getElementById('user.attributes.persona');
+      if (personaField?.value.trim()) {
+        const personaPattern = /^\d{3}-[A-Z]{2,10}-[a-z]+$/;
+        const personaValue = personaField.value.trim();
+        const personaWarning = document.getElementById('persona-format-warning');
+        
+        if (!personaPattern.test(personaValue)) {
+          if (personaWarning) {
+            personaWarning.style.display = 'block';
+          }
+          // Don't set hasErrors since it's optional, just show warning
+        } else if (personaWarning) {
+          personaWarning.style.display = 'none';
+        }
+      }
+      
       // Validate password fields if not CAC user
       if (!isCacUser) {
         hasErrors |= validatePasswordField();
@@ -362,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
           currentStep++;
           showStep(currentStep);
           // Only scroll to top when successfully moving to a new step
-          window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          globalThis.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
         }
       });
     }
@@ -380,10 +402,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Remove ALL hidden inputs before submitting to prevent saving them as attributes
         const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
-        hiddenInputs.forEach(input => {
+        for (const input of hiddenInputs) {
           console.log('Removing hidden input:', input.name); // Optional: for debugging
           input.remove();
-        });
+        }
 
         // Explicitly submit the form
         form.submit();
@@ -391,5 +413,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     showStep(currentStep); // Initial render
+    
+    // Add real-time validation for persona field
+    const personaInput = document.getElementById('user.attributes.persona');
+    const personaFormatWarning = document.getElementById('persona-format-warning');
+    
+    if (personaInput && personaFormatWarning) {
+      personaInput.addEventListener('input', function(e) {
+        const value = e.target.value.trim();
+        const pattern = /^\d{3}-[A-Z]{2,10}-[a-z]+$/;
+        
+        // Only show warning if there's text and it doesn't match the pattern
+        if (value.length > 0 && !pattern.test(value)) {
+          personaFormatWarning.style.display = 'block';
+        } else {
+          personaFormatWarning.style.display = 'none';
+        }
+      });
+    }
   }
 });

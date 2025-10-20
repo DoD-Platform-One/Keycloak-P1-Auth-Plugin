@@ -1,0 +1,151 @@
+---
+# Kubernetes Deployment Example for Mattermost Provisioning
+# This includes configuration for TEST, IL2, IL4, and IL5 environments
+
+# Secret for Mattermost provisioning tokens
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mattermost-provisioning-secrets
+  namespace: keycloak
+type: Opaque
+stringData:
+  test-token: "pvt_xxxxx_test"   # Replace with actual TEST token
+  il2-token: "pvt_xxxxx_il2"     # Replace with actual IL2 token
+  il4-token: "pvt_xxxxx_il4"     # Replace with actual IL4 token
+  il5-token: "pvt_xxxxx_il5"     # Replace with actual IL5 token
+
+---
+# ConfigMap with YAML configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-custom-config
+  namespace: keycloak
+data:
+  customreg.yaml: |
+    # X509 Configuration
+    x509:
+      userIdentityAttribute: "usercertificate"
+      userActive509Attribute: "activecac"
+      autoJoinGroup:
+        - "/Impact Level 2 Authorized"
+      requiredCertificatePolicies:
+        - "2.16.840.1.101.2.1.11.39"
+      subjectDnPattern: "CN=(.*?)(?:,|$)"
+      serialNumberDnPattern: "(?:^|,)([0-9]{10})(?:,|$)"
+      emailDnPattern: "EMAILADDRESS=(.*?)(?:,|$)"
+    
+    # Mattermost Provisioning Configuration
+    mattermostProvisioning:
+      enabled: true
+      requestTimeoutSeconds: 30
+      
+      environments:
+        TEST:
+          enabled: "${TEST_PROVISIONING_ENABLED:true}"
+          provisionUrl: "https://chat.test.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_TEST_PROVISION_TOKEN}"
+        
+        IL2:
+          enabled: "${IL2_PROVISIONING_ENABLED:true}"
+          provisionUrl: "https://chat.il2.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_IL2_PROVISION_TOKEN}"
+        
+        IL4:
+          enabled: "${IL4_PROVISIONING_ENABLED:true}"
+          provisionUrl: "https://chat.il4.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_IL4_PROVISION_TOKEN}"
+        
+        IL5:
+          enabled: "${IL5_PROVISIONING_ENABLED:false}"
+          provisionUrl: "https://chat.il5.dso.mil/plugins/auto-provision/provision"
+          provisionToken: "${MATTERMOST_IL5_PROVISION_TOKEN}"
+
+---
+# Keycloak Deployment (partial - showing environment variables)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:26.0.7
+        env:
+        # Database configuration
+        - name: KC_DB
+          value: postgres
+        - name: KC_DB_URL
+          value: jdbc:postgresql://postgres:5432/keycloak
+        - name: KC_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-db-secret
+              key: username
+        - name: KC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-db-secret
+              key: password
+        
+        # Custom registration config path
+        - name: CUSTOM_REGISTRATION_CONFIG
+          value: "/opt/keycloak/conf/customreg.yaml"
+        
+        # Mattermost provisioning tokens
+        - name: MATTERMOST_TEST_PROVISION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mattermost-provisioning-secrets
+              key: test-token
+        - name: MATTERMOST_IL2_PROVISION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mattermost-provisioning-secrets
+              key: il2-token
+        - name: MATTERMOST_IL4_PROVISION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mattermost-provisioning-secrets
+              key: il4-token
+        - name: MATTERMOST_IL5_PROVISION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mattermost-provisioning-secrets
+              key: il5-token
+        
+        # Optional: Control which environments are enabled
+        - name: TEST_PROVISIONING_ENABLED
+          value: "true"  # Enable TEST environment
+        - name: IL2_PROVISIONING_ENABLED
+          value: "true"  # Enable IL2
+        - name: IL4_PROVISIONING_ENABLED
+          value: "true"  # Enable IL4
+        - name: IL5_PROVISIONING_ENABLED
+          value: "false" # Disable IL5 for now
+        
+        volumeMounts:
+        - name: custom-config
+          mountPath: /opt/keycloak/conf/customreg.yaml
+          subPath: customreg.yaml
+        - name: providers
+          mountPath: /opt/keycloak/providers
+        
+      volumes:
+      - name: custom-config
+        configMap:
+          name: keycloak-custom-config
+      - name: providers
+        persistentVolumeClaim:
+          claimName: keycloak-providers-pvc

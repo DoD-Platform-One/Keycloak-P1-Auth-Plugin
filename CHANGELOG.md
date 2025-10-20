@@ -2,11 +2,27 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.6.10] - 2025-8-12
+## [3.6.10] - 2025-10-16
 
-### Updated
+### Added
 
-- Support for Keycloak  26.3.2 - 26.3.4
+- **Quarkus Configuration Migration** - Updated custom Quarkus extension for Keycloak 26.4.x compatibility
+  - Migrated `KcRoutingConfig` from legacy `@ConfigRoot` class to `@ConfigMapping` interface
+  - Now compatible with both Keycloak 26.3.x (Quarkus 3.20.x) and 26.4.x (Quarkus 3.26+)
+  - Changed configuration accessors from fields to method calls with null safety
+- **Mattermost User Provisioning Event Listener** - Automatically provisions new users in Mattermost upon email verification
+  - Listens to VERIFY_EMAIL events to ensure users have validated email before provisioning
+  - Supports multiple environments: TEST, IL2, IL4, and IL5 (each can be enabled/disabled independently)
+  - Configured via YAML: `mattermostProvisioning` section in customreg.yaml
+  - Environment variables for tokens: `MATTERMOST_TEST_PROVISION_TOKEN`, `MATTERMOST_IL2_PROVISION_TOKEN`, etc.
+  - Tracks provisioning status in user attributes: `mattermost_provisioned`, `mattermost_provisioned_environments`
+  - Handles partial failures gracefully - can succeed in some environments while failing in others
+  - Uses idempotency keys to prevent duplicate provisioning attempts
+  - Configurable timeout (default 30 seconds) for HTTP requests to Mattermost
+  - Mattermost handles its own Jira persona lookups internally (no Jira integration in Keycloak)
+- **Keycloak Version Support** - Tested and compatible with Keycloak 26.3.x - 26.4.1
+  - Plugin compiled against 26.3.4 but runtime compatible with all 26.3.x and 26.4.x versions
+  - Quarkus config changes ensure forward and backward compatibility
 - Patched CVEs in dependencies
 - **Mattermost JavaScript Attribute Mapper (mm_username.js)** - Dynamically generates Mattermost-compatible usernames
   - Uses custom `mm_username` attribute if present, otherwise falls back to email local-part or Keycloak username
