@@ -105,5 +105,5 @@ For detailed configuration and troubleshooting, see [docs/mattermost_provisioner
 Commit history could not be preserved. Credit goes to Jeff McCoy who developed the original plugin. The plugin is now maintained by Platform One.
 
 # Additional Information
-See more [docs](docs/). Be sure to review the [docs/compatibility-matrix.md](docs/compatibility-matrix.md) to choose the most appropriate version.
+See more [docs](docs/). Be sure to review the [docs/COMPATIBILITY_MATRIX.md](docs/COMPATIBILITY_MATRIX.md) to choose the most appropriate version.
 
